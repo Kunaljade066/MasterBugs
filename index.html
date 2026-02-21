@@ -798,14 +798,16 @@ async function saveBug(){
   };
 
   const btn=document.getElementById('spSaveBtn');
-  btn.disabled=true;btn.textContent='Saving…';
+  btn.disabled=true; btn.textContent='Saving…';
 
   try{
     let res;
     if(editingBugIndex===null){
+      // ADD — no password needed
       res=await sheetAPI({action:'addBug',data});
-      if(res?.success) toast(`✅ Bug added! ID: ${res.id||''}','success`);
+      if(res?.success) toast('✅ Bug added! ID: '+(res.id||''), 'success');
     } else {
+      // EDIT — also no password needed
       const rowIndex=bugs[editingBugIndex]._rowIndex??editingBugIndex;
       res=await sheetAPI({action:'updateBug',index:rowIndex,data});
       if(res?.success) toast('✅ Bug updated!','success');
@@ -816,18 +818,64 @@ async function saveBug(){
   }catch(e){
     toast('❌ '+e.message,'error');
   }finally{
-    btn.disabled=false;btn.textContent='💾 Save Bug';
+    btn.disabled=false; btn.textContent='💾 Save Bug';
   }
 }
 
-// ── DELETE ──
-async function deleteBug(idx){
+// ── DELETE (password protected) ──
+const DELETE_PASSWORD = 'qa2024'; // change this to your team password
+
+function deleteBug(idx){
   const bug=bugs[idx];
-  if(!confirm(`Delete bug "${bug.Title}"?\nThis cannot be undone.`)) return;
+  // Show password modal
+  showDeleteModal(bug, idx);
+}
+
+function showDeleteModal(bug, idx){
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.id = 'deleteModal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9990;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+  modal.innerHTML=`
+    <div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:32px;width:100%;max-width:400px;box-shadow:0 0 60px rgba(239,68,68,0.15)">
+      <div style="font-size:20px;margin-bottom:8px">🔐 Delete Restricted</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.4">${esc(bug.Title||'')}</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Only Dev / QA Lead can delete bugs.</div>
+      <label style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Enter Delete Password</label>
+      <input type="password" id="delPwd" placeholder="Password…"
+        style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-size:14px;padding:10px 12px;border-radius:6px;outline:none;margin-bottom:8px;font-family:'JetBrains Mono',monospace;letter-spacing:2px"
+        onkeydown="if(event.key==='Enter')confirmDelete(${idx})">
+      <div id="delErr" style="font-size:12px;color:var(--danger);min-height:16px;margin-bottom:14px;font-family:'JetBrains Mono',monospace"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-secondary btn-sm" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${idx})">🗑️ Delete Bug</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('delPwd')?.focus(),50);
+}
+
+function closeDeleteModal(){
+  const m=document.getElementById('deleteModal');
+  if(m) m.remove();
+}
+
+async function confirmDelete(idx){
+  const pwd=document.getElementById('delPwd')?.value||'';
+  const errEl=document.getElementById('delErr');
+  if(pwd!==DELETE_PASSWORD){
+    errEl.textContent='❌ Wrong password!';
+    document.getElementById('delPwd').value='';
+    document.getElementById('delPwd').focus();
+    return;
+  }
+  errEl.textContent='';
+  closeDeleteModal();
+  const bug=bugs[idx];
   const rowIndex=bug._rowIndex??idx;
   try{
     const res=await sheetAPI({action:'deleteBug',index:rowIndex});
-    if(res?.success){toast(`🗑️ Deleted`,'info');await fetchBugs();}
+    if(res?.success){toast('🗑️ Bug deleted','info');await fetchBugs();}
     else throw new Error(res?.message||'Delete failed');
   }catch(e){toast('❌ '+e.message,'error');}
 }
