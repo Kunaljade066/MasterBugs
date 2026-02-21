@@ -253,27 +253,27 @@ tbody td{padding:11px 14px;vertical-align:middle;color:var(--text);max-width:260
     <div class="sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">Views</div>
-        <div class="sidebar-item active" onclick="switchView('list',this)"><span class="si-icon">☰</span> List View</div>
-        <div class="sidebar-item" onclick="switchView('kanban',this)"><span class="si-icon">⬛</span> Kanban Board</div>
-        <div class="sidebar-item" onclick="switchView('dashboard',this)"><span class="si-icon">📊</span> Dashboard</div>
+        <div class="sidebar-item view-item active" onclick="switchView('list',this)"><span class="si-icon">☰</span> List View</div>
+        <div class="sidebar-item view-item" onclick="switchView('kanban',this)"><span class="si-icon">⬛</span> Kanban Board</div>
+        <div class="sidebar-item view-item" onclick="switchView('dashboard',this)"><span class="si-icon">📊</span> Dashboard</div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-label">Filter by Status</div>
-        <div class="sidebar-item" onclick="filterSidebar('all',this)"><span class="si-icon">🔘</span> All Issues<span class="sidebar-badge" id="badge-all">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('Open',this)"><span class="si-icon">🟣</span> Open<span class="sidebar-badge" id="badge-open">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('In Progress',this)"><span class="si-icon">🔵</span> In Progress<span class="sidebar-badge" id="badge-inprog">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('In Review',this)"><span class="si-icon">🟡</span> In Review<span class="sidebar-badge" id="badge-review">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('Done',this)"><span class="si-icon">🟢</span> Done<span class="sidebar-badge" id="badge-done">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('Bugged',this)"><span class="si-icon">🔴</span> Bugged<span class="sidebar-badge red" id="badge-bugged">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('Bug verified/QA Pass',this)"><span class="si-icon">✅</span> QA Pass<span class="sidebar-badge" id="badge-qapass">0</span></div>
+        <div class="sidebar-item filter-item active-filter" onclick="filterSidebar('all',this)"><span class="si-icon">🔘</span> All Issues<span class="sidebar-badge" id="badge-all">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Open',this)"><span class="si-icon">🟣</span> Open<span class="sidebar-badge" id="badge-open">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('In Progress',this)"><span class="si-icon">🔵</span> In Progress<span class="sidebar-badge" id="badge-inprog">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('In Review',this)"><span class="si-icon">🟡</span> In Review<span class="sidebar-badge" id="badge-review">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Done',this)"><span class="si-icon">🟢</span> Done<span class="sidebar-badge" id="badge-done">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Bugged',this)"><span class="si-icon">🔴</span> Bugged<span class="sidebar-badge red" id="badge-bugged">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Bug verified/QA Pass',this)"><span class="si-icon">✅</span> QA Pass<span class="sidebar-badge" id="badge-qapass">0</span></div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-label">Priority</div>
-        <div class="sidebar-item" onclick="filterSidebar('Critical',this,'priority')"><span class="si-icon">🔴</span> Critical<span class="sidebar-badge red" id="badge-critical">0</span></div>
-        <div class="sidebar-item" onclick="filterSidebar('High',this,'priority')"><span class="si-icon">🟠</span> High</div>
-        <div class="sidebar-item" onclick="filterSidebar('Medium',this,'priority')"><span class="si-icon">🟡</span> Medium</div>
-        <div class="sidebar-item" onclick="filterSidebar('Low',this,'priority')"><span class="si-icon">🟢</span> Low</div>
-        <div class="sidebar-item" onclick="filterSidebar('Urgent',this,'priority')"><span class="si-icon">🚨</span> Urgent</div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Critical',this,'priority')"><span class="si-icon">🔴</span> Critical<span class="sidebar-badge red" id="badge-critical">0</span></div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('High',this,'priority')"><span class="si-icon">🟠</span> High</div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Medium',this,'priority')"><span class="si-icon">🟡</span> Medium</div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Low',this,'priority')"><span class="si-icon">🟢</span> Low</div>
+        <div class="sidebar-item filter-item" onclick="filterSidebar('Urgent',this,'priority')"><span class="si-icon">🚨</span> Urgent</div>
       </div>
     </div>
 
@@ -479,8 +479,18 @@ function applyFilters(){
 
 function filterSidebar(val,el,mode='status'){
   sidebarFilterMode=mode; sidebarFilterVal=val;
-  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
-  el.classList.add('active'); applyFilters();
+  // Only reset filter-item active, not view-item active
+  document.querySelectorAll('.filter-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  // Always switch to list view when filtering so data is visible
+  currentView='list';
+  document.getElementById('viewList').style.display='';
+  document.getElementById('viewKanban').style.display='none';
+  document.getElementById('viewDashboard').style.display='none';
+  // Update view-item active to show List View is active
+  document.querySelectorAll('.view-item').forEach(i=>i.classList.remove('active'));
+  document.querySelector('.view-item').classList.add('active');
+  applyFilters();
 }
 
 function updateSidebarBadges(){
@@ -498,9 +508,14 @@ function updateSidebarBadges(){
 // ── VIEWS ──
 function switchView(view,el){
   currentView=view;
-  ['list','kanban','dashboard'].forEach(v=>document.getElementById('view'+v.charAt(0).toUpperCase()+v.slice(1)).style.display=v===view?'':'none');
-  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
-  el.classList.add('active'); renderCurrentView();
+  ['list','kanban','dashboard'].forEach(v=>{
+    const el2=document.getElementById('view'+v.charAt(0).toUpperCase()+v.slice(1));
+    if(el2) el2.style.display=v===view?'':'none';
+  });
+  // Only reset view-item active, not filter-item active
+  document.querySelectorAll('.view-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  renderCurrentView();
 }
 function renderCurrentView(){
   if(currentView==='list') renderTable();
@@ -696,15 +711,17 @@ function openEdit(idx){
 }
 
 function rebuildForm(bug){
-  // Get unique values from existing bugs for dropdowns
-  const statuses=[...new Set(bugs.map(b=>b.Status).filter(Boolean)),'Open','Bugged','In Progress','Bug verified/QA Pass','Non-Recreatable','Not a bug','Closed'];
-  const uniqueStatuses=[...new Set(statuses)];
+  const statuses=[...new Set(['Open','Bugged','In Progress','In Review','Bug verified/QA Pass','Non-Recreatable','Not a bug','Closed',...bugs.map(b=>b.Status).filter(Boolean)])];
 
   document.getElementById('spBody').innerHTML=`
+    <div id="dupBox" style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">⚠️ Similar bugs already reported</div>
+      <div id="dupList"></div>
+    </div>
     <div class="form-grid">
       <div class="form-group full">
         <label class="form-label">Issue / Title *</label>
-        <textarea class="form-textarea" id="f-title" rows="2" placeholder="Describe the bug…">${esc(bug?.Title||'')}</textarea>
+        <textarea class="form-textarea" id="f-title" rows="2" placeholder="Describe the bug…" oninput="checkDuplicates(this.value)">${esc(bug?.Title||'')}</textarea>
       </div>
       <div class="form-group">
         <label class="form-label">Priority</label>
@@ -721,7 +738,7 @@ function rebuildForm(bug){
       <div class="form-group">
         <label class="form-label">Status</label>
         <select class="form-select" id="f-fstatus">
-          ${uniqueStatuses.map(v=>`<option value="${v}"${(bug?.Status||'Open')===v?' selected':''}>${v}</option>`).join('')}
+          ${statuses.map(v=>`<option value="${v}"${(bug?.Status||'Open')===v?' selected':''}>${v}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
@@ -752,19 +769,10 @@ function rebuildForm(bug){
         <label class="form-label">Comments / Actual Result</label>
         <textarea class="form-textarea" id="f-factual" rows="3" placeholder="What actually happened?">${esc(bug?.Actual||'')}</textarea>
       </div>
-    </div>
-    <div class="ai-panel" id="aiPanel">
-      <div class="ai-panel-header">
-        <span style="font-size:16px">🤖</span>
-        <span class="ai-label">AI Analysis</span>
-        <div class="ai-spinner" id="aiSpinner"><div class="spin-ring"></div><span style="font-size:12px;color:var(--text3)">Analyzing…</span></div>
-      </div>
-      <div class="ai-result" id="aiResult">${esc(bug?.['AI Notes']||'Click below to get AI analysis.')}</div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-ai btn-sm" onclick="runAI()">🤖 AI Analyze Bug</button>
     </div>`;
+  if(bug?.Title) checkDuplicates(bug.Title, bug.ID);
 }
+
 
 function openPanel(){document.getElementById('overlay').classList.add('open');document.getElementById('slidePanel').classList.add('open');}
 function closePanel(){document.getElementById('overlay').classList.remove('open');document.getElementById('slidePanel').classList.remove('open');editingBugIndex=null;}
@@ -773,9 +781,6 @@ function closePanel(){document.getElementById('overlay').classList.remove('open'
 async function saveBug(){
   const title=document.getElementById('f-title')?.value?.trim();
   if(!title){toast('Issue/Title is required!','error');return;}
-
-  const aiResult=document.getElementById('aiResult')?.textContent||'';
-  const isDefault=aiResult.includes('Click below');
 
   const data={
     Title:    title,
@@ -789,7 +794,7 @@ async function saveBug(){
     Device:   document.getElementById('f-fdevice')?.value||'',
     Steps:    document.getElementById('f-fsteps')?.value||'',
     Actual:   document.getElementById('f-factual')?.value||'',
-    'AI Notes': isDefault?'':aiResult,
+    'AI Notes': '',
   };
 
   const btn=document.getElementById('spSaveBtn');
@@ -827,47 +832,41 @@ async function deleteBug(idx){
   }catch(e){toast('❌ '+e.message,'error');}
 }
 
-// ── AI ──
-async function runAI(){
-  const title=document.getElementById('f-title')?.value||'';
-  const steps=document.getElementById('f-fsteps')?.value||'';
-  const actual=document.getElementById('f-factual')?.value||'';
-  const priority=document.getElementById('f-fpriority')?.value||'';
-  const feature=document.getElementById('f-ffeature')?.value||'';
-  if(!title){toast('Add a title first!','error');return;}
+// ── DUPLICATE DETECTOR ──
+function checkDuplicates(inputText, currentId){
+  const dupBox = document.getElementById('dupBox');
+  const dupList = document.getElementById('dupList');
+  if(!dupBox || !dupList) return;
+  if(!inputText || inputText.trim().length < 6){ dupBox.style.display='none'; return; }
 
-  const spinner=document.getElementById('aiSpinner');
-  const result=document.getElementById('aiResult');
-  spinner.classList.add('on');result.textContent='';
+  const words = inputText.toLowerCase().trim().split(/\s+/).filter(w => w.length > 3);
+  if(words.length === 0){ dupBox.style.display='none'; return; }
 
-  const prompt=`You are a senior QA engineer at a mobile cricket game studio. Analyze this bug report:
+  // Score each bug by how many words match
+  const matches = bugs
+    .filter(b => b.ID !== currentId)
+    .map(b => {
+      const haystack = (b.Title + ' ' + b.Description + ' ' + b.Actual).toLowerCase();
+      const score = words.filter(w => haystack.includes(w)).length;
+      return { bug: b, score };
+    })
+    .filter(m => m.score >= Math.min(2, words.length))
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 4);
 
-Title: ${title}
-Feature: ${feature}
-Priority: ${priority}
-Steps/Repo Rate: ${steps}
-Actual Result/Comments: ${actual}
+  if(matches.length === 0){ dupBox.style.display='none'; return; }
 
-Provide:
-1. ROOT CAUSE (likely technical reason)
-2. RISK LEVEL with reason
-3. REGRESSION SCOPE (what else might break)
-4. FIX DIRECTION (brief guidance for dev)
-5. TEST CASES TO VERIFY (3-5 cases)
-
-Be concise, practical, plain text only.`;
-
-  try{
-    const data=await aiAPI(prompt);
-    const text=(data.content||[]).map(c=>c.text||'').join('');
-    result.textContent=text||'No analysis returned.';
-    toast('🤖 AI analysis complete!','success');
-  }catch(e){
-    result.textContent='AI failed: '+e.message;
-    toast('❌ AI failed','error');
-  }finally{
-    spinner.classList.remove('on');
-  }
+  dupBox.style.display='block';
+  dupList.innerHTML = matches.map(m => {
+    const b = m.bug;
+    const matchPct = Math.round((m.score / words.length) * 100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(245,158,11,0.15);cursor:pointer" onclick="openDetail(${bugs.indexOf(b)});closePanel()">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);flex-shrink:0">${esc(b.ID||'—')}</span>
+      <span style="font-size:12px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.Title||'')}</span>
+      <span style="flex-shrink:0">${statusChip(b.Status)}</span>
+      <span style="font-size:10px;color:var(--warn);font-weight:700;flex-shrink:0">${matchPct}%</span>
+    </div>`;
+  }).join('');
 }
 
 // ── EXPORT ──
