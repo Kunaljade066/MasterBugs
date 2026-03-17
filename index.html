@@ -513,22 +513,6 @@ select.fi2 option{background:var(--bg2)}
 .act-text{font-size:12px;color:var(--mist);margin-top:3px;line-height:1.6;font-weight:500}
 .act-badge{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(124,58,237,.12);color:var(--g2);margin-top:3px;letter-spacing:.5px}
 .comment-row{display:flex;gap:8px;margin-top:12px;align-items:flex-start}
-.comment-input-wrap{flex:1;position:relative}
-.comment-mention-drop{
-  position:absolute;bottom:calc(100% + 6px);left:0;right:0;z-index:9999;
-  background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;
-  box-shadow:var(--sh2);max-height:200px;overflow-y:auto;display:none;
-}
-.comment-mention-drop.on{display:block}
-.cm-opt{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:none;transition:background .1s;border-bottom:1px solid rgba(255,255,255,.03)}
-.cm-opt:last-child{border-bottom:none}
-.cm-opt:hover,.cm-opt.focus{background:rgba(124,58,237,.12)}
-.cm-opt-name{font-size:13px;font-weight:700;color:var(--text)}
-.cm-opt-email{font-family:var(--mono);font-size:10px;color:var(--mute)}
-.mention-pill{display:inline-block;background:rgba(124,58,237,.18);color:#c4b5fd;border:1px solid rgba(124,58,237,.35);border-radius:12px;padding:0 6px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:none}
-.epod-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:3px 9px;font-family:var(--mono);font-size:11px;color:#fbbf24;font-weight:700}
-.epod-badge.overdue{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#f87171;animation:pulse-red 2s ease-in-out infinite}
-@keyframes pulse-red{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(239,68,68,.3)}}
 
 /* ═══ SPRINTS / FEATURES ═══ */
 .sprint-card{background:var(--bg2);border:1px solid var(--bd);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:var(--sh)}
@@ -637,174 +621,6 @@ select.fi2 option{background:var(--bg2)}
 
 @media(max-width:1024px){.sidebar{display:none}}
 @media(max-width:768px){.wrap{padding:14px}.stats{grid-template-columns:1fr 1fr}.panel{width:100%}.dgrid{grid-template-columns:1fr}.home-grids{grid-template-columns:1fr}}
-
-/* ═══ LIGHT MODE ═══ */
-body.light{
-  --bg:#f0f2fa;--bg1:#e8eaf5;--bg2:#ffffff;--bg3:#f4f5fc;--bg4:#ececf8;
-  --bd:#d0d4e8;--bd2:#c0c8dc;--bd3:#b0b8cc;
-  --dim:#9090b8;--mute:#7070a0;--fog:#5858a0;--mist:#404090;--ghost:#202060;--text:#0a0a40;
-}
-body.light{background:var(--bg);color:var(--text)}
-body.light .topbar{background:rgba(232,234,245,.97)}
-body.light .sidebar{background:rgba(232,234,245,.95)}
-body.light .panel{background:var(--bg1)}
-body.light .fi{background:rgba(255,255,255,.9);color:var(--text)}
-body.light .fi2{background:rgba(255,255,255,.9);color:var(--text)}
-
-/* ═══ PROFILE MENU ═══ */
-.user-pill-wrap{position:relative}
-.profile-menu{
-  position:absolute;top:calc(100% + 10px);right:0;
-  background:var(--bg2);border:1px solid var(--bd2);border-radius:14px;
-  padding:6px;min-width:210px;
-  box-shadow:var(--sh2);z-index:9999;
-  display:none;flex-direction:column;gap:2px;
-  backdrop-filter:blur(20px);
-}
-.profile-menu.on{display:flex}
-.profile-menu::before{
-  content:'';position:absolute;top:-7px;right:22px;
-  width:13px;height:13px;background:var(--bg2);
-  transform:rotate(45deg);
-  border-left:1px solid var(--bd2);border-top:1px solid var(--bd2);
-}
-.pm-header{padding:10px 12px 10px;border-bottom:1px solid var(--bd);margin-bottom:4px}
-.pm-name{font-size:13px;font-weight:800;color:var(--text);letter-spacing:.3px}
-.pm-email{font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:2px}
-.pm-item{
-  display:flex;align-items:center;gap:9px;padding:9px 12px;
-  border-radius:8px;cursor:none;transition:background .1s;
-  font-size:13px;font-weight:600;color:var(--mist);
-}
-.pm-item:hover{background:rgba(124,58,237,.1);color:var(--text)}
-.pm-item.danger:hover{background:rgba(239,68,68,.1);color:#f87171}
-.pm-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
-.pm-divider{height:1px;background:var(--bd);margin:3px 6px}
-
-/* ═══ MOBILE BOTTOM NAV ═══ */
-.mobile-nav{
-  display:none;
-  position:fixed;bottom:0;left:0;right:0;z-index:600;
-  background:rgba(6,6,15,.97);
-  border-top:1px solid rgba(124,58,237,.25);
-  backdrop-filter:blur(24px);
-  padding:4px 0 calc(4px + env(safe-area-inset-bottom));
-}
-.mobile-nav::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--g1),var(--g2),var(--g1),transparent);
-  opacity:.7;
-}
-.mn-items{display:flex;justify-content:space-around;align-items:center;gap:0}
-.mn-item{
-  display:flex;flex-direction:column;align-items:center;gap:1px;
-  padding:5px 8px;border-radius:10px;
-  font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.3px;
-  color:var(--mute);text-transform:uppercase;
-  transition:all .15s;flex:1;position:relative;
-  min-width:0;
-}
-.mn-item.on{color:var(--g2);background:rgba(124,58,237,.1)}
-.mn-icon{font-size:17px;line-height:1}
-.mn-label{font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50px}
-.mn-badge{
-  position:absolute;top:2px;right:4px;
-  background:var(--g5);color:#fff;font-family:var(--mono);font-size:8px;font-weight:700;
-  padding:1px 4px;border-radius:10px;min-width:14px;text-align:center;
-  box-shadow:0 0 6px rgba(239,68,68,.5);
-}
-.mn-fab{
-  width:46px;height:46px;border-radius:50%;
-  background:var(--grad);border:none;
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;
-  box-shadow:0 4px 14px rgba(124,58,237,.5);
-  transition:all .15s;flex-shrink:0;margin:0 4px;
-}
-.mn-fab:hover,.mn-fab:active{transform:scale(1.1)}
-@media(max-width:768px){
-  .mobile-nav{display:block}
-  .main{padding-bottom:82px}
-  .topbar{padding:0 12px;height:48px}
-  .tb-tabs{display:none!important}
-  .tb-divider{display:none}
-  .tb-name{font-size:12px}
-  .pip-wrap{display:none}
-  body{cursor:auto}
-  #cur-bat,#cur-ball{display:none!important}
-}
-@media(min-width:769px){.mobile-nav{display:none!important}}
-
-/* ═══ NATASHA INTRO ═══ */
-#natashaIntro{
-  position:fixed;inset:0;z-index:8000;
-  display:flex;align-items:flex-end;justify-content:flex-end;
-  padding:0 20px 20px 0;pointer-events:none;
-}
-#natashaIntro.gone{display:none}
-.natasha-wrap{
-  display:flex;align-items:flex-end;gap:8px;
-  pointer-events:all;
-  animation:nslide .65s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes nslide{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
-.natasha-char-wrap{
-  width:130px;flex-shrink:0;
-  display:flex;align-items:flex-end;
-}
-#natashaSVG{
-  animation:char-bounce 2.2s ease-in-out infinite;
-  transform-origin:bottom center;
-}
-@keyframes char-bounce{
-  0%,100%{transform:translateY(0) rotate(0deg)}
-  25%{transform:translateY(-8px) rotate(-1deg)}
-  75%{transform:translateY(-4px) rotate(1deg)}
-}
-.natasha-bubble{
-  background:linear-gradient(135deg,rgba(255,255,255,.99),rgba(240,245,255,.99));
-  border-radius:18px 18px 18px 4px;
-  padding:16px 18px 14px;
-  max-width:230px;
-  margin-bottom:44px;
-  box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.5);
-  position:relative;
-  animation:bpop .5s .55s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes bpop{from{transform:scale(.3) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
-/* Arrow pointing right toward character */
-.natasha-bubble::after{
-  content:'';position:absolute;bottom:22px;right:-12px;
-  width:0;height:0;
-  border-top:10px solid transparent;
-  border-bottom:10px solid transparent;
-  border-left:12px solid rgba(240,245,255,.99);
-}
-.natasha-name-tag{
-  display:inline-block;
-  background:linear-gradient(135deg,#4f46e5,#7c3aed);
-  color:#fff;font-family:var(--disp);font-size:10px;font-weight:800;
-  letter-spacing:2px;padding:3px 10px;border-radius:4px;
-  margin-bottom:9px;box-shadow:0 2px 8px rgba(79,70,229,.4);
-}
-.natasha-text{font-size:13px;font-weight:700;color:#1a1a4a;line-height:1.6;margin-bottom:12px}
-.natasha-ok{
-  width:100%;padding:9px 12px;
-  background:linear-gradient(135deg,#7c3aed,#06b6d4);
-  border:none;border-radius:8px;color:#fff;
-  font-family:var(--disp);font-size:10px;font-weight:800;letter-spacing:1.5px;
-  cursor:pointer;transition:all .15s;
-  box-shadow:0 4px 14px rgba(124,58,237,.4);
-}
-.natasha-ok:hover{opacity:.92;transform:translateY(-2px);box-shadow:0 6px 18px rgba(124,58,237,.5)}
-
-/* ═══ TOPBAR – full logo ═══ */
-.tb-logo-full{
-  height:30px;object-fit:contain;
-  transition:filter .2s;
-}
-.tb-brand:hover .tb-logo-full{filter:drop-shadow(0 0 10px rgba(124,58,237,.8))}
-
 </style>
 </head>
 <body>
@@ -854,53 +670,17 @@ body.light .fi2{background:rgba(255,255,255,.9);color:var(--text)}
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-<!-- NATASHA INTRO -->
-<div id="natashaIntro" class="gone">
-  <div class="natasha-wrap">
-    <div class="natasha-bubble">
-      <div class="natasha-name-tag">NATASHA</div>
-      <div class="natasha-text" id="natashaText">Welcome back! Ready to squash some bugs today? 🏏</div>
-      <button class="natasha-ok" onclick="dismissNatasha()">LET'S GO!</button>
-    </div>
-    <div class="natasha-char-wrap">
-      <img id="natashaImg" src="natasha.png" alt="Natasha" style="width:140px;height:auto;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 24px rgba(0,0,0,.5));animation:char-bounce 2.2s ease-in-out infinite;transform-origin:bottom center">
-  </div>
-</div>
-
-<!-- MOBILE BOTTOM NAV -->
-<div class="mobile-nav" id="mobileNav">
-  <div class="mn-items">
-    <div class="mn-item on" id="mn-home" onclick="goTab('home')">
-      <span class="mn-icon">🏠</span><span class="mn-label">Home</span>
-    </div>
-    <div class="mn-item" id="mn-backlog" onclick="goTab('backlog')">
-      <span class="mn-icon">📋</span><span class="mn-label">Backlog</span>
-    </div>
-    <div class="mn-item" id="mn-board" onclick="goTab('board')">
-      <span class="mn-icon">⬛</span><span class="mn-label">Board</span>
-    </div>
-    <button class="mn-fab" onclick="openNew()" title="New Bug">＋</button>
-    <div class="mn-item" id="mn-sprints" onclick="goTab('sprints')">
-      <span class="mn-icon">🏃</span><span class="mn-label">Sprints</span>
-    </div>
-    <div class="mn-item" id="mn-dashboard" onclick="goTab('dashboard')">
-      <span class="mn-icon">📊</span><span class="mn-label">Stats</span>
-    </div>
-    <div class="mn-item" id="mn-notifs" onclick="goTab('notifs')">
-      <span class="mn-icon">🔔</span><span class="mn-label">Alerts</span>
-      <span class="mn-badge" id="mnNotifBadge" style="display:none">0</span>
-    </div>
-  </div>
-</div>
-
 <!-- APP -->
 <div id="app" style="display:none">
   <div class="topbar">
-    <div class="tb-brand" onclick="goTab('home')" id="topBrand">
-      <img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket"
-        class="tb-logo-full"
-        onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<span class=\'tb-name\'>HW·TRACKER</span>')">
+    <div class="tb-brand" onclick="goTab('home');return false" id="topBrand">
+      <div class="tb-logo-wrap">
+        <img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="HW"
+          onerror="this.style.display='none';this.parentElement.innerHTML='🏏'">
+      </div>
+      <span class="tb-name">HW·TRACKER</span>
     </div>
+    <div class="tb-divider"></div>
     <div class="tb-tabs">
       <div class="tb-tab on" id="tt-home"      onclick="goTab('home')">🏠 Home</div>
       <div class="tb-tab"    id="tt-backlog"   onclick="goTab('backlog')">📋 Backlog</div>
@@ -915,35 +695,10 @@ body.light .fi2{background:rgba(255,255,255,.9);color:var(--text)}
       <button class="btn btn-g btn-sm" onclick="exportCSV()" title="Export CSV">📥</button>
       <button class="btn btn-g btn-sm" onclick="refreshAll()">↻</button>
       <button class="btn btn-v btn-sm" onclick="openNew()">＋ BUG</button>
-      <div class="user-pill-wrap">
-        <div class="user-pill" onclick="toggleProfileMenu(event)" title="Profile & settings">
-          <div class="uav" id="uav" style="background:var(--g1)">?</div>
-          <span class="unm" id="unm">—</span>
-          <span class="utag" id="utag">member</span>
-        </div>
-        <div class="profile-menu" id="profileMenu">
-          <div class="pm-header">
-            <div class="pm-name" id="pmName">—</div>
-            <div class="pm-email" id="pmEmail">—</div>
-          </div>
-          <div class="pm-item" onclick="setTheme('dark');closeProfileMenu()">
-            <span class="pm-icon">🌙</span> Dark Mode
-          </div>
-          <div class="pm-item" onclick="setTheme('light');closeProfileMenu()">
-            <span class="pm-icon">☀️</span> Light Mode
-          </div>
-          <div class="pm-divider"></div>
-          <div class="pm-item" onclick="refreshAll();closeProfileMenu()">
-            <span class="pm-icon">↻</span> Refresh Data
-          </div>
-          <div class="pm-item" onclick="showNatasha();closeProfileMenu()">
-            <span class="pm-icon">🏏</span> Say Hi to Natasha
-          </div>
-          <div class="pm-divider"></div>
-          <div class="pm-item danger" onclick="signOut()">
-            <span class="pm-icon">🚪</span> Sign Out
-          </div>
-        </div>
+      <div class="user-pill" onclick="signOut()" title="Sign out">
+        <div class="uav" id="uav" style="background:var(--g1)">?</div>
+        <span class="unm" id="unm">—</span>
+        <span class="utag" id="utag">member</span>
       </div>
     </div>
   </div>
@@ -1184,12 +939,7 @@ const clearSession=()=>localStorage.removeItem(SK);
 function loadNotifs(){try{S.localNotifs=JSON.parse(localStorage.getItem(NK(S.user?.email))||'[]');}catch{S.localNotifs=[];}}
 function saveNotifs(){try{localStorage.setItem(NK(S.user?.email),JSON.stringify(S.localNotifs.slice(0,100)));}catch{}}
 function addNotif(t,b,bugId){loadNotifs();S.localNotifs.unshift({id:Date.now(),title:t,body:b,bugId,read:false,ts:new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})});saveNotifs();updateNotifBadge();}
-function updateNotifBadge(){
-  loadNotifs();
-  const u=S.localNotifs.filter(n=>!n.read).length;
-  const b=document.getElementById('notifBadge');if(b){b.textContent=u;b.style.display=u?'inline':'none';}
-  const mb=document.getElementById('mnNotifBadge');if(mb){mb.textContent=u;mb.style.display=u?'inline':'none';}
-}
+function updateNotifBadge(){loadNotifs();const u=S.localNotifs.filter(n=>!n.read).length;const b=document.getElementById('notifBadge');if(b){b.textContent=u;b.style.display=u?'inline':'none';}}
 function markAllRead(){S.localNotifs.forEach(n=>n.read=true);saveNotifs();updateNotifBadge();renderNotifs();}
 
 // ══════════════════════════════════════════
@@ -1240,27 +990,12 @@ function onLogin(){
   else{av.textContent=avi(S.user.name);av.style.background=avc(S.user.name);}
   document.getElementById('unm').textContent=(S.user.name||'').split(' ')[0];
   const ut=document.getElementById('utag');ut.textContent=S.user.role;ut.className='utag '+(S.user.role==='admin'?'utag-admin':'utag-member');
-  // Profile menu info
-  document.getElementById('pmName').textContent=S.user.name||'—';
-  document.getElementById('pmEmail').textContent=S.user.email||'—';
   if(S.user.role!=='admin')document.getElementById('sprintNewBtn').style.display='none';
-  loadTheme();
   loadNotifs();updateNotifBadge();
-  refreshAll().then(()=>{
-    hideLoad();
-    checkDeepLink();
-    // Show Natasha welcome after a short delay
-    const firstName=(S.user.name||'').split(' ')[0]||'there';
-    const critCount=S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Done','QA Pass','Closed'].includes(b.status)).length;
-    const myCount=S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user?.email)).length;
-    let msg=`Hey ${firstName}! Welcome back to HW Tracker! 🏏`;
-    if(critCount>0)msg=`Hey ${firstName}! There are ${critCount} critical bug${critCount>1?'s':''} waiting! Let's smash them! 🚨`;
-    else if(myCount>0)msg=`Hey ${firstName}! You have ${myCount} bug${myCount>1?'s':''} assigned. Time to get cracking! 🏏`;
-    setTimeout(()=>showNatasha(msg),600);
-  });
+  refreshAll().then(()=>{hideLoad();checkDeepLink();});
 }
 
-function signOut(){closeProfileMenu();if(!confirm('Sign out?'))return;clearSession();location.reload();}
+function signOut(){if(!confirm('Sign out?'))return;clearSession();location.reload();}
 
 // ══════════════════════════════════════════
 // API
@@ -1366,7 +1101,6 @@ function goTab(v){
     const el=document.getElementById('v-'+n);if(el)el.style.display=n===v?'':'none';
     document.getElementById('tt-'+n)?.classList.toggle('on',n===v);
   });
-  syncMobileNav(v);
   if(v==='home')renderHome();
   if(v==='board')renderBoard();
   if(v==='sprints')renderSprints();
@@ -1441,7 +1175,7 @@ function renderTable(){
   document.getElementById('pgInfo').textContent=`${S.page}/${tp}`;
   document.getElementById('bl-sub').textContent=total+' issues';
   if(!sl.length){document.getElementById('tBody').innerHTML=`<div class="empty"><div class="empty-icon">🦗</div><h3>No issues</h3><p>Adjust filters or add a new bug.</p></div>`;return;}
-  const cols=[{k:'id',l:'ID'},{k:'title',l:'Title'},{k:'priority',l:'Priority'},{k:'severity',l:'Severity'},{k:'status',l:'Status'},{k:'assignees',l:'Assignees'},{k:'feature',l:'Feature'},{k:'sprint',l:'Sprint'},{k:'epod',l:'EPOD'},{k:'build',l:'Build'}];
+  const cols=[{k:'id',l:'ID'},{k:'title',l:'Title'},{k:'priority',l:'Priority'},{k:'severity',l:'Severity'},{k:'status',l:'Status'},{k:'assignees',l:'Assignees'},{k:'feature',l:'Feature'},{k:'sprint',l:'Sprint'},{k:'build',l:'Build'}];
   let h=`<table><thead><tr>`;
   cols.forEach(c=>{const ar=S.sortCol===c.k?(S.sortDir===1?' ▲':' ▼'):'';h+=`<th onclick="sortBy('${c.k}')">${c.l}${ar}</th>`;});
   h+=`<th>Actions</th></tr></thead><tbody>`;
@@ -1453,7 +1187,6 @@ function renderTable(){
       <td>${avStack(bug.assignees||[],20)}</td>
       <td><span style="font-size:11px;font-weight:600">${esc(bug.feature||'—')}</span></td>
       <td>${bug.sprint?`<span class="chip chip-sprint">${esc(bug.sprint)}</span>`:''}</td>
-      <td>${epodCell(bug.epod)}</td>
       <td><span style="font-family:var(--mono);font-size:10px;color:var(--mute)">${esc(bug.build||'—')}</span></td>
       <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px">
@@ -1732,7 +1465,6 @@ function openDetail(id){
       <div class="dgi"><div class="dgi-l">Feature</div><div class="dgi-v">${esc(bug.feature||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Sprint</div><div class="dgi-v">${esc(bug.sprint||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Build</div><div class="dgi-v" style="font-family:var(--mono);font-size:11px">${esc(bug.build||'—')}</div></div>
-      <div class="dgi"><div class="dgi-l">EPOD</div><div style="margin-top:4px">${bug.epod?epodBadge(bug.epod):'<span style="font-size:12px;color:var(--dim);font-family:var(--mono)">—</span>'}</div></div>
       <div class="dgi"><div class="dgi-l">Device / UID</div><div class="dgi-v">${esc(bug.device||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Created</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.created_at||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Updated</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.updated_at||'—')}</div></div>
@@ -1746,227 +1478,24 @@ function openDetail(id){
       <div>${renderComments(bug.comments||[])}</div>
       <div class="comment-row">
         ${avEl(S.user?.name,S.user?.picture,24)}
-        <div class="comment-input-wrap">
-          <div class="comment-mention-drop" id="mentionDrop"></div>
-          <textarea class="fi2" id="cInput" rows="2"
-            placeholder="Add a comment… type @ to mention someone"
-            style="flex:1;min-height:64px;width:100%"
-            oninput="onCommentInput(this,event)"
-            onkeydown="onCommentKey(event,'${bug.id}')"></textarea>
-          <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">💡 Type <b style="color:var(--g2)">@name</b> to notify someone</span>
-            <button class="btn btn-v btn-sm" onclick="postComment('${bug.id}')">POST</button>
-          </div>
-        </div>
+        <textarea class="fi2" id="cInput" rows="2" placeholder="Add a comment…" style="flex:1;min-height:64px"></textarea>
+        <button class="btn btn-v btn-sm" style="align-self:flex-end" onclick="postComment('${bug.id}')">POST</button>
       </div>
     </div>`;
   openPanel();
 }
 
 function dsec(title,content){if(!content)return'';return`<div class="dsec"><div class="dsec-title">${title}</div><div class="dtext">${esc(content)}</div></div>`;}
-
-// Render @mentions as highlighted pills in comment text
-function renderMentionText(text){
-  return esc(text).replace(/@(\w[\w. -]*)/g,'<span class="mention-pill">@$1</span>');
-}
-
 function renderComments(comments){
   if(!comments.length)return'<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:10px 0">No activity yet.</div>';
-  return comments.map(c=>{
-    const mentions=(c.mentions||[]);
-    const mentionPills=mentions.length?`<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${mentions.map(m=>`<span class="mention-pill">@${esc(m.name)}</span>`).join('')}</div>`:'';
-    return`<div class="act-item">${avEl(c.author,c.author_picture,24)}<div class="act-body">
-      <span class="act-author">${esc(c.author||'?')}</span>
-      <span class="act-time">${esc(c.ts||'')}</span>
-      ${c.type==='activity'
-        ?`<div><span class="act-badge">${esc(c.text||'')}</span></div>`
-        :`<div class="act-text">${renderMentionText(c.text||'')}</div>${mentionPills}`}
-    </div></div>`;
-  }).join('');
+  return comments.map(c=>`<div class="act-item">${avEl(c.author,c.author_picture,24)}<div class="act-body"><span class="act-author">${esc(c.author||'?')}</span><span class="act-time">${esc(c.ts||'')}</span>${c.type==='activity'?`<div><span class="act-badge">${esc(c.text||'')}</span></div>`:`<div class="act-text">${esc(c.text||'')}</div>`}</div></div>`).join('');
 }
-
-// ── @mention logic ──────────────────────────────────────────
-let _mentionQuery='',_mentionIdx=-1,_mentionStart=-1;
-
-function onCommentInput(el){
-  const v=el.value,pos=el.selectionStart;
-  // Find if cursor is in a @word
-  const before=v.slice(0,pos);
-  const atMatch=before.match(/@([\w ]*)$/);
-  if(atMatch){
-    _mentionQuery=atMatch[1].toLowerCase();
-    _mentionStart=pos-atMatch[0].length;
-    showMentionDrop();
-  }else{
-    hideMentionDrop();
-  }
-}
-
-function showMentionDrop(){
-  const dd=document.getElementById('mentionDrop');if(!dd)return;
-  _mentionIdx=-1;
-  const members=_mentionQuery
-    ?S.teamMembers.filter(m=>m.name.toLowerCase().includes(_mentionQuery)||m.email.toLowerCase().includes(_mentionQuery))
-    :S.teamMembers;
-  if(!members.length){hideMentionDrop();return;}
-  dd.innerHTML=members.slice(0,8).map((m,i)=>`
-    <div class="cm-opt" data-i="${i}" data-name="${esc(m.name)}" data-email="${esc(m.email)}"
-      onmousedown="insertMention('${esc(m.name)}')">
-      ${avEl(m.name,m.picture,22)}
-      <div><div class="cm-opt-name">${esc(m.name)}</div><div class="cm-opt-email">${esc(m.email)}</div></div>
-    </div>`).join('');
-  dd.classList.add('on');
-}
-
-function hideMentionDrop(){
-  const dd=document.getElementById('mentionDrop');if(dd)dd.classList.remove('on');
-  _mentionIdx=-1;_mentionQuery='';_mentionStart=-1;
-}
-
-function insertMention(name){
-  const el=document.getElementById('cInput');if(!el)return;
-  const v=el.value,pos=el.selectionStart;
-  const before=v.slice(0,_mentionStart>=0?_mentionStart:pos);
-  const after=v.slice(pos);
-  const newVal=before+'@'+name+' '+after;
-  el.value=newVal;
-  const newPos=before.length+name.length+2;
-  el.setSelectionRange(newPos,newPos);
-  el.focus();
-  hideMentionDrop();
-}
-
-function onCommentKey(e,bugId){
-  const dd=document.getElementById('mentionDrop');
-  if(dd&&dd.classList.contains('on')){
-    const opts=dd.querySelectorAll('.cm-opt');
-    if(e.key==='ArrowDown'){e.preventDefault();_mentionIdx=Math.min(_mentionIdx+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('focus',i===_mentionIdx));opts[_mentionIdx]?.scrollIntoView({block:'nearest'});return;}
-    if(e.key==='ArrowUp'){e.preventDefault();_mentionIdx=Math.max(_mentionIdx-1,0);opts.forEach((o,i)=>o.classList.toggle('focus',i===_mentionIdx));return;}
-    if(e.key==='Enter'&&_mentionIdx>=0){e.preventDefault();const o=opts[_mentionIdx];if(o)insertMention(o.dataset.name);return;}
-    if(e.key==='Escape'){hideMentionDrop();return;}
-  }
-  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();postComment(bugId);}
-}
-
-// Extract @mentioned names from comment text, return matched team members
-function extractMentions(text){
-  const found=[];
-  const matches=text.matchAll(/@([\w][^\s@,]*)/g);
-  for(const m of matches){
-    const n=m[1].toLowerCase();
-    const member=S.teamMembers.find(t=>t.name.toLowerCase()===n||t.name.toLowerCase().startsWith(n));
-    if(member&&!found.some(f=>f.email===member.email))found.push(member);
-  }
-  return found;
-}
-
 async function postComment(bugId){
   const txt=document.getElementById('cInput')?.value?.trim();
   if(!txt){toast('Enter a comment','err');return;}
-  const mentions=extractMentions(txt);
-  const bug=S.bugs.find(b=>b.id===bugId);
-  // Notify @mentioned people
-  mentions.forEach(m=>{
-    if(m.email!==S.user?.email)
-      addNotif(`💬 ${S.user?.name||'Someone'} mentioned you`,`"${txt.slice(0,50)}"`,bugId);
-  });
-  // Also notify assignees + reporter (if not the commenter and not already mentioned)
-  if(bug){
-    const mentionedEmails=new Set(mentions.map(m=>m.email));
-    (bug.assignees||[]).forEach(a=>{
-      if(a.email&&a.email!==S.user?.email&&!mentionedEmails.has(a.email))
-        addNotif(`💬 New comment on ${bugId}`,`${S.user?.name||'Someone'}: "${txt.slice(0,50)}"`,bugId);
-    });
-    if(bug.reporter_email&&bug.reporter_email!==S.user?.email&&!mentionedEmails.has(bug.reporter_email))
-      addNotif(`💬 New comment on ${bugId}`,`${S.user?.name||'Someone'}: "${txt.slice(0,50)}"`,bugId);
-  }
-  try{
-    await api(`/bugs/${bugId}/comment`,'POST',{text:txt,mentions:mentions.map(m=>({name:m.name,email:m.email}))});
-    toast('Comment posted ✓','ok');
-    hideMentionDrop();
-    closePanel();await refreshAll();openDetail(bugId);
-  }catch(e){toast(e.message,'err');}
+  try{await api(`/bugs/${bugId}/comment`,'POST',{text:txt});toast('Comment posted ✓','ok');closePanel();await refreshAll();openDetail(bugId);}
+  catch(e){toast(e.message,'err');}
 }
-
-// ── EPOD helpers ────────────────────────────────────────────
-function epodCell(epod){
-  if(!epod)return'<span style="font-family:var(--mono);font-size:10px;color:var(--dim)">—</span>';
-  const today=new Date();today.setHours(0,0,0,0);
-  const d=new Date(epod);const overdue=d<today&&epod;
-  const label=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
-  return`<span class="epod-badge${overdue?' overdue':''}">📅 ${label}</span>`;
-}
-function epodBadge(epod){
-  if(!epod)return'';
-  const today=new Date();today.setHours(0,0,0,0);
-  const d=new Date(epod);const overdue=d<today;
-  const label=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  return`<span class="epod-badge${overdue?' overdue':''}">${overdue?'⚠️ OVERDUE':'📅'} ${label}</span>`;
-}
-
-// ── THEME ───────────────────────────────────────────────────
-function setTheme(mode){
-  document.body.classList.toggle('light',mode==='light');
-  try{localStorage.setItem('hwt_theme',mode);}catch{}
-  toast(mode==='light'?'☀️ Light mode on':'🌙 Dark mode on','info');
-}
-function loadTheme(){
-  try{const t=localStorage.getItem('hwt_theme');if(t==='light')document.body.classList.add('light');}catch{}
-}
-
-// ── PROFILE MENU ────────────────────────────────────────────
-function toggleProfileMenu(e){
-  e.stopPropagation();
-  const m=document.getElementById('profileMenu');
-  m.classList.toggle('on');
-  if(m.classList.contains('on')){
-    document.addEventListener('click',closeProfileMenu,{once:true});
-  }
-}
-function closeProfileMenu(){
-  document.getElementById('profileMenu')?.classList.remove('on');
-}
-
-// ── NATASHA ─────────────────────────────────────────────────
-const NATASHA_MSGS=[
-  "Welcome back! Ready to squash some bugs today? 🏏",
-  "New bugs spotted! Let's smash them out of the park! 🏏",
-  "Hey! Don't forget to check your assigned issues! 👀",
-  "Great work team! Keep the quality high! ⭐",
-  "Remember: a bug fixed today is a player happy tomorrow! 🎮",
-];
-function showNatasha(msg){
-  const intro=document.getElementById('natashaIntro');
-  const wrap=intro.querySelector('.natasha-wrap');
-  document.getElementById('natashaText').textContent=msg||NATASHA_MSGS[Math.floor(Math.random()*NATASHA_MSGS.length)];
-  // Reset animation by removing and re-adding
-  intro.classList.remove('gone');
-  wrap.style.animation='none';
-  wrap.offsetHeight; // force reflow
-  wrap.style.animation='';
-  clearTimeout(window._natashaTimer);
-  window._natashaTimer=setTimeout(dismissNatasha,8000);
-}
-function dismissNatasha(){
-  const intro=document.getElementById('natashaIntro');
-  const wrap=intro.querySelector('.natasha-wrap');
-  wrap.style.animation='nslide .35s ease-in reverse both';
-  setTimeout(()=>{intro.classList.add('gone');wrap.style.animation='';},320);
-}
-
-// ── MOBILE NAV SYNC ─────────────────────────────────────────
-function syncMobileNav(v){
-  const map={home:'mn-home',backlog:'mn-backlog',board:'mn-board',sprints:'mn-sprints',features:null,dashboard:'mn-dashboard',notifs:'mn-notifs'};
-  document.querySelectorAll('.mn-item').forEach(el=>el.classList.remove('on'));
-  const id=map[v];if(id)document.getElementById(id)?.classList.add('on');
-}
-function updateMobileNotifBadge(){
-  loadNotifs();
-  const u=S.localNotifs.filter(n=>!n.read).length;
-  const b=document.getElementById('mnNotifBadge');
-  if(b){b.textContent=u;b.style.display=u?'inline':'none';}
-}
-
 
 // ══════════════════════════════════════════
 // BUG FORM
@@ -2026,7 +1555,6 @@ function buildBugForm(bug,full){
       </div>
       <div class="fg"><label class="fl">Sprint</label><select class="fi2" id="f-sp"><option value="">No Sprint</option>${spOpts}</select></div>
       <div class="fg"><label class="fl">Build</label><input class="fi2" id="f-build" value="${esc(bug?.build||'')}" placeholder="e.g. v3.2.1"></div>
-      <div class="fg"><label class="fl">EPOD — Expected Publish Date</label><input type="date" class="fi2" id="f-epod" value="${esc(bug?.epod||'')}"></div>
       <div class="fg"><label class="fl">Device / User ID</label><input class="fi2" id="f-dev" value="${esc(bug?.device||'')}" placeholder="e.g. Pixel 8 / UID 12345"></div>
       <div class="fg fc2"><label class="fl">Steps / Repro Rate</label>
         <textarea class="fi2" id="f-steps" rows="3" placeholder="1. Open app&#10;2. Tap…&#10;Repro: 80%">${esc(bug?.steps||'')}</textarea>
@@ -2090,9 +1618,7 @@ async function saveBug(){
         reporter:document.getElementById('f-rep')?.value||S.user?.name||'',
         reporter_email:S.user?.email||'',reporter_picture:S.user?.picture||'',
         feature:document.getElementById('f-feat')?.value||'',sprint:document.getElementById('f-sp')?.value||'',
-        build:document.getElementById('f-build')?.value||'',
-        epod:document.getElementById('f-epod')?.value||'',
-        device:document.getElementById('f-dev')?.value||'',
+        build:document.getElementById('f-build')?.value||'',device:document.getElementById('f-dev')?.value||'',
         steps:document.getElementById('f-steps')?.value||'',actual:document.getElementById('f-actual')?.value||'',
         attachment:document.getElementById('f-att')?.value||'',app_url:APP_URL,
       };
@@ -2155,12 +1681,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
 // ══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('gSignInBtn').addEventListener('click',doSignIn);
-  loadTheme();
   setLoad(20,'CHECKING SESSION');
-  // Close profile menu on outside click
-  document.addEventListener('click',e=>{
-    if(!e.target.closest('.user-pill-wrap'))closeProfileMenu();
-  });
   const sess=loadSession();
   if(sess?.user){
     S.user=sess.user;setLoad(40,'RESTORING SESSION');
