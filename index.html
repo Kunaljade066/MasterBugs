@@ -50,7 +50,8 @@
 /* ═══ RESET ═══ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden;font-size:14px;line-height:1.5;cursor:none}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden;font-size:14px;line-height:1.5}
+@media(pointer:fine){body{cursor:none}}
 
 /* ═══ SCROLLBAR ═══ */
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -863,7 +864,7 @@ body.light .fi2{background:rgba(255,255,255,.9);color:var(--text)}
       <div class="load-inner">🏏</div>
     </div>
   </div>
-  <div class="load-title">HW TRACKER</div>
+  <div class="load-title">Hitwicket BugPulse</div>
   <div class="load-bar-wrap"><div class="load-bar" id="loadBar"></div></div>
   <div class="load-sub" id="loadSub">INITIALISING</div>
 </div>
