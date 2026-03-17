@@ -1,17 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HW Tracker · Hitwicket</title>
-<meta name="theme-color" content="#080810">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --display: 'Syne', sans-serif;
-  --accent: #f97316;
-  --accent2: #fb923c;
-  --accentbg: rgba(249,115,22,.12);
   --bg:    #0a0a12;
   --s1:    #0e0e1a;
   --s2:    #121220;
@@ -36,7 +31,7 @@
   --pink:  #db2777; --pink2: #f472b6;
   --orange:#ea580c; --orange2:#fb923c;
 
-  --sans: 'Inter', sans-serif;
+  --sans: 'Plus Jakarta Sans', sans-serif;
   --mono: 'JetBrains Mono', monospace;
 
   --sh: 0 4px 24px rgba(0,0,0,.4);
@@ -372,45 +367,6 @@ select.fi2 option{background:var(--s2)}
 .empty p{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.8}
 .info-banner{background:var(--vbg);border:1px solid rgba(109,40,217,.2);border-radius:8px;padding:10px 13px;margin-bottom:14px;font-family:var(--mono);font-size:11px;color:var(--v3)}
 
-
-/* ═══ DISPLAY FONT ═══ */
-h1,.ph h1{font-family:'Syne',var(--display,sans-serif)!important}
-.tb-name{font-family:'Syne',var(--display,sans-serif)!important}
-.lc-title{font-family:'Syne',var(--display,sans-serif)!important}
-.sc-n{font-family:'Syne',var(--display,sans-serif)}
-
-/* ═══ LIGHT MODE ═══ */
-[data-theme="light"]{--bg:#f6f6ff;--bg2:#efeffa;--s1:#ffffff;--s2:#f4f4fc;--s3:#ebebf8;--s4:#e0e0f2;--bd:#ddddf0;--bd2:#d0d0e8;--bd3:#b8b8d8;--dim:#9090c0;--mute:#6060a0;--fog:#5050a0;--mist:#303080;--ghost:#101060;--text:#12122a;--text2:#28284a}
-[data-theme="light"] body{background:var(--bg)}
-[data-theme="light"] .topbar{background:rgba(255,255,255,.96);border-bottom-color:#e0e0f0}
-[data-theme="light"] .sidebar{background:#fff}
-[data-theme="light"] .lc{background:rgba(255,255,255,.95)}
-[data-theme="light"] tbody tr{border-bottom-color:rgba(0,0,40,.04)!important}
-[data-theme="light"] select.fi option,[data-theme="light"] select.fi2 option{background:#fff;color:#12122a}
-
-/* ═══ ACCENT ORANGE OVERRIDES ═══ */
-.btn-v{background:var(--accent,#f97316)!important;box-shadow:0 3px 12px rgba(249,115,22,.3)!important}
-.btn-v:hover:not(:disabled){background:#ea6c0d!important}
-.tb-tab.on{color:var(--accent)!important;border-bottom-color:var(--accent)!important}
-.sb-item.on{background:var(--accentbg)!important;color:var(--accent)!important;border-left-color:var(--accent)!important}
-.fi:focus,.fi2:focus{border-color:var(--accent)!important;box-shadow:0 0 0 3px rgba(249,115,22,.1)!important}
-
-/* ═══ RESPONSIVE ═══ */
-@media(max-width:1100px){.sidebar{display:none}}
-@media(max-width:768px){
-  .wrap{padding:10px!important}
-  .stats,.sc{grid-template-columns:repeat(2,1fr)!important}
-  .panel{width:100vw!important}
-  .dgrid{grid-template-columns:1fr!important}
-  #devSplit{grid-template-columns:1fr!important}
-  .tb-tab{padding:0 8px!important;font-size:11px!important}
-  .tb-tab .tab-label{display:none}
-}
-@media(max-width:480px){
-  .stats{grid-template-columns:1fr 1fr!important}
-  .topbar{padding:0 8px 0 0!important}
-}
-
 @media(max-width:1024px){.sidebar{display:none}}
 @media(max-width:768px){.wrap{padding:12px}.stats{grid-template-columns:1fr 1fr}.panel{width:100%}.dgrid{grid-template-columns:1fr}}
 </style>
@@ -433,14 +389,9 @@ h1,.ph h1{font-family:'Syne',var(--display,sans-serif)!important}
 </div>
 
 <!-- LOGIN -->
-<div id="loginScreen" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px">
-  <video autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.4">
-    <source src="https://cdn.octathorpeweb.com/v1/webstore/webstore-login.mp4" type="video/mp4">
-  </video>
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,rgba(8,8,18,.9),rgba(124,58,237,.1),rgba(8,8,18,.92))"></div>
-  <div id="loginScreen_inner" style="position:relative;z-index:2;width:100%;display:flex;align-items:center;justify-content:center">
+<div id="loginScreen">
   <div class="lc">
-    <div class="lc-logo"><img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='🏏'"></div>
+    <div class="lc-logo">🐛</div>
     <div class="lc-title">HW Tracker</div>
     <div class="lc-sub">Hitwicket · Bug Management</div>
     <button class="lc-gbtn" id="gSignInBtn">
@@ -455,7 +406,6 @@ h1,.ph h1{font-family:'Syne',var(--display,sans-serif)!important}
     <div class="lc-note">Restricted to <b>@hitwicket.com</b> accounts only</div>
     <div class="lc-err" id="loginErr"></div>
   </div>
-  </div>
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -464,11 +414,11 @@ h1,.ph h1{font-family:'Syne',var(--display,sans-serif)!important}
 <div id="app" style="display:none">
   <div class="topbar">
     <div class="tb-brand">
-      <img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket" style="height:26px;object-fit:contain;filter:brightness(0) invert(1)" onerror="this.outerHTML='<span style=\"font-family:var(--display);font-weight:800;font-size:15px;color:var(--accent)\">HW</span>'">
+      <div class="tb-mark">HW</div>
+      <div class="tb-name">HW<em>Tracker</em></div>
     </div>
     <div class="tb-tabs">
-      <div class="tb-tab on" id="tt-home" onclick="goTab('home')">🏠 Home</div>
-      <div class="tb-tab" id="tt-backlog"   onclick="goTab('backlog')">📋 Backlog</div>
+      <div class="tb-tab on" id="tt-backlog"   onclick="goTab('backlog')">📋 Backlog</div>
       <div class="tb-tab"    id="tt-board"     onclick="goTab('board')">⬛ Board</div>
       <div class="tb-tab"    id="tt-sprints"   onclick="goTab('sprints')">🏃 Sprints</div>
       <div class="tb-tab"    id="tt-features"  onclick="goTab('features')">🎮 Features</div>
@@ -480,8 +430,7 @@ h1,.ph h1{font-family:'Syne',var(--display,sans-serif)!important}
         <div class="pip" id="pip"></div>
         <span class="pip-lbl" id="pipLbl">—</span>
       </div>
-      <button class="btn btn-g btn-sm" onclick="toggleTheme()" id="themeBtn" title="Dark/Light mode" style="font-size:14px">🌙</button>
-      <button class="btn btn-g btn-sm" onclick="refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); })">↻</button>
+      <button class="btn btn-g btn-sm" onclick="refreshAll()">↻</button>
       <button class="btn btn-v btn-sm" onclick="openNew()">＋ Bug</button>
       <div class="user-pill" id="userPill" onclick="signOut()" title="Sign out">
         <div class="uav" id="uav" style="background:var(--v2)">?</div>
@@ -520,7 +469,7 @@ h1,.ph h1{font-family:'Syne',var(--display,sans-serif)!important}
 
     <div class="main">
       <div class="wrap">
-        <div id="v-backlog" style="display:none">
+        <div id="v-backlog">
           <div class="ph">
             <div><h1>Backlog</h1><p id="bl-sub">All issues</p></div>
             <div class="ph-r">
@@ -792,7 +741,7 @@ function onLogin(){
   ut.textContent=S.user.role;ut.className='utag '+(S.user.role==='admin'?'utag-admin':'utag-member');
   if(S.user.role!=='admin')document.getElementById('sprintNewBtn').style.display='none';
   loadNotifs();updateNotifBadge();
-  refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); }).then(()=>{ hideLoad(); checkDeepLink(); });
+  refreshAll().then(()=>{ hideLoad(); checkDeepLink(); });
 }
 
 function signOut(){if(!confirm('Sign out?'))return;clearSession();location.reload();}
@@ -817,7 +766,7 @@ function setCloud(s,l){
 // ════════════════════════════════════════
 // REFRESH
 // ════════════════════════════════════════
-async function refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); }){
+async function refreshAll(){
   setCloud('busy','loading…');
   try{
     const [bugsD,sprintsD,teamD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team')]);
@@ -908,7 +857,7 @@ function applyF(){
 // ════════════════════════════════════════
 function goTab(v){
   S.view=v;
-  ['home','backlog','board','sprints','features','dashboard','notifs'].forEach(n=>{
+  ['backlog','board','sprints','features','dashboard','notifs'].forEach(n=>{
     const el=document.getElementById('v-'+n);if(el)el.style.display=n===v?'':'none';
     document.getElementById('tt-'+n)?.classList.toggle('on',n===v);
   });
@@ -1073,10 +1022,10 @@ function openSprintForm(){
 async function saveSprint(){
   const name=document.getElementById('sp-nm')?.value?.trim();
   if(!name){toast('Name required','err');return;}
-  try{await api('/sprints','POST',{name,start:document.getElementById('sp-s')?.value||'',end:document.getElementById('sp-e')?.value||'',goal:document.getElementById('sp-g')?.value||''});closePanel();await refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); });goTab('sprints');toast('Sprint created ✓','ok');}
+  try{await api('/sprints','POST',{name,start:document.getElementById('sp-s')?.value||'',end:document.getElementById('sp-e')?.value||'',goal:document.getElementById('sp-g')?.value||''});closePanel();await refreshAll();goTab('sprints');toast('Sprint created ✓','ok');}
   catch(e){toast(e.message,'err');}
 }
-async function delSprint(id){if(!confirm('Delete sprint?'))return;try{await api(`/sprints/${id}`,'DELETE');await refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); });toast('Deleted','ok');}catch(e){toast(e.message,'err');}}
+async function delSprint(id){if(!confirm('Delete sprint?'))return;try{await api(`/sprints/${id}`,'DELETE');await refreshAll();toast('Deleted','ok');}catch(e){toast(e.message,'err');}}
 
 // ════════════════════════════════════════
 // FEATURES
@@ -1219,7 +1168,7 @@ async function postComment(bugId){
   try{
     await api(`/bugs/${bugId}/comment`,'POST',{text:txt});
     toast('Comment posted ✓','ok');
-    closePanel();await refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); });openDetail(bugId);
+    closePanel();await refreshAll();openDetail(bugId);
   }catch(e){toast(e.message,'err');}
 }
 
@@ -1430,7 +1379,7 @@ async function saveBug(){
       if(qc)await api(`/bugs/${S.editing}/comment`,'POST',{text:qc});
       if(data.assignee&&data.assignee!==prev.assignee)addNotif(`Assigned: ${data.assignee}`,prev.title,S.editing);
       if(data.status!==prev.status)addNotif(`Status: ${prev.title}`,`${prev.status} → ${data.status}`,S.editing);
-      toast('Updated ✓','ok');closePanel();await refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); });
+      toast('Updated ✓','ok');closePanel();await refreshAll();
     }else{
       const title=document.getElementById('f-title')?.value?.trim();
       if(!title){toast('Title required','err');btn.disabled=false;btn.innerHTML='💾 Save';return;}
@@ -1465,7 +1414,7 @@ async function saveBug(){
         if(data.assignee)addNotif(`New bug assigned`,data.title,res.bug?.id);
         toast(`Created: ${res.bug?.id} ✓`,'ok');
       }
-      closePanel();await refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); });
+      closePanel();await refreshAll();
     }
   }catch(e){toast('❌ '+e.message,'err');}
   btn.disabled=false;btn.innerHTML='💾 Save';
@@ -1477,7 +1426,7 @@ async function saveBug(){
 async function delBug(id){
   if(S.user?.role!=='admin'){toast('Admin only','err');return;}
   if(!confirm(`Delete ${id}?`))return;
-  try{await api(`/bugs/${id}`,'DELETE');toast(`${id} deleted`,'ok');await refreshAll().then(()=>{ hideLoad(); checkDeepLink(); if(!new URLSearchParams(window.location.search).get('bug')) goTab('home'); });}
+  try{await api(`/bugs/${id}`,'DELETE');toast(`${id} deleted`,'ok');await refreshAll();}
   catch(e){toast(e.message,'err');}
 }
 
@@ -1514,139 +1463,6 @@ function toast(msg,type='ok'){
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
-window.addEventListener('resize',()=>{if(S.view==='home')renderHome();});
-
-
-// ════════════ THEME ════════════
-function initTheme(){
-  const t=localStorage.getItem('hwt_theme')||'dark';
-  document.documentElement.setAttribute('data-theme',t);
-  const btn=document.getElementById('themeBtn');
-  if(btn)btn.textContent=t==='dark'?'☀️':'🌙';
-}
-function toggleTheme(){
-  const cur=document.documentElement.getAttribute('data-theme')||'dark';
-  const next=cur==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('hwt_theme',next);
-  const btn=document.getElementById('themeBtn');
-  if(btn)btn.textContent=next==='dark'?'☀️':'🌙';
-}
-
-// ════════════ LIGHT MODE CSS ════════════
-(function injectLightMode(){
-  const style=document.createElement('style');
-  style.textContent=`
-    [data-theme="light"]{
-      --bg:#f6f6ff;--bg2:#efeffa;--s1:#ffffff;--s2:#f4f4fc;--s3:#ebebf8;--s4:#e0e0f2;
-      --bd:#ddddf0;--bd2:#d0d0e8;--bd3:#b8b8d8;--dim:#9090c0;--mute:#6060a0;
-      --fog:#5050a0;--mist:#303080;--ghost:#101060;--text:#12122a;--text2:#28284a;
-      --card:rgba(255,255,255,.9);--sh:0 4px 24px rgba(0,0,40,.08);
-      --sh2:0 8px 40px rgba(0,0,40,.14);--glass:rgba(255,255,255,.7);
-      --glassborder:rgba(0,0,40,.1);
-    }
-    [data-theme="light"] body{background:var(--bg)}
-    [data-theme="light"] .topbar{background:rgba(255,255,255,.95)}
-    [data-theme="light"] .sidebar{background:#fff;border-right-color:var(--bd)}
-    [data-theme="light"] .tw{background:#fff}
-    [data-theme="light"] tbody tr{border-bottom-color:rgba(0,0,40,.04)}
-    [data-theme="light"] .tb-logo img{filter:none}
-    [data-theme="light"] #loginScreen{background:var(--bg)}
-  `;
-  document.head.appendChild(style);
-})();
-
-// ════════════ HOME DASHBOARD ════════════
-function renderHome(){
-  if(!S.user) return;
-  const hr=new Date().getHours();
-  const greet=hr<12?'Good morning':hr<18?'Good afternoon':'Good evening';
-  const emoji=hr<12?'☀️':hr<18?'🌤️':'🌙';
-  const name=(S.user?.name||'').split(' ')[0];
-
-  // Hero
-  const heroEl=document.getElementById('devHeroWrap');
-  if(heroEl){
-    const myBugsCount=S.bugs.filter(b=>b.assignee_email===S.user?.email&&!['Done','QA Pass','Closed','Non-Recreatable','Not a bug'].includes(b.status)).length;
-    const critCount=S.bugs.filter(b=>b.assignee_email===S.user?.email&&['Critical','Urgent'].includes(b.priority)&&!['Done','QA Pass'].includes(b.status)).length;
-    heroEl.innerHTML=`<div style="background:linear-gradient(135deg,var(--s2),var(--accentbg));border:1px solid var(--bd);border-radius:14px;padding:22px 24px;margin-bottom:18px;position:relative;overflow:hidden">
-      <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:56px;opacity:.06;pointer-events:none">🏏</div>
-      <div style="font-family:'Syne',var(--display,sans-serif);font-size:20px;font-weight:800;color:var(--text);margin-bottom:4px">${greet}, ${esc(name)}! ${emoji}</div>
-      <div style="font-size:13px;color:var(--fog)">${myBugsCount?`You have <strong style="color:var(--accent)">${myBugsCount} open bug${myBugsCount!==1?'s':''}</strong> assigned${critCount?` — <strong style="color:var(--red2)">${critCount} critical</strong>`:'.'}`:
-      'All clear! No open bugs assigned to you. 🏆'}</div>
-    </div>`;
-  }
-
-  // Stats
-  const myBugs=S.bugs.filter(b=>b.assignee_email===S.user?.email);
-  const myOpen=myBugs.filter(b=>!['Done','QA Pass','Closed','Non-Recreatable','Not a bug'].includes(b.status));
-  const myCrit=myBugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Done','QA Pass'].includes(b.status));
-  const myProg=myBugs.filter(b=>b.status==='In Progress');
-  const myReview=myBugs.filter(b=>b.status==='In Review');
-  const statsEl=document.getElementById('devStats');
-  if(statsEl){
-    statsEl.innerHTML=[
-      {n:myOpen.length,l:'Open Assigned',c:'var(--accent)'},
-      {n:myCrit.length,l:'Critical',c:'var(--red2)'},
-      {n:myProg.length,l:'In Progress',c:'var(--cyan2)'},
-      {n:myReview.length,l:'In Review',c:'var(--warn2)'},
-      {n:S.bugs.filter(b=>b.status==='Open').length,l:'All Open',c:'var(--v2)'},
-    ].map(s=>`<div class="sc"><div class="sc-n" style="color:${s.c}">${s.n}</div><div class="sc-l">${s.l}</div><div class="sc-bar" style="background:${s.c}"></div></div>`).join('');
-  }
-
-  // Alerts
-  const alertsEl=document.getElementById('devAlerts');
-  if(alertsEl){
-    let a='';
-    if(myCrit.length)a+=`<div style="padding:10px 14px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--red2)">🚨 <strong>${myCrit.length} critical bug${myCrit.length!==1?'s':''}</strong> assigned to you need immediate attention.</div>`;
-    const allOpen=S.bugs.filter(b=>b.status==='Open'&&!b.assignee_email);
-    if(allOpen.length)a+=`<div style="padding:10px 14px;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:12px;background:var(--accentbg);border:1px solid rgba(249,115,22,.2);color:var(--accent2)">📋 <strong>${allOpen.length} unassigned bug${allOpen.length!==1?'s':''}</strong> in the backlog.</div>`;
-    alertsEl.innerHTML=a;
-  }
-
-  // My Bugs list
-  const myBugsEl=document.getElementById('devMyBugs');
-  if(myBugsEl){
-    if(!myOpen.length){
-      myBugsEl.innerHTML='<div style="text-align:center;padding:28px 10px;opacity:.5"><div style="font-size:36px;margin-bottom:8px">🏆</div><div style="font-size:12px;color:var(--mute)">No bugs assigned to you</div></div>';
-    }else{
-      myBugsEl.innerHTML=myOpen.slice(0,8).map(bug=>`
-        <div onclick="openDetail('${bug.id}')" style="background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:none;transition:border-color .15s,background .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--s2)'" onmouseout="this.style.borderColor='var(--bd)';this.style.background='var(--s1)'">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px">
-            <div style="font-size:12px;font-weight:600;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(bug.title||'')}</div>
-            ${pChip(bug.priority)}
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span style="font-family:var(--mono);font-size:9px;color:var(--dim)">${esc(bug.id)}</span>
-            ${stChip(bug.status)}
-            ${bug.sprint?`<span class="chip chip-sprint">${esc(bug.sprint)}</span>`:''}
-            ${bug.feature?`<span style="font-family:var(--mono);font-size:9px;color:var(--mute)">🎮 ${esc(bug.feature)}</span>`:''}
-          </div>
-        </div>`).join('')+
-      (myOpen.length>8?`<div onclick="sbFilter('mine','assignee',document.querySelectorAll('.sb-item')[8]);goTab('backlog')" style="text-align:center;color:var(--accent);font-size:12px;font-weight:600;cursor:none;padding:6px;border-radius:6px;background:var(--accentbg)">View all ${myOpen.length} →</div>`:'');
-    }
-  }
-
-  // Recent notifications
-  const recentEl=document.getElementById('devRecent');
-  if(recentEl){
-    loadNotifs();
-    const recent=S.localNotifs.slice(0,8);
-    if(!recent.length){
-      recentEl.innerHTML='<div style="text-align:center;padding:28px 10px;opacity:.5"><div style="font-size:36px;margin-bottom:8px">🔔</div><div style="font-size:12px;color:var(--mute)">No recent activity</div></div>';
-    }else{
-      recentEl.innerHTML=recent.map(n=>`
-        <div onclick="clickNotif(${n.id},'${n.bugId||''}')" style="background:var(--s1);border:1px solid ${n.read?'var(--bd)':'var(--accent)'};border-radius:8px;padding:9px 12px;margin-bottom:6px;cursor:none;transition:all .15s;opacity:${n.read?.7:1}" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--s2)'" onmouseout="this.style.borderColor='${n.read?'var(--bd)':'var(--accent)'}';this.style.background='var(--s1)'">
-          <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(n.title||'')}</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:2px">${esc(n.body||'')} · ${n.ts||''}</div>
-        </div>`).join('');
-    }
-  }
-
-  // Responsive
-  const split=document.getElementById('devSplit');
-  if(split)split.style.gridTemplateColumns=window.innerWidth<650?'1fr':'1fr 1fr';
-}
 
 // ════════════════════════════════════════
 // INIT
