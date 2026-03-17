@@ -1,12 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HW Tracker · Hitwicket</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#080810">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
+  --display: 'Syne', sans-serif;
+  --accent: #f97316;
+  --accent2: #fb923c;
+  --accentbg: rgba(249,115,22,.12);
   --bg:    #0a0a12;
   --s1:    #0e0e1a;
   --s2:    #121220;
@@ -31,7 +36,7 @@
   --pink:  #db2777; --pink2: #f472b6;
   --orange:#ea580c; --orange2:#fb923c;
 
-  --sans: 'Plus Jakarta Sans', sans-serif;
+  --sans: 'Inter', sans-serif;
   --mono: 'JetBrains Mono', monospace;
 
   --sh: 0 4px 24px rgba(0,0,0,.4);
@@ -389,9 +394,14 @@ select.fi2 option{background:var(--s2)}
 </div>
 
 <!-- LOGIN -->
-<div id="loginScreen">
+<div id="loginScreen" style="position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;align-items:center;justify-content:center;padding:20px">
+  <video autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;opacity:.4">
+    <source src="https://cdn.octathorpeweb.com/v1/webstore/webstore-login.mp4" type="video/mp4">
+  </video>
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,rgba(8,8,18,.9),rgba(124,58,237,.1),rgba(8,8,18,.92))"></div>
+  <div id="loginScreen_inner" style="position:relative;z-index:2;width:100%;display:flex;align-items:center;justify-content:center">
   <div class="lc">
-    <div class="lc-logo">🐛</div>
+    <div class="lc-logo"><img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket" style="width:100%;height:100%;object-fit:contain" onerror="this.outerHTML='🏏'"></div>
     <div class="lc-title">HW Tracker</div>
     <div class="lc-sub">Hitwicket · Bug Management</div>
     <button class="lc-gbtn" id="gSignInBtn">
@@ -406,6 +416,7 @@ select.fi2 option{background:var(--s2)}
     <div class="lc-note">Restricted to <b>@hitwicket.com</b> accounts only</div>
     <div class="lc-err" id="loginErr"></div>
   </div>
+  </div>
 </div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -414,10 +425,10 @@ select.fi2 option{background:var(--s2)}
 <div id="app" style="display:none">
   <div class="topbar">
     <div class="tb-brand">
-      <div class="tb-mark">HW</div>
-      <div class="tb-name">HW<em>Tracker</em></div>
+      <img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket" style="height:26px;object-fit:contain;filter:brightness(0) invert(1)" onerror="this.outerHTML='<span style=\"font-family:var(--display);font-weight:800;font-size:15px;color:var(--accent)\">HW</span>'">
     </div>
     <div class="tb-tabs">
+      <div class="tb-tab" id="tt-home" onclick="goTab('home')">🏠 Home</div>
       <div class="tb-tab on" id="tt-backlog"   onclick="goTab('backlog')">📋 Backlog</div>
       <div class="tb-tab"    id="tt-board"     onclick="goTab('board')">⬛ Board</div>
       <div class="tb-tab"    id="tt-sprints"   onclick="goTab('sprints')">🏃 Sprints</div>
@@ -430,6 +441,7 @@ select.fi2 option{background:var(--s2)}
         <div class="pip" id="pip"></div>
         <span class="pip-lbl" id="pipLbl">—</span>
       </div>
+      <button class="btn btn-g btn-sm" onclick="toggleTheme()" id="themeBtn" title="Dark/Light mode" style="font-size:14px">🌙</button>
       <button class="btn btn-g btn-sm" onclick="refreshAll()">↻</button>
       <button class="btn btn-v btn-sm" onclick="openNew()">＋ Bug</button>
       <div class="user-pill" id="userPill" onclick="signOut()" title="Sign out">
