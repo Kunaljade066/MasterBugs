@@ -1287,7 +1287,7 @@ function onLogin(){
     const firstName=(S.user.name||'').split(' ')[0]||'there';
     const critCount=S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Done','QA Pass','Closed'].includes(b.status)).length;
     const myCount=S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user?.email)).length;
-    let msg=`Hey ${firstName}! Welcome back to HW Tracker! 🏏`;
+    let msg=`Hey ${firstName}! Welcome back to BugPulse! 🏏`;
     if(critCount>0)msg=`Hey ${firstName}! There are ${critCount} critical bug${critCount>1?'s':''} waiting! Let's smash them! 🚨`;
     else if(myCount>0)msg=`Hey ${firstName}! You have ${myCount} bug${myCount>1?'s':''} assigned. Time to get cracking! 🏏`;
     setTimeout(()=>showNatasha(msg),600);
