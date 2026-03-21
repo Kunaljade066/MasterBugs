@@ -1000,7 +1000,7 @@ body.theme-slate .fi2{background:var(--bg2);color:var(--text)}
             <div class="tw-hd"><span class="tw-hd-t">CSV IMPORT</span></div>
             <div style="padding:22px">
               <div class="info-banner" style="margin-bottom:16px">
-                📋 CSV headers: <b>title</b> (required), priority, status, feature, sprint, steps, actual, expected, build, device, severity
+                📋 CSV headers: <b>title</b> (required), priority, status, feature, sprint, steps, actual, expected, build, device, severity, attachment
               </div>
               <div id="importDropZone"
                 style="border:2px dashed var(--bd2);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(124,58,237,.04)"
@@ -2673,14 +2673,14 @@ function closeProfileMenu(){document.getElementById('profileMenu')?.classList.re
 
 const NATASHA_MSGS=['Welcome back! Ready to squash some bugs today? 🏏','New bugs spotted! Let\'s smash them out of the park! 🏏','Hey! Don\'t forget to check your assigned issues! 👀','Great work team! Keep the quality high! ⭐','Remember: a bug fixed today is a player happy tomorrow! 🎮'];
 const NATASHA_IMGS={
-  happy:   ['natasha_happy.png',   'center'],
-  cool:    ['natasha_cool.png',    'center'],
-  angry:   ['natasha_angry.png',   'center'],
-  sad:     ['natasha_sad.png',     'center'],
-  shocked: ['natasha_angry.png',   'center'],
-  default: ['natasha.png',         'center'],
-  celebrate:['natasha_happy.png',  'center'],
-  search:  ['natasha_cool.png',    'center'],
+  happy:    ['natasha_happy.png',   'center'],
+  cool:     ['natasha1.png',        'center'],
+  angry:    ['natasha_alert.png',   'center'],
+  sad:      ['natasha_alert.png',   'center'],
+  shocked:  ['natasha_alert.png',   'center'],
+  default:  ['natasha.png',         'center'],
+  celebrate:['natasha_celebrate.png','center'],
+  search:   ['natasha1.png',        'center'],
 };
 function showNatasha(msg, mood='default'){
   const intro=document.getElementById('natashaIntro');
@@ -2986,7 +2986,7 @@ async function delBug(id){
 function exportCSV(){
   const src=S.filtered.length?S.filtered:S.bugs;
   if(!src.length){toast('No data','err');return;}
-  const keys=['id','title','priority','severity','status','pod','assignees','reporter','feature','sprint','build','device','steps','actual'];
+  const keys=['id','title','priority','severity','status','pod','assignees','reporter','feature','sprint','build','device','steps','actual','expected','attachment'];
   const csv=[keys.join(','),...src.map(b=>keys.map(k=>k==='assignees'?`"${(b.assignees||[]).map(a=>a.name).join('; ')}"`:`"${String(b[k]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`hw_bugs_${new Date().toISOString().slice(0,10)}.csv`;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
   toast(`Exported ${src.length} bugs ✓`,'ok');
@@ -3625,6 +3625,7 @@ async function importSubmit() {
   let done = 0, failed = 0;
   for (const row of _importRows) {
     const data = {
+      // id intentionally omitted — worker generates a fresh HW-XXXXX id
       title:    row.title,
       priority: row.priority  || 'Medium',
       status:   row.status    || 'Open',
@@ -3639,6 +3640,7 @@ async function importSubmit() {
       reporter: row.reporter  || S.user?.name || '',
       reporter_email:   S.user?.email   || '',
       reporter_picture: S.user?.picture || '',
+      attachment: row.attachment || '',
       assignees: [], app_url: APP_URL,
     };
     try { await api('/bugs', 'POST', data); done++; } catch(e) { failed++; }
@@ -3823,3 +3825,21 @@ async function runMigration() {
 }
 
 </script>
+
+<div id="natashaIntro" class="gone">
+  <div class="natasha-wrap">
+    <div class="natasha-bubble">
+      <div class="natasha-name-tag">NATASHA</div>
+      <div class="natasha-text" id="natashaText">Welcome back! Ready to squash some bugs today? 🏏</div>
+      <button class="natasha-ok" onclick="dismissNatasha()">LET'S GO!</button>
+    </div>
+    <div class="natasha-char-wrap">
+      <img id="natashaImg" src="natasha.png" alt="Natasha"
+        onerror="this.style.display='none';document.getElementById('natashaEmoji').style.display='block'"
+      >
+      <div id="natashaEmoji" style="display:none;font-size:80px;line-height:1;padding-bottom:8px;filter:drop-shadow(0 4px 12px rgba(124,58,237,.4))">🏏</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
