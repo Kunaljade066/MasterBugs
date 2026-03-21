@@ -797,7 +797,6 @@ body.theme-slate .fi2{background:var(--bg2);color:var(--text)}
           <div class="pm-item" id="managePodBtn" onclick="openDropdownManager();closeProfileMenu()" style="display:none"><span class="pm-icon">🗂️</span> Manage Dropdowns</div>
           <div class="pm-item" id="importBugsBtn" onclick="goTab('import');closeProfileMenu()" style="display:none"><span class="pm-icon">📥</span> Import Bugs (CSV)</div>
           <div class="pm-divider" id="managePodDivider" style="display:none"></div>
-          <div class="pm-item" id="migrateBtn" onclick="openMigratePanel();closeProfileMenu()" style="display:none;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:8px;margin-bottom:4px"><span class="pm-icon">🔄</span> Migrate to D1</div>
           <div class="pm-item danger" onclick="signOut()"><span class="pm-icon">🚪</span> Sign Out</div>
         </div>
       </div>
@@ -1607,7 +1606,6 @@ function onLogin(){
     document.getElementById('managePodBtn').style.display='flex';
     document.getElementById('importBugsBtn').style.display='flex';
     document.getElementById('managePodDivider').style.display='block';
-    document.getElementById('migrateBtn').style.display='flex';
   }
   loadTheme();
   loadNotifs();updateNotifBadge();
@@ -3729,173 +3727,6 @@ async function importSubmit() {
 // ══════════════════════════════════════════
 // D1 MIGRATION TOOL (admin only, one-time)
 // ══════════════════════════════════════════
-const NEW_WORKER_URL = 'https://bugpulse-worker.kunal-249.workers.dev';
-
-function openMigratePanel() {
-  document.getElementById('panelTitle').textContent = '🔄 MIGRATE TO D1';
-  document.getElementById('panelId').textContent = 'One-time · Admin only';
-  document.getElementById('panelFooter').innerHTML = `<button class="btn btn-g" onclick="closePanel()">Close</button>`;
-  document.getElementById('panelBody').innerHTML = `
-    <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px;margin-bottom:16px;font-family:var(--mono);font-size:11px;color:#fbbf24;line-height:2">
-      Before running, confirm these are done in Cloudflare Dashboard:<br>
-      <span id="chk1" style="cursor:pointer" onclick="this.textContent=this.textContent.includes('☐')?this.textContent.replace('☐','☑'):this.textContent.replace('☑','☐')">  ☐  Worker deployed (bugpulse-worker)</span><br>
-      <span id="chk2" style="cursor:pointer" onclick="this.textContent=this.textContent.includes('☐')?this.textContent.replace('☐','☑'):this.textContent.replace('☑','☐')">  ☐  D1 binding added (variable name: DB)</span><br>
-      <span id="chk3" style="cursor:pointer" onclick="this.textContent=this.textContent.includes('☐')?this.textContent.replace('☐','☑'):this.textContent.replace('☑','☐')">  ☐  GOOGLE_CLIENT_ID variable added</span><br>
-      <span id="chk4" style="cursor:pointer" onclick="this.textContent=this.textContent.includes('☐')?this.textContent.replace('☐','☑'):this.textContent.replace('☑','☐')">  ☐  4 SQL blocks run in D1 Console</span><br>
-      <span id="chk5" style="cursor:pointer" onclick="this.textContent=this.textContent.includes('☐')?this.textContent.replace('☐','☑'):this.textContent.replace('☑','☐')">  ☐  Worker redeployed after binding</span>
-    </div>
-    <div class="fg">
-      <label class="fl">New Worker URL (from Cloudflare dashboard after deploy)</label>
-      <input class="fi2" id="migrate-url" value="${NEW_WORKER_URL}" placeholder="https://bugpulse-worker.xxx.workers.dev">
-    </div>
-    <div id="migrate-log" style="background:rgba(0,0,0,.4);border:1px solid var(--bd);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11px;color:var(--mist);min-height:120px;white-space:pre-wrap;line-height:1.8;margin-top:8px">Ready. Click Start Migration to begin...</div>
-    <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
-      <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-      <button class="btn btn-v" onclick="runMigration()" id="migStartBtn">🚀 Start Migration</button>
-    </div>`;
-  openPanel();
-}
-
-function migrateLog(msg, color) {
-  const el = document.getElementById('migrate-log');
-  if (!el) return;
-  const line = document.createElement('div');
-  line.style.color = color || 'var(--mist)';
-  line.textContent = msg;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-}
-
-async function runMigration() {
-  const btn    = document.getElementById('migStartBtn');
-  const newUrl = (document.getElementById('migrate-url')?.value||'').trim().replace(/\/$/, '');
-  if (!newUrl) { toast('Enter the new worker URL', 'err'); return; }
-  if (!confirm('This will copy ALL your data to the new D1 worker. Continue?')) return;
-
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Migrating…';
-  document.getElementById('migrate-log').innerHTML = '';
-
-  // ── PHASE 1: Check new worker is reachable ─────────────────────────────
-  migrateLog('🔍 Step 1/4 — Checking new worker is live…', 'var(--g3)');
-  try {
-    const ping = await fetch(newUrl + '/config', { method: 'GET' });
-    if (ping.ok) {
-      migrateLog('   ✅ New worker is reachable', 'var(--g4)');
-    } else {
-      migrateLog(`   ⚠ New worker responded with ${ping.status} — continuing anyway`, 'var(--g3)');
-    }
-  } catch(e) {
-    migrateLog('   ❌ Cannot reach new worker: ' + e.message, 'var(--g5)');
-    migrateLog('', '');
-    migrateLog('   FIX: Deploy your worker first in Cloudflare Dashboard', 'var(--g3)');
-    migrateLog('   Worker URL should look like:', 'var(--mute)');
-    migrateLog('   https://bugpulse-worker.YOUR-NAME.workers.dev', 'var(--mute)');
-    btn.disabled = false; btn.innerHTML = '↻ Retry';
-    return;
-  }
-
-  // ── PHASE 2: Fetch data from OLD worker ────────────────────────────────
-  migrateLog('', '');
-  migrateLog('📦 Step 2/4 — Fetching data from current KV worker…', 'var(--g3)');
-  let bugs = [], sprints = [], members = [];
-
-  try {
-    const bugsRes = await fetch(WORKER + '/bugs', {
-      headers: { 'Content-Type': 'application/json', 'X-Google-Token': S.user.idToken }
-    });
-    migrateLog(`   /bugs → HTTP ${bugsRes.status}`, bugsRes.ok ? 'var(--mist)' : 'var(--g5)');
-    if (!bugsRes.ok) throw new Error(`/bugs returned ${bugsRes.status}: ${await bugsRes.text()}`);
-    const bd = await bugsRes.json();
-    bugs = bd.bugs || [];
-    migrateLog(`   ✅ ${bugs.length} bugs`, 'var(--g4)');
-  } catch(e) {
-    migrateLog('   ❌ Failed to fetch bugs: ' + e.message, 'var(--g5)');
-    btn.disabled = false; btn.innerHTML = '↻ Retry'; return;
-  }
-
-  try {
-    const spRes = await fetch(WORKER + '/sprints', {
-      headers: { 'Content-Type': 'application/json', 'X-Google-Token': S.user.idToken }
-    });
-    migrateLog(`   /sprints → HTTP ${spRes.status}`, spRes.ok ? 'var(--mist)' : 'var(--g5)');
-    if (spRes.ok) { const sd = await spRes.json(); sprints = (sd.sprints||[]).filter(s=>s.name!=='__dd_cfg_v1'); }
-    migrateLog(`   ✅ ${sprints.length} sprints`, 'var(--g4)');
-  } catch(e) { migrateLog('   ⚠ Sprints fetch failed (continuing): ' + e.message, 'var(--g3)'); }
-
-  try {
-    const tmRes = await fetch(WORKER + '/team', {
-      headers: { 'Content-Type': 'application/json', 'X-Google-Token': S.user.idToken }
-    });
-    migrateLog(`   /team → HTTP ${tmRes.status}`, tmRes.ok ? 'var(--mist)' : 'var(--g5)');
-    if (tmRes.ok) { const td = await tmRes.json(); members = td.members||[]; }
-    migrateLog(`   ✅ ${members.length} team members`, 'var(--g4)');
-  } catch(e) { migrateLog('   ⚠ Team fetch failed (continuing): ' + e.message, 'var(--g3)'); }
-
-  if (!bugs.length && !sprints.length) {
-    migrateLog('', '');
-    migrateLog('⚠ Nothing to migrate (0 bugs, 0 sprints found)', 'var(--g3)');
-    migrateLog('   This could mean your KV worker token expired.', 'var(--mute)');
-    migrateLog('   Try: sign out → sign back in → retry migration.', 'var(--mute)');
-    btn.disabled = false; btn.innerHTML = '↻ Retry'; return;
-  }
-
-  // ── PHASE 3: Push to new D1 worker ────────────────────────────────────
-  migrateLog('', '');
-  migrateLog('🚀 Step 3/4 — Pushing to new D1 worker…', 'var(--g3)');
-  migrateLog(`   Sending ${bugs.length} bugs + ${sprints.length} sprints + ${members.length} members…`, 'var(--mist)');
-
-  let result;
-  try {
-    const res = await fetch(newUrl + '/migrate', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Migrate-Secret': 'hw_migrate_2024' },
-      body:    JSON.stringify({ bugs, sprints, members }),
-    });
-    const txt = await res.text();
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${txt}`);
-    result = JSON.parse(txt);
-  } catch(e) {
-    migrateLog('   ❌ Push failed: ' + e.message, 'var(--g5)');
-    migrateLog('', '');
-    migrateLog('   Likely causes:', 'var(--g3)');
-    migrateLog('   • D1 binding not set (var name must be DB)', 'var(--mute)');
-    migrateLog('   • Tables not created (run schema.sql in D1 console)', 'var(--mute)');
-    migrateLog('   • Worker not redeployed after binding DB', 'var(--mute)');
-    btn.disabled = false; btn.innerHTML = '↻ Retry'; return;
-  }
-
-  // ── PHASE 4: Make caller admin ─────────────────────────────────────────
-  migrateLog('', '');
-  migrateLog('👑 Step 4/4 — Setting you as admin…', 'var(--g3)');
-  try {
-    const ar = await fetch(newUrl + '/set-admin', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Migrate-Secret': 'hw_migrate_2024' },
-      body:    JSON.stringify({ email: S.user.email }),
-    });
-    if (ar.ok) migrateLog(`   ✅ ${S.user.email} is now admin`, 'var(--g4)');
-    else migrateLog('   ⚠ Admin set failed — do it manually in D1 console', 'var(--g3)');
-  } catch(e) { migrateLog('   ⚠ Admin set skipped: ' + e.message, 'var(--g3)'); }
-
-  // ── DONE ──────────────────────────────────────────────────────────────
-  migrateLog('', '');
-  migrateLog('══════════════════════════════════════', 'var(--bd3)');
-  migrateLog('✅  MIGRATION COMPLETE!', 'var(--g4)');
-  migrateLog(`    Bugs:    ${result.bugs}`, 'var(--g4)');
-  migrateLog(`    Sprints: ${result.sprints}`, 'var(--g4)');
-  migrateLog(`    Members: ${result.members}`, 'var(--g4)');
-  migrateLog('══════════════════════════════════════', 'var(--bd3)');
-  migrateLog('', '');
-  migrateLog('FINAL STEP — open BugPulse HTML in Notepad:', 'var(--g3)');
-  migrateLog(`  FIND:    ${WORKER}`, 'var(--mute)');
-  migrateLog(`  REPLACE: ${newUrl}`, 'var(--g2)');
-  migrateLog('  Save → re-upload to Verse → done!', 'var(--g4)');
-
-  btn.innerHTML = '✅ Done!';
-  btn.className = 'btn btn-g';
-  toast('Migration complete! ✓', 'ok');
-}
 
 </script>
 
