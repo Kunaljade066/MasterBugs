@@ -1067,7 +1067,7 @@ body.theme-slate .fi2{background:var(--bg2);color:var(--text)}
 // ══════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════
-const WORKER    = 'https://bugpulse-worker.kunal-249.workers.dev';
+const WORKER    = 'https://frosty-wood-37ecbugiq-workerjs.kunal-249.workers.dev';
 // ── CHANGED: let so fetchConfig() can override if worker has /config ──
 let GOOGLE_ID = '714484298488-ucn9blv0cr5ol2h0v9p6irbrj87murce.apps.googleusercontent.com';
 let ALLOWED   = 'hitwicket.com';
@@ -1336,26 +1336,85 @@ async function updateLiveCount(){
   }catch(e){}
 }
 
+// ── TOKEN REFRESH ─────────────────────────────────────────────────────────────
+// Google id_tokens expire after 1 hour.
+// Fix: get a FRESH token from Google before expiry using silent prompt.
+// Falls back to forcing re-login if silent refresh unavailable.
+
 let _refreshTimer = null;
-function scheduleTokenRefresh() {
-  if (_refreshTimer) clearInterval(_refreshTimer);
-  _refreshTimer = setInterval(async () => {
-    if (!S.user?.idToken) return;
+let _refreshing   = false;
+
+// Ask Google for a fresh id_token silently (no popup, no redirect)
+function refreshGoogleToken() {
+  return new Promise((resolve) => {
+    if (!GOOGLE_ID || typeof google === 'undefined') { resolve(null); return; }
     try {
-      const r = await fetch(WORKER+'/auth/verify', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({id_token: S.user.idToken})
+      google.accounts.id.initialize({
+        client_id:             GOOGLE_ID,
+        callback:              (resp) => resolve(resp?.credential || null),
+        auto_select:           true,   // enables silent credential selection
+        cancel_on_tap_outside: false,
+        use_fedcm_for_prompt:  true,
+      });
+      google.accounts.id.prompt(notification => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          resolve(null); // silent refresh not available
+        }
+        // If auto-selected, callback fires with fresh token
+      });
+      setTimeout(() => resolve(null), 5000); // safety timeout
+    } catch(e) {
+      console.warn('[token] silent refresh error:', e.message);
+      resolve(null);
+    }
+  });
+}
+
+async function doTokenRefresh() {
+  if (_refreshing) return false;
+  _refreshing = true;
+  try {
+    const newToken = await refreshGoogleToken();
+    if (newToken) {
+      const r = await fetch(WORKER + '/auth/verify', {
+        method:  'POST',
+        headers: {'Content-Type': 'application/json'},
+        body:    JSON.stringify({ id_token: newToken }),
       });
       const d = await r.json();
       if (d.ok) {
-        S.user = {...d, idToken: S.user.idToken};
+        S.user = { ...d, idToken: newToken };
         saveSession();
+        console.log('[token] ✅ Silently refreshed');
+        return true;
       }
-    } catch(e) {
-      console.warn('[session] silent refresh failed:', e.message);
     }
-  }, 90 * 60 * 1000); // 90 min — was 45min, halves auth/verify KV reads
+    console.warn('[token] Silent refresh unavailable');
+    return false;
+  } catch(e) {
+    console.warn('[token] Refresh error:', e.message);
+    return false;
+  } finally {
+    _refreshing = false;
+    // Restore original GSI callback for normal login flow
+    if (GOOGLE_ID && typeof google !== 'undefined') {
+      try {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_ID, callback: handleGoogleCredential,
+          auto_select: false, cancel_on_tap_outside: true, use_fedcm_for_prompt: true,
+        });
+      } catch(e) {}
+    }
+  }
+}
+
+function scheduleTokenRefresh() {
+  if (_refreshTimer) clearInterval(_refreshTimer);
+  // Refresh at 45 min — well before the 60 min Google expiry
+  _refreshTimer = setInterval(() => {
+    if (!S.user?.idToken) return;
+    doTokenRefresh().catch(() => {});
+  }, 45 * 60 * 1000);
 }
 
 async function ensureFreshToken() {
@@ -1363,21 +1422,9 @@ async function ensureFreshToken() {
   const sess = loadSession();
   if (!sess) return;
   const age = Date.now() - (sess.ts || 0);
-  if (age > 80 * 60 * 1000) { // raised from 50→80min to reduce /auth/verify hits
-    try {
-      const r = await fetch(WORKER+'/auth/verify', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({id_token: S.user.idToken})
-      });
-      const d = await r.json();
-      if (d.ok) {
-        S.user = {...d, idToken: S.user.idToken};
-        saveSession();
-      }
-    } catch(e) {
-      console.warn('[session] pre-call refresh failed:', e.message);
-    }
+  // If token is >50 min old, proactively refresh before the API call
+  if (age > 50 * 60 * 1000) {
+    await doTokenRefresh();
   }
 }
 
@@ -1678,17 +1725,25 @@ async function api(path,method='GET',body=null){
   const r=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
   const d=await r.json();
   if(r.status===401){
-    toast('Session refreshing…','info');
+    // Token expired — get a fresh one from Google, then retry the call once
+    toast('🔄 Refreshing session…','info');
     try {
-      const rr=await fetch(WORKER+'/auth/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_token:S.user.idToken})});
-      const dd=await rr.json();
-      if(dd.ok){ S.user={...dd,idToken:S.user.idToken};saveSession(); }
+      const refreshed = await doTokenRefresh();
+      if(!refreshed) {
+        // Silent refresh failed — force re-login
+        toast('Session expired — please sign in again','err');
+        setTimeout(()=>{ clearSession(); location.reload(); }, 2500);
+        throw new Error('Session expired — please sign in again');
+      }
+      // Retry original call with new token
       const r2=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
       const d2=await r2.json();
       if(!r2.ok)throw new Error(d2.error||`HTTP ${r2.status}`);
+      toast('✅ Session refreshed','ok');
       return d2;
     } catch(e2) {
-      throw new Error(d.error||'Session expired. Please refresh the page.');
+      if(e2.message.includes('expired')) throw e2;
+      throw new Error(d.error||'Session expired — please sign in again');
     }
   }
   if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);
