@@ -1599,83 +1599,48 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function requestPushPermission() {
-  if (!('serviceWorker' in navigator)) {
-    toast('Step 1 FAIL: Service worker not supported in this browser', 'err'); return false;
-  }
-  if (!('Notification' in window)) {
-    toast('Step 1 FAIL: Notifications API not supported', 'err'); return false;
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+    toast('Push notifications not supported in this browser', 'err'); return false;
   }
 
-  toast('Step 1: Requesting permission...', 'ok');
   const result = await Notification.requestPermission();
   _pushPermission = result;
   if (result !== 'granted') {
-    toast('Step 1 FAIL: Permission denied — allow in browser settings', 'err'); return false;
+    toast('Notifications blocked — please allow in browser settings', 'err'); return false;
   }
-  toast('Step 1 OK: Permission granted', 'ok');
 
   try {
-    // Step 2: Get VAPID key (public endpoint — no auth needed)
-    toast('Step 2: Fetching VAPID key from worker...', 'ok');
-    let keyRes;
-    try {
-      const r = await fetch(WORKER + '/push/vapid-public-key');
-      keyRes = await r.json();
-      toast('Step 2 response: ' + JSON.stringify(keyRes).slice(0,80), 'ok');
-    } catch(fetchErr) {
-      toast('Step 2 FAIL: Network error — ' + fetchErr.message, 'err');
-      return false;
-    }
-    if (!keyRes || !keyRes.key) {
-      toast('Step 2 FAIL: ' + (keyRes?.error || 'No key returned'), 'err');
-      return false;
-    }
-    toast('Step 2 OK: Got VAPID key', 'ok');
+    const r = await fetch(WORKER + '/push/vapid-public-key');
+    const keyRes = await r.json();
+    if (!keyRes?.key) { toast('Push setup failed — contact admin', 'err'); return false; }
 
-    // Step 3: Subscribe
-    toast('Step 3: Subscribing to push...', 'ok');
     const reg = _swRegistration || await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(keyRes.key),
     });
-    toast('Step 3 OK: Subscribed to push', 'ok');
 
-    // Step 4: Save to worker
-    toast('Step 4: Saving subscription...', 'ok');
     const saved = await api('/push/subscribe', 'POST', sub.toJSON());
-    if (!saved?.ok) {
-      toast('Step 4 FAIL: Could not save subscription to worker', 'err'); return false;
-    }
-    toast('Step 4 OK: Subscription saved', 'ok');
+    if (!saved?.ok) { toast('Push setup failed — try again', 'err'); return false; }
 
     try { localStorage.setItem('hwt_push_enabled', '1'); } catch(e) {}
+    updatePushMenuLabel();
+    toast('Notifications enabled!', 'ok');
 
-    // Step 5: Test notification — send via server push so it works even when tab open
-    toast('ALL STEPS OK — sending test notification!', 'ok');
-    // Show immediate local notification
-    reg.showNotification('BugPulse Active', {
-      body: 'Push notifications are now active! You will be notified of new bugs and builds.',
-      icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
-      requireInteraction: true,
-    });
-    // Also send a server-side push to confirm end-to-end works
+    // Server-side test push
     setTimeout(async () => {
       try {
         await api('/push/notify', 'POST', {
-          title: 'BugPulse Connected',
-          body: 'Server push working! You will get notified even when browser is closed.',
+          title: 'BugPulse',
+          body: 'Notifications active — you will be alerted on new bugs and builds.',
           icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
           tag: 'test',
         });
-        toast('Server push sent — check desktop!', 'ok');
-      } catch(e) { console.warn('[push test]', e); }
-    }, 1500);
+      } catch(e) {}
+    }, 1000);
     return true;
-
   } catch(e) {
-    toast('FAILED at: ' + e.message, 'err');
-    console.error('[push]', e);
+    toast('Push setup failed: ' + e.message, 'err');
     return false;
   }
 }
