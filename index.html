@@ -6947,6 +6947,18 @@ async function sendBugNotification(bug, customMsg) {
     await sendSlackWebhook(`🐛 New Bug: ${bug.id} — ${bug.title}`, slackBlocks);
   }
 
+  // Server-side Web Push to all subscribers
+  try {
+    await api('/push/notify', 'POST', {
+      title: 'Bug ' + (bug.priority||'Medium') + ': ' + (bug.id||''),
+      body: (bug.title||'').slice(0,80) + (customMsg ? ' — ' + customMsg.slice(0,60) : ''),
+      icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+      tag: bug.id || 'bugpulse',
+      bugId: bug.id || '',
+      url: APP_URL + '?bug=' + (bug.id||''),
+    });
+  } catch(e) { console.warn('[push]', e); }
+
   toast('Team notified ✓','ok');
 }
 
