@@ -1042,6 +1042,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="pm-item" onclick="refreshAll();closeProfileMenu()"><span class="pm-icon">↻</span> Refresh Data</div>
           <div class="pm-item" onclick="showNatasha();closeProfileMenu()"><span class="pm-icon">🏏</span> Say Hi to Natasha</div>
           <div class="pm-item" onclick="toggleNatashaPref();closeProfileMenu()"><span class="pm-icon" id="natashaPrefIcon">🔕</span> <span id="natashaPrefLabel">Disable Natasha</span></div>
+          <div class="pm-item" id="pmPushToggle" onclick="togglePushFromMenu();closeProfileMenu()"><span class="pm-icon">🔔</span> <span id="pmPushLabel">Enable Notifications</span></div>
           <div class="pm-divider"></div>
           <div class="pm-item" id="managePodBtn" onclick="openDropdownManager();closeProfileMenu()" style="display:none"><span class="pm-icon">🗂️</span> Manage Dropdowns</div>
           <div class="pm-item" id="importBugsBtn" onclick="goTab('import');closeProfileMenu()" style="display:none"><span class="pm-icon">📥</span> Import Bugs (CSV)</div>
@@ -1959,6 +1960,32 @@ async function ensureFreshToken() {
 function loadNotifs(){try{S.localNotifs=JSON.parse(localStorage.getItem(NK(S.user?.email))||'[]');}catch{S.localNotifs=[];}}
 function saveNotifs(){try{localStorage.setItem(NK(S.user?.email),JSON.stringify(S.localNotifs.slice(0,100)));}catch{}}
 function addNotif(t,b,bugId){loadNotifs();S.localNotifs.unshift({id:Date.now(),title:t,body:b,bugId,read:false,ts:new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})});saveNotifs();updateNotifBadge();sendDesktopNotification(t,b,bugId);}
+
+function updatePushMenuLabel() {
+  const lbl = document.getElementById('pmPushLabel');
+  if (!lbl) return;
+  if (!('Notification' in window)) { lbl.textContent = 'Notifications not supported'; return; }
+  if (Notification.permission === 'granted') {
+    const enabled = (() => { try { return localStorage.getItem('hwt_push_enabled') === '1'; } catch(e) { return false; } })();
+    lbl.textContent = enabled ? 'Disable Notifications' : 'Enable Notifications';
+  } else if (Notification.permission === 'denied') {
+    lbl.textContent = 'Notifications blocked in browser';
+  } else {
+    lbl.textContent = 'Enable Notifications';
+  }
+}
+
+async function togglePushFromMenu() {
+  if (!('Notification' in window)) { toast('Notifications not supported in this browser', 'err'); return; }
+  const enabled = (() => { try { return localStorage.getItem('hwt_push_enabled') === '1'; } catch(e) { return false; } })();
+  if (Notification.permission === 'granted' && enabled) {
+    await disablePushNotifications();
+  } else {
+    await requestPushPermission();
+  }
+  updatePushMenuLabel();
+}
+
 function updateNotifBadge(){
   loadNotifs();
   const u=S.localNotifs.filter(n=>!n.read).length;
@@ -2163,6 +2190,7 @@ function onLogin(){
   loadTheme();
   loadCursorPref();
   loadNatashaPref();
+  updatePushMenuLabel();
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
   initPushNotifications();
