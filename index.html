@@ -1550,22 +1550,42 @@ async function initPushNotifications() {
   if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
   _pushPermission = Notification.permission;
 
-  // Register service worker (sw.js must be at same origin as index.html)
+  // Register service worker
   try {
     _swRegistration = await navigator.serviceWorker.register(
       new URL('./sw.js', window.location.href).href
     );
     console.log('[sw] registered');
-
-    // Listen for messages from SW (e.g. OPEN_BUG)
     navigator.serviceWorker.addEventListener('message', e => {
-      if (e.data?.type === 'OPEN_BUG' && e.data.bugId) {
-        openDetail(e.data.bugId);
-      }
+      if (e.data?.type === 'OPEN_BUG' && e.data.bugId) openDetail(e.data.bugId);
     });
   } catch(e) {
     console.warn('[sw] registration failed:', e.message);
   }
+
+  // Auto-prompt if not yet decided — show after 2s so page loads first
+  if (_pushPermission === 'default') {
+    const dismissed = (() => { try { return localStorage.getItem('hwt_push_dismissed') === '1'; } catch(e) { return false; } })();
+    if (!dismissed) {
+      setTimeout(showPushBanner, 2000);
+    }
+  }
+}
+
+function showPushBanner() {
+  if (Notification.permission !== 'default') return;
+  if (document.getElementById('pushBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'pushBanner';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+  b.innerHTML = `
+    <div style="font-size:18px">🔔</div>
+    <div style="flex:1;color:#fff;font-size:13px;font-weight:600">Enable desktop notifications to get alerted on new bugs, status changes and builds — even when browser is closed.</div>
+    <button onclick="document.getElementById('pushBanner').remove();requestPushPermission()"
+      style="background:#fff;color:#7c3aed;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Allow</button>
+    <button onclick="document.getElementById('pushBanner').remove();try{localStorage.setItem('hwt_push_dismissed','1')}catch(e){}"
+      style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;flex-shrink:0">Not now</button>`;
+  document.body.prepend(b);
 }
 
 function urlBase64ToUint8Array(base64String) {
