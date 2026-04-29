@@ -311,6 +311,10 @@ tbody td{padding:9px 11px;vertical-align:middle;color:var(--mist)}
 .kcol-name{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
 .kcol-n{background:var(--bg3);color:var(--mute);font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px}
 .kcol-cards{padding:7px;display:flex;flex-direction:column;gap:6px;min-height:40px;}
+.kcol-dragover{border-color:var(--g1)!important;background:rgba(124,58,237,.08)!important;box-shadow:0 0 0 2px rgba(124,58,237,.3)!important;}
+.kcol-empty{text-align:center;padding:18px;font-family:var(--mono);font-size:11px;color:var(--dim);border:1px dashed var(--bd);border-radius:8px;margin:4px;}
+.kcard[draggable]{cursor:grab;}
+.kcard[draggable]:active{cursor:grabbing;}
 .kcard{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:9px 10px;cursor:none;transition:border-color .15s,box-shadow .15s;}
 .kcard:hover{border-color:var(--g1);box-shadow:var(--glow)}
 .kcard-id{font-family:var(--mono);font-size:8px;color:var(--g1);margin-bottom:4px;letter-spacing:.5px}
@@ -883,6 +887,11 @@ body.theme-slate { --text:#f0f0f8; --mist:#c0c0e0; --ghost:#e8e8f8; }
 .fi2 { color: var(--text) !important; }
 .fi  { color: var(--text) !important; }
 textarea.fi2, input.fi2 { color: var(--text) !important; }
+.jk-mi{padding:7px 12px;font-family:var(--mono);font-size:11px;color:var(--text);cursor:pointer;border-radius:6px;white-space:nowrap}
+.jk-mi:hover{background:rgba(124,58,237,.15)}
+.jk-mi-danger{color:#f87171}
+.jk-mi-danger:hover{background:rgba(239,68,68,.12)}
+@keyframes slideInRight{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 </style>
 </head>
 <body>
@@ -954,6 +963,8 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
     <div class="sc-row"><span class="sc-desc">Focus search</span><span><kbd class="kbd">/</kbd></span></div>
     <div class="sc-row"><span class="sc-desc">Close panel / modal</span><span><kbd class="kbd">Esc</kbd></span></div>
     <div class="sc-row"><span class="sc-desc">This help</span><span><kbd class="kbd">?</kbd></span></div>
+    <div class="sc-row"><span class="sc-desc">Open bug template selector</span><span><kbd class="kbd">T</kbd></span></div>
+    <div class="sc-row"><span class="sc-desc">Go to Test Runs</span><span><kbd class="kbd">R</kbd></span></div>
   </div>
 </div>
 
@@ -963,6 +974,8 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
   <select class="fi" id="bulkStatus" style="width:auto;padding:5px 9px"><option value="">Change Status…</option></select>
   <select class="fi" id="bulkAssignee" style="width:auto;padding:5px 9px"><option value="">Change Assignee…</option></select>
   <button class="btn btn-v btn-sm" onclick="applyBulk()">✓ Apply</button>
+  <button class="btn btn-g btn-sm" onclick="copyBulkLink()">🔗 Copy Link</button>
+  <button class="btn btn-g btn-sm" onclick="copyBulkReport()">📋 Copy Report</button>
   <button class="btn btn-g btn-sm" onclick="clearBulk()">✕ Clear</button>
 </div>
 
@@ -1007,10 +1020,11 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
         <div style="width:5px;height:5px;border-radius:50%;background:var(--g4);box-shadow:0 0 5px var(--g4);animation:blink 2.5s ease-in-out infinite;flex-shrink:0"></div>
         <span id="liveCount" style="font-family:var(--mono);font-size:10px;color:var(--g4);font-weight:700;white-space:nowrap"></span>
       </div>
-      <button class="btn btn-g btn-sm" onclick="exportCSV()" title="Export CSV">📥</button>
+      <div style="position:relative;display:inline-block" id="exportDropWrap"><button class="btn btn-g btn-sm" onclick="toggleExportDrop()" title="Export CSV">📥 ▾</button><div id="exportDrop" style="display:none;position:absolute;right:0;top:30px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.4)"><div class="jk-mi" onclick="exportCSV('filtered');toggleExportDrop()">📋 Export filtered</div><div class="jk-mi" onclick="exportCSV('all');toggleExportDrop()">📦 Export all bugs</div><div class="jk-mi" onclick="exportCSV('selection');toggleExportDrop()">✅ Export selected</div></div></div>
       <button class="btn btn-g btn-sm" onclick="refreshAll()">↻</button>
       <button class="btn btn-g btn-sm" onclick="document.getElementById('shortcutsModal').classList.add('on')" title="Keyboard shortcuts (?)">⌨</button>
       <button class="btn btn-v btn-sm" onclick="openNew()">＋ BUG</button>
+              <button class="btn btn-g btn-sm" onclick="openTemplateSelector()">📋</button>
       <div class="user-pill-wrap">
         <div class="user-pill" onclick="toggleProfileMenu(event)" title="Profile & settings">
           <div class="uav" id="uav" style="background:var(--g1)">?</div>
@@ -1027,12 +1041,14 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="pm-divider"></div>
           <div class="pm-item" onclick="refreshAll();closeProfileMenu()"><span class="pm-icon">↻</span> Refresh Data</div>
           <div class="pm-item" onclick="showNatasha();closeProfileMenu()"><span class="pm-icon">🏏</span> Say Hi to Natasha</div>
+          <div class="pm-item" onclick="toggleNatashaPref();closeProfileMenu()"><span class="pm-icon" id="natashaPrefIcon">🔕</span> <span id="natashaPrefLabel">Disable Natasha</span></div>
           <div class="pm-divider"></div>
           <div class="pm-item" id="managePodBtn" onclick="openDropdownManager();closeProfileMenu()" style="display:none"><span class="pm-icon">🗂️</span> Manage Dropdowns</div>
           <div class="pm-item" id="importBugsBtn" onclick="goTab('import');closeProfileMenu()" style="display:none"><span class="pm-icon">📥</span> Import Bugs (CSV)</div>
           <div class="pm-divider" id="managePodDivider" style="display:none"></div>
           <div class="pm-item" onclick="openDayEndReport();closeProfileMenu()"><span class="pm-icon">📊</span> Day-End Report</div>
-          <div class="pm-item" onclick="openWebhookSettings();closeProfileMenu()"><span class="pm-icon">🔔</span> Webhook Settings</div>
+          <div class="pm-item" id="webhookSettingsBtn" onclick="openWebhookSettings();closeProfileMenu()" style="display:none"><span class="pm-icon">🔔</span> Webhook Settings</div>
+          <div class="pm-item" id="slaSettingsBtn" onclick="openSLASettings();closeProfileMenu()" style="display:none"><span class="pm-icon">⏱</span> SLA Rules</div>
           <div class="pm-item danger" onclick="signOut()"><span class="pm-icon">🚪</span> Sign Out</div>
         </div>
       </div>
@@ -1093,7 +1109,8 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="ph">
             <div><h1>Bugs</h1><p id="bl-sub">All issues</p></div>
             <div class="ph-r">
-              <button class="btn btn-g btn-sm" onclick="exportCSV()">📥 CSV</button>
+              <button class="btn btn-g btn-sm" onclick="exportCSV('filtered')">📥 CSV</button>
+              <button class="btn btn-g btn-sm" onclick="openFeatureKanban()" title="Feature / System view">🎮 Features</button>
               <button class="btn btn-v" onclick="openNew()">＋ NEW BUG</button>
             </div>
           </div>
@@ -1163,11 +1180,13 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="ph">
             <div><h1>BUILDS</h1><p id="builds-sub">Track what's in each build</p></div>
             <div class="ph-r">
+              <button class="btn btn-g" onclick="goTestRuns()">🧪 Test Runs</button>
               <button class="btn btn-v" onclick="openNewBuild()">＋ LOG BUILD</button>
             </div>
           </div>
           <div id="buildsCurrentBanner"></div>
           <div id="buildsWrap"></div>
+          <div id="testRunsWrap" style="display:none;margin-top:18px"></div>
         </div>
 
         <!-- NOTIFS -->
@@ -1175,7 +1194,9 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="ph">
             <div><h1>NOTIFICATIONS</h1><p style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:3px">In-app alerts · click any bug ID to open</p></div>
             <div class="ph-r">
-              <button class="btn btn-g btn-sm" onclick="openWebhookSettings()">🔔 Webhook Settings</button>
+              <button class="btn btn-g btn-sm" id="notifWebhookBtn" onclick="openWebhookSettings()" style="display:none">🔔 Webhook Settings</button>
+              <button class="btn btn-g btn-sm" id="notifSLABtn" onclick="openSLASettings()" style="display:none">⏱ SLA Rules</button>
+              <button class="btn btn-g btn-sm" id="pushEnableBtn" onclick="requestPushPermission()" style="display:none">🔔 Enable Desktop Notifs</button>
               <button class="btn btn-g btn-sm" onclick="markAllRead()">Mark all read</button>
             </div>
           </div>
@@ -1517,6 +1538,218 @@ function avStack(assignees,sz=22){
 // ══════════════════════════════════════════
 // SESSION
 // ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// DESKTOP PUSH NOTIFICATIONS
+// ══════════════════════════════════════════
+let _pushPermission = 'default';
+
+// ── Service Worker + Web Push ─────────────────────────────────────────────────
+let _swRegistration = null;
+
+async function initPushNotifications() {
+  if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+  _pushPermission = Notification.permission;
+
+  // Register service worker (sw.js must be at same origin as index.html)
+  try {
+    _swRegistration = await navigator.serviceWorker.register(
+      new URL('./sw.js', window.location.href).href
+    );
+    console.log('[sw] registered');
+
+    // Listen for messages from SW (e.g. OPEN_BUG)
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'OPEN_BUG' && e.data.bugId) {
+        openDetail(e.data.bugId);
+      }
+    });
+  } catch(e) {
+    console.warn('[sw] registration failed:', e.message);
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function requestPushPermission() {
+  if (!('serviceWorker' in navigator)) {
+    toast('Step 1 FAIL: Service worker not supported in this browser', 'err'); return false;
+  }
+  if (!('Notification' in window)) {
+    toast('Step 1 FAIL: Notifications API not supported', 'err'); return false;
+  }
+
+  toast('Step 1: Requesting permission...', 'ok');
+  const result = await Notification.requestPermission();
+  _pushPermission = result;
+  if (result !== 'granted') {
+    toast('Step 1 FAIL: Permission denied — allow in browser settings', 'err'); return false;
+  }
+  toast('Step 1 OK: Permission granted', 'ok');
+
+  try {
+    // Step 2: Get VAPID key (public endpoint — no auth needed)
+    toast('Step 2: Fetching VAPID key from worker...', 'ok');
+    let keyRes;
+    try {
+      const r = await fetch(WORKER + '/push/vapid-public-key');
+      keyRes = await r.json();
+      toast('Step 2 response: ' + JSON.stringify(keyRes).slice(0,80), 'ok');
+    } catch(fetchErr) {
+      toast('Step 2 FAIL: Network error — ' + fetchErr.message, 'err');
+      return false;
+    }
+    if (!keyRes || !keyRes.key) {
+      toast('Step 2 FAIL: ' + (keyRes?.error || 'No key returned'), 'err');
+      return false;
+    }
+    toast('Step 2 OK: Got VAPID key', 'ok');
+
+    // Step 3: Subscribe
+    toast('Step 3: Subscribing to push...', 'ok');
+    const reg = _swRegistration || await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(keyRes.key),
+    });
+    toast('Step 3 OK: Subscribed to push', 'ok');
+
+    // Step 4: Save to worker
+    toast('Step 4: Saving subscription...', 'ok');
+    const saved = await api('/push/subscribe', 'POST', sub.toJSON());
+    if (!saved?.ok) {
+      toast('Step 4 FAIL: Could not save subscription to worker', 'err'); return false;
+    }
+    toast('Step 4 OK: Subscription saved', 'ok');
+
+    try { localStorage.setItem('hwt_push_enabled', '1'); } catch(e) {}
+
+    // Step 5: Test notification — send via server push so it works even when tab open
+    toast('ALL STEPS OK — sending test notification!', 'ok');
+    // Show immediate local notification
+    reg.showNotification('BugPulse Active', {
+      body: 'Push notifications are now active! You will be notified of new bugs and builds.',
+      icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+      requireInteraction: true,
+    });
+    // Also send a server-side push to confirm end-to-end works
+    setTimeout(async () => {
+      try {
+        await api('/push/notify', 'POST', {
+          title: 'BugPulse Connected',
+          body: 'Server push working! You will get notified even when browser is closed.',
+          icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+          tag: 'test',
+        });
+        toast('Server push sent — check desktop!', 'ok');
+      } catch(e) { console.warn('[push test]', e); }
+    }, 1500);
+    return true;
+
+  } catch(e) {
+    toast('FAILED at: ' + e.message, 'err');
+    console.error('[push]', e);
+    return false;
+  }
+}
+
+async function disablePushNotifications() {
+  try {
+    const reg = _swRegistration || await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+    await api('/push/subscribe', 'DELETE');
+    localStorage.removeItem('hwt_push_enabled');
+    toast('Desktop notifications disabled', 'ok');
+  } catch(e) { toast('Failed to disable: ' + e.message, 'err'); }
+}
+
+// Generate VAPID keys in browser (admin setup)
+
+function showVapidSetup() {
+  generateVapidKeys().then(keys => {
+    if(!keys) return;
+    document.getElementById('vapid-pub').value  = keys.public;
+    document.getElementById('vapid-priv').value = keys.private;
+    document.getElementById('vapid-generated').style.display = 'block';
+    document.getElementById('vapid-setup-section').innerHTML =
+      '<div style="font-family:var(--mono);font-size:9px;color:var(--g4)">Keys generated below. Copy both to Cloudflare Worker env vars, then redeploy.</div>';
+  });
+}
+
+async function generateVapidKeys() {
+  try {
+    const keyPair = await crypto.subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      true,
+      ['sign', 'verify']
+    );
+    const pub  = await crypto.subtle.exportKey('raw',   keyPair.publicKey);
+    const priv = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+    const toB64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+    return { public: toB64url(pub), private: toB64url(priv) };
+  } catch(e) {
+    toast('Key generation failed: ' + e.message, 'err');
+    return null;
+  }
+}
+
+function showPushPrompt() {
+  // Show a non-intrusive banner asking for permission
+  const existing = document.getElementById('pushPromptBanner');
+  if(existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'pushPromptBanner';
+  banner.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:8000;background:var(--bg2);border:1px solid var(--g1);border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:300px;backdrop-filter:blur(12px);animation:slideInRight .3s ease';
+  banner.innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:6px">🔔 STAY UPDATED</div>
+    <div style="font-size:12px;color:var(--mist);line-height:1.6;margin-bottom:12px">Get notified about critical bugs and EOD reports even when you're on another tab.</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="requestPushPermission();document.getElementById('pushPromptBanner')?.remove()" 
+        style="flex:1;background:linear-gradient(135deg,var(--g1),#5b21b6);color:#fff;border:none;border-radius:7px;padding:7px;font-size:12px;font-weight:700;cursor:pointer">Enable</button>
+      <button onclick="document.getElementById('pushPromptBanner')?.remove();try{localStorage.setItem('hwt_push_dismissed','1');}catch(e){}"
+        style="background:var(--bg3);color:var(--mute);border:1px solid var(--bd);border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer">Later</button>
+    </div>`;
+  // Don't show again if dismissed
+  try { if(localStorage.getItem('hwt_push_dismissed')) return; } catch(e) {}
+  document.body.appendChild(banner);
+  // Auto-dismiss after 15s
+  setTimeout(() => banner.remove(), 15000);
+}
+
+// requestPushPermission defined above
+
+function sendDesktopNotification(title, body, bugId) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  // Show notification regardless of tab visibility
+  // Use service worker notification if available (shows even when tab closed later)
+  if (_swRegistration) {
+    _swRegistration.showNotification(title, {
+      body,
+      icon:  'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+      badge: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+      tag:   bugId || 'bugpulse',
+      data:  { bugId, url: bugId ? APP_URL + '?bug=' + bugId : APP_URL },
+    });
+    return;
+  }
+  // Fallback to basic Notification API
+  const n = new Notification(title, {
+    body,
+    icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+    tag:  bugId || 'bugpulse',
+  });
+  if(bugId) n.onclick = () => { window.focus(); openDetail(bugId); n.close(); };
+}
+
 const saveSession=()=>{try{if(S.user)localStorage.setItem(SK,JSON.stringify({user:S.user,ts:Date.now()}));}catch(e){}};
 const loadSession=()=>{try{const r=JSON.parse(localStorage.getItem(SK)||'null');if(!r||!r.user||Date.now()-r.ts>8*3600*1000){localStorage.removeItem(SK);return null;}return r;}catch{return null;}};
 const clearSession=()=>localStorage.removeItem(SK);
@@ -1552,6 +1785,21 @@ function startFastSync(){
         setCloud('ok',`☁ ${S.bugs.length}`);
         if(S.view==='home')renderHome();
         else if(S.view==='board')renderBoard();
+      }
+      // Quietly re-sync settings from D1 every poll cycle
+      api('/settings').then(sd=>{
+        if(sd?.settings){_webhookCfgCache=sd.settings;try{localStorage.setItem(WEBHOOK_KEY,JSON.stringify(_webhookCfgCache));}catch(e){}}
+      }).catch(()=>{});
+      // Desktop push: notify about critical bugs when tab hidden
+      if(document.hidden && Notification.permission === 'granted') {
+        const crit = S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && ['Open','Bugged','In Progress'].includes(b.status));
+        if(crit.length > 0) {
+          const key = 'hwt_crit_push_' + new Date().toISOString().slice(0,13);
+          if(!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, '1');
+            sendDesktopNotification(`🚨 ${crit.length} Critical Bug${crit.length!==1?'s':''} Open`, crit.slice(0,2).map(b=>b.title).join(' · '));
+          }
+        }
       }
     }catch(e){}
   }, SYNC_INTERVAL);
@@ -1690,7 +1938,7 @@ async function ensureFreshToken() {
 // ══════════════════════════════════════════
 function loadNotifs(){try{S.localNotifs=JSON.parse(localStorage.getItem(NK(S.user?.email))||'[]');}catch{S.localNotifs=[];}}
 function saveNotifs(){try{localStorage.setItem(NK(S.user?.email),JSON.stringify(S.localNotifs.slice(0,100)));}catch{}}
-function addNotif(t,b,bugId){loadNotifs();S.localNotifs.unshift({id:Date.now(),title:t,body:b,bugId,read:false,ts:new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})});saveNotifs();updateNotifBadge();}
+function addNotif(t,b,bugId){loadNotifs();S.localNotifs.unshift({id:Date.now(),title:t,body:b,bugId,read:false,ts:new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})});saveNotifs();updateNotifBadge();sendDesktopNotification(t,b,bugId);}
 function updateNotifBadge(){
   loadNotifs();
   const u=S.localNotifs.filter(n=>!n.read).length;
@@ -1705,7 +1953,36 @@ function markAllRead(){S.localNotifs.forEach(n=>n.read=true);saveNotifs();update
 function checkDeepLink(){
   const p=new URLSearchParams(window.location.search);
   const bugId=p.get('bug');
-  if(!bugId)return;
+  // Multi-bug share link: ?bugs=BUG-1,BUG-2,BUG-3
+  const bugsParam = p.get('bugs');
+  if(bugsParam) {
+    history.replaceState({},'',window.location.pathname);
+    const ids = bugsParam.split(',').map(s=>s.trim()).filter(Boolean);
+    const tryOpenMulti = () => {
+      if(!S.bugs.length) { setTimeout(tryOpenMulti, 400); return; }
+      const found = S.bugs.filter(b => ids.includes(b.id));
+      if(!found.length) { toast('No matching bugs found', 'err'); return; }
+      // Filter backlog to these bugs
+      S.filtered = found;
+      S.page = 1;
+      goToBugsClean();
+      S.filtered = found;
+      renderTable();
+      const title = document.getElementById('tTitle');
+      if(title) title.textContent = `Shared: ${found.length} bug${found.length!==1?'s':''}`;
+      toast(`Showing ${found.length} shared bug${found.length!==1?'s':''}`, 'ok');
+    };
+    setTimeout(tryOpenMulti, 600);
+    return;
+  }
+  if(!bugId) {
+    // Restore last tab
+    try {
+      const lastTab = sessionStorage.getItem('hwt_tab');
+      if(lastTab && lastTab !== 'home') setTimeout(()=>goTab(lastTab), 100);
+    } catch(e) {}
+    return;
+  }
   history.replaceState({},'',window.location.pathname);
   const tryOpen=()=>{if(S.bugs.length){const f=S.bugs.find(b=>b.id===bugId);if(f)openDetail(bugId);else toast(`Bug ${bugId} not found`,'err');}else{setTimeout(tryOpen,400);}};
   setTimeout(tryOpen,600);
@@ -1858,11 +2135,17 @@ function onLogin(){
     document.getElementById('managePodBtn').style.display='flex';
     document.getElementById('importBugsBtn').style.display='flex';
     document.getElementById('managePodDivider').style.display='block';
+    document.getElementById('webhookSettingsBtn').style.display='flex';
+    document.getElementById('slaSettingsBtn').style.display='flex';
+    const nwb=document.getElementById('notifWebhookBtn');if(nwb)nwb.style.display='';
+    const nsb=document.getElementById('notifSLABtn');if(nsb)nsb.style.display='';
   }
   loadTheme();
   loadCursorPref();
+  loadNatashaPref();
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
+  initPushNotifications();
   initEODScheduler();
   refreshAll().then(()=>{
     startFastSync();
@@ -2031,7 +2314,8 @@ function setCloud(s,l){
 async function refreshAll(){
   setCloud('busy','loading…');
   try{
-    const [bugsD,sprintsD,teamD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team')]);
+    const [bugsD,sprintsD,teamD,settingsD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team'),api('/settings').catch(()=>({settings:null}))]);
+    if(settingsD?.settings){_webhookCfgCache=settingsD.settings;try{localStorage.setItem(WEBHOOK_KEY,JSON.stringify(_webhookCfgCache));}catch(e){}}
     const _rawSprints=sprintsD.sprints||[];
     const freshBugs=bugsD.bugs||[];
 
@@ -2043,13 +2327,14 @@ async function refreshAll(){
     }
 
     S.bugs=freshBugs;
-    S.sprints=_rawSprints.filter(s=>s.name!==DD_CONFIG_KEY);
+    S.sprints=_rawSprints.filter(s=>!s.name.startsWith('__'));
     S.teamMembers=teamD.members||[];
     loadDDConfigFromSprints(_rawSprints);
     S.bugs.forEach(b=>{if(!b.assignees)b.assignees=b.assignee_email?[{name:b.assignee||'',email:b.assignee_email,picture:b.assignee_picture||''}]:[];});
     updateSbBadges();populateDropdowns();applyF();populateBoardSprint();
     setCloud('ok',`☁ ${S.bugs.length}`);
     renderSlaWarnings();
+    initEODScheduler();
     if(S.view==='home')renderHome();
     else if(S.view==='board')renderBoard();
     else if(S.view==='sprints')renderSprints();
@@ -2147,9 +2432,19 @@ function applyF(){
 // ══════════════════════════════════════════
 // VIEWS
 // ══════════════════════════════════════════
+// Tab state: store scroll position + filter state per tab
+const _tabScrollPos = {};
+const _tabFilterState = {};
+
 function goTab(v){
+  // Save scroll of current tab
+  if(S.view && S.view !== v) {
+    const main = document.querySelector('.main');
+    if(main) _tabScrollPos[S.view] = main.scrollTop;
+  }
   if(v!=='backlog')closeInlineDrawer();
   S.view=v;
+  try { sessionStorage.setItem('hwt_tab', v); } catch(e) {}
   ['home','backlog','board','sprints','features','dashboard','notifs','clickup','import','builds'].forEach(n=>{
     const el=document.getElementById('v-'+n);if(el)el.style.display=n===v?'':'none';
     document.getElementById('tt-'+n)?.classList.toggle('on',n===v);
@@ -2163,7 +2458,12 @@ function goTab(v){
   if(v==='notifs')renderNotifs();
   if(v==='backlog')renderTable();
   if(v==='clickup')loadClickUp();
-  if(v==='builds')renderBuildsPage();
+  if(v==='builds'){renderBuildsPage();document.getElementById('testRunsWrap').style.display='none';document.getElementById('buildsWrap').style.display='';document.getElementById('buildsCurrentBanner').style.display='';}
+  // Restore scroll position
+  requestAnimationFrame(() => {
+    const main = document.querySelector('.main');
+    if(main && _tabScrollPos[v] !== undefined) main.scrollTop = _tabScrollPos[v];
+  });
 }
 
 // ══════════════════════════════════════════
@@ -2241,7 +2541,9 @@ function renderTable(){
   sl.forEach(bug=>{
     const _isSel=_bulkSelected.has(bug.id);
     const _days=bugAgeDays(bug);
-    const _slaRow=_days!==null&&_days>=SLA_BREACH_DAYS&&['Open','In Progress','Bugged','In Review'].includes(bug.status);
+    const _slaCfg=getSLAConfig();const _pKey=(bug.priority||'Medium').toLowerCase().replace(/\s+/g,'_');
+    const _slaBreach=_slaCfg['p_'+_pKey+'_breach']??_slaCfg.breach??7;
+    const _slaRow=_days!==null&&_days>=_slaBreach&&['Open','In Progress','Bugged','In Review'].includes(bug.status);
     h+=`<tr onclick="openDetail('${bug.id}')" style="${_slaRow?'background:rgba(239,68,68,.04)':''}${_isSel?';background:rgba(124,58,237,.1)':''}">
       <td onclick="event.stopPropagation()" style="width:30px"><div class="cb-wrap"><input type="checkbox" ${_isSel?'checked':''} onclick="toggleBulkSelect('${bug.id}',event)"></div></td>
       <td class="tc-id mob-hide-id" style="white-space:nowrap">
@@ -2298,16 +2600,62 @@ function renderBoard(){
   const src=spf?S.bugs.filter(b=>b.sprint===spf):S.bugs;
   document.getElementById('kanbanBoard').innerHTML=KCOLS.map(col=>{
     const cb=src.filter(b=>b.status===col.k);
-    return`<div class="kcol">
+    return`<div class="kcol"
+      ondragover="event.preventDefault();this.classList.add('kcol-dragover')"
+      ondragleave="this.classList.remove('kcol-dragover')"
+      ondrop="kDrop(event,'${col.k.replace(/'/g,"\'")}');this.classList.remove('kcol-dragover')">
       <div class="kcol-hd"><span class="kcol-name" style="color:${col.c};text-shadow:0 0 8px ${col.c}44">${col.k}</span><span class="kcol-n">${cb.length}</span></div>
       <div class="kcol-cards">
-        ${cb.map(bug=>`<div class="kcard" onclick="openDetail('${bug.id}')">
+        ${cb.map(bug=>`<div class="kcard" draggable="true"
+          onclick="openDetail('${bug.id}')"
+          ondragstart="kDragStart(event,'${bug.id}')"
+          ondragend="kDragEnd(event)">
           <div class="kcard-id">${esc(bug.id)}</div>
           <div class="kcard-title">${esc(bug.title||'')}</div>
           <div class="kcard-foot">${pChip(bug.priority)}${ageChip(bug)}${avStack(bug.assignees||[],18)}</div>
-        </div>`).join('')||`<div style="text-align:center;padding:18px;font-family:var(--mono);font-size:11px;color:var(--dim)">— empty —</div>`}
+        </div>`).join('')||`<div class="kcol-empty">— drop here —</div>`}
       </div></div>`;
   }).join('');
+}
+
+let _kDragging = null;
+function kDragStart(e, bugId) {
+  _kDragging = bugId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', bugId);
+  e.currentTarget.style.opacity = '0.4';
+}
+function kDragEnd(e) {
+  e.currentTarget.style.opacity = '';
+  _kDragging = null;
+  document.querySelectorAll('.kcol-dragover').forEach(el => el.classList.remove('kcol-dragover'));
+}
+async function kDrop(e, newStatus) {
+  e.preventDefault();
+  const bugId = e.dataTransfer.getData('text/plain') || _kDragging;
+  if(!bugId) return;
+  const bug = S.bugs.find(b => b.id === bugId);
+  if(!bug || bug.status === newStatus) return;
+  const oldStatus = bug.status;
+  // Optimistic update
+  bug.status = newStatus;
+  renderBoard();
+  try {
+    await api('/bugs/'+bugId, 'PUT', { status: newStatus, _restricted: true });
+    toast(`${bugId} → ${newStatus}`, 'ok');
+    // Push to ClickUp if linked
+    syncStatusToClickUp(bug, newStatus);
+    // Notify on status change
+    const cfg = getWebhookConfig();
+    const bugUrl = APP_URL + '?bug=' + bugId;
+    const msg = `📊 *Status Update — ${bugId}*\n${bug.title||''}\n${oldStatus} → *${newStatus}*\n🔗 ${bugUrl}`;
+    if(cfg.gchat_url) sendGChatWebhook(msg);
+    if(cfg.slack_url) sendSlackWebhook(msg);
+  } catch(err) {
+    bug.status = oldStatus;
+    renderBoard();
+    toast('Update failed: '+err.message, 'err');
+  }
 }
 
 // ══════════════════════════════════════════
@@ -2472,16 +2820,44 @@ function renderFeatures(){
   const feats=[...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort();
   if(!feats.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🎮</div><h3>NO FEATURES</h3><p>Add feature tags when creating bugs.</p></div>`;return;}
   const dc=['#7c3aed','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#db2777','#0d9488'];
-  el.innerHTML=feats.map((feat,i)=>{
+
+  el.innerHTML = feats.map((feat,i)=>{
     const fb=S.bugs.filter(b=>b.feature===feat);
     const done=fb.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
     const pct=fb.length?Math.round(done/fb.length*100):0;
     const c=dc[i%dc.length];
+
+    // Group by sub_feature — bugs with sub_feature get nested, others go under feature directly
+    const subMap = {};
+    fb.forEach(b => {
+      const sub = b.sub_feature?.trim() || '';
+      if(!subMap[sub]) subMap[sub] = [];
+      subMap[sub].push(b);
+    });
+    const subKeys = Object.keys(subMap).sort((a,b) => a === '' ? 1 : b === '' ? -1 : a.localeCompare(b));
+
+    const subSections = subKeys.map(sub => {
+      const subBugs = subMap[sub];
+      const subOpen = subBugs.filter(b=>!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).length;
+      return `
+        <div style="margin-bottom:8px">
+          ${sub ? `<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:${c};opacity:.7;margin-bottom:5px;padding-left:2px">↳ ${esc(sub)}</div>` : ''}
+          <div style="display:flex;flex-wrap:wrap;gap:7px">
+            ${subBugs.slice(0,6).map(bug=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;cursor:pointer;flex:1;min-width:150px;max-width:220px;transition:all .15s" onclick="openDetail('${bug.id}')" onmouseenter="this.style.borderColor='${c}'" onmouseleave="this.style.borderColor='var(--bd)'">
+              <div style="font-family:var(--mono);font-size:9px;color:${c};margin-bottom:4px">${esc(bug.id)}</div>
+              <div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:6px">${esc((bug.title||'').slice(0,55))}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap">${pChip(bug.priority)}${stChip(bug.status)}</div>
+            </div>`).join('')}
+            ${subBugs.length>6?`<div style="display:flex;align-items:center;justify-content:center;min-width:80px;cursor:pointer;color:${c};font-size:13px;font-weight:700;padding:9px;border:1px dashed var(--bd);border-radius:8px" onclick="fBySubFeat('${esc(feat)}','${esc(sub)}')">+${subBugs.length-6} more</div>`:''}
+          </div>
+        </div>`;
+    }).join('');
+
     return`<div class="sprint-card">
       <div class="sprint-hd">
         <div style="display:flex;align-items:center;gap:9px;flex:1">
           <div style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0;box-shadow:0 0 8px ${c}"></div>
-          <div><div class="sprint-name">${esc(feat)}</div><div class="sprint-dates">${fb.length} issues</div></div>
+          <div><div class="sprint-name">${esc(feat)}</div><div class="sprint-dates">${fb.length} issues · ${subKeys.filter(s=>s).length} sub-features</div></div>
           <div style="flex:1;display:flex;align-items:center;gap:8px;margin-left:14px">
             <div class="sprint-prog"><div class="sprint-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${c},${c}aa)"></div></div>
             <span class="sprint-pct" style="color:${c}">${pct}%</span>
@@ -2491,20 +2867,21 @@ function renderFeatures(){
           ${fb.filter(b=>b.status==='Open').length?`<span class="chip chip-open">${fb.filter(b=>b.status==='Open').length} open</span>`:''}
           ${fb.filter(b=>['In Progress','Bugged'].includes(b.status)).length?`<span class="chip chip-prog">${fb.filter(b=>['In Progress','Bugged'].includes(b.status)).length} active</span>`:''}
           ${done?`<span class="chip chip-done">${done} done</span>`:''}
-          <button class="btn btn-g btn-sm" onclick="fByFeat('${esc(feat)}')">View</button>
+          <button class="btn btn-g btn-sm" onclick="fByFeat('${esc(feat)}')">View All</button>
         </div>
       </div>
-      <div style="padding:10px;display:flex;flex-wrap:wrap;gap:7px">
-        ${fb.slice(0,8).map(bug=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;cursor:none;flex:1;min-width:170px;max-width:240px;transition:all .15px" onclick="openDetail('${bug.id}')" onmouseenter="this.style.borderColor='${c}'" onmouseleave="this.style.borderColor='var(--bd)'">
-          <div style="font-family:var(--mono);font-size:9px;color:${c};margin-bottom:4px;letter-spacing:.5px">${esc(bug.id)}</div>
-          <div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:6px">${esc((bug.title||'').slice(0,55))}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">${pChip(bug.priority)}${stChip(bug.status)}</div>
-        </div>`).join('')}
-        ${fb.length>8?`<div style="display:flex;align-items:center;justify-content:center;min-width:80px;cursor:none;color:${c};font-size:13px;font-weight:700;padding:9px;border:1px dashed var(--bd);border-radius:8px" onclick="fByFeat('${esc(feat)}')">+${fb.length-8} more</div>`:''}
+      <div style="padding:10px 14px">
+        ${subSections}
       </div>
     </div>`;
   }).join('');
 }
+
+function fBySubFeat(feat, sub) {
+  const bugs = S.bugs.filter(b => b.feature === feat && (b.sub_feature||'') === sub);
+  showInlineDrawer(`🎮 ${feat}${sub?' → '+sub:''}`, bugs);
+}
+
 function fByFeat(f){
   const bugs = S.bugs.filter(b=>b.feature===f);
   showInlineDrawer('🎮 Feature: '+f, bugs, ()=>fByFeat(f));
@@ -2523,6 +2900,87 @@ function dashDrillDown(field, value){
     bugs = S.bugs;
   }
   showInlineDrawer('📊 '+value+' ('+field+')', bugs);
+}
+
+// ── Bug Age Heatmap ───────────────────────────────────────────────────────────
+function renderBugHeatmap() {
+  const el = document.getElementById('bugHeatmap');
+  if(!el) return;
+  if(!S.bugs.length) { el.innerHTML=''; return; }
+
+  // Build daily count map for last 84 days (12 weeks)
+  const DAYS = 84;
+  const now = Date.now();
+  const dayMs = 86400000;
+  const counts = {};
+  S.bugs.forEach(b => {
+    if(!b.created_ts) return;
+    const daysAgo = Math.floor((now - b.created_ts) / dayMs);
+    if(daysAgo >= 0 && daysAgo < DAYS) {
+      const key = daysAgo;
+      counts[key] = (counts[key]||0) + 1;
+    }
+  });
+
+  const max = Math.max(1, ...Object.values(counts));
+  const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  // Build 12 columns (weeks), 7 rows (days)
+  const today = new Date();
+  const todayDow = today.getDay(); // 0=Sun
+
+  let cells = [];
+  for(let w = 11; w >= 0; w--) {
+    let col = [];
+    for(let d = 0; d < 7; d++) {
+      const daysAgo = w*7 + (todayDow - d + 7)%7;
+      if(daysAgo >= DAYS) { col.push({daysAgo:-1,count:0}); continue; }
+      const count = counts[daysAgo] || 0;
+      col.push({daysAgo, count});
+    }
+    cells.push(col);
+  }
+
+  const cellHtml = (cell) => {
+    if(cell.daysAgo < 0) return `<div style="width:12px;height:12px"></div>`;
+    const opacity = cell.count === 0 ? 0.07 : 0.2 + (cell.count/max)*0.8;
+    const date = new Date(now - cell.daysAgo * dayMs);
+    const label = date.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    const title = cell.count ? `${cell.count} bug${cell.count!==1?'s':''} on ${label}` : `No bugs on ${label}`;
+    return `<div title="${title}" style="width:12px;height:12px;border-radius:2px;background:var(--g1);opacity:${opacity.toFixed(2)};cursor:${cell.count?'pointer':'default'}" onclick="${cell.count?`filterByDate(${cell.daysAgo})`:''}"></div>`;
+  };
+
+  el.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px 18px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">🗓 BUG FILING HEATMAP — LAST 12 WEEKS</div>
+      <div style="display:flex;gap:3px;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:3px;margin-right:4px;padding-top:0">
+          ${dayNames.map((d,i)=>`<div style="font-family:var(--mono);font-size:8px;color:var(--dim);height:12px;line-height:12px;width:14px">${i%2===1?d:''}</div>`).join('')}
+        </div>
+        ${cells.map(col=>`<div style="display:flex;flex-direction:column;gap:3px">${col.map(cellHtml).join('')}</div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+        <span style="font-family:var(--mono);font-size:8px;color:var(--dim)">Less</span>
+        ${[0.07,0.3,0.5,0.7,0.9].map(o=>`<div style="width:12px;height:12px;border-radius:2px;background:var(--g1);opacity:${o}"></div>`).join('')}
+        <span style="font-family:var(--mono);font-size:8px;color:var(--dim)">More</span>
+        <span style="font-family:var(--mono);font-size:8px;color:var(--dim);margin-left:8px">Click a cell to filter that day</span>
+      </div>
+    </div>`;
+}
+
+function filterByDate(daysAgo) {
+  const dayMs = 86400000;
+  const now = Date.now();
+  const target = new Date(now - daysAgo * dayMs);
+  const dateStr = target.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  // Filter bugs to that day
+  S.filtered = S.bugs.filter(b => {
+    if(!b.created_ts) return false;
+    const d = Math.floor((now - b.created_ts) / dayMs);
+    return d === daysAgo;
+  });
+  goToBugsClean();
+  toast(`Showing bugs filed on ${dateStr} (${S.filtered.length})`, 'ok');
 }
 
 function renderDashboard(){
@@ -2546,6 +3004,7 @@ function renderDashboard(){
   el.innerHTML=bc('BY PRIORITY',cntBy('priority'),pco,'priority')+bc('BY STATUS',cntBy('status'),sco,'status')+bc('BY ASSIGNEE',cntByAssignee(),'','assignee')+bc('BY FEATURE',cntBy('feature'),{},'feature')+DD_FIELDS.map(f=>bc('BY '+f.label.toUpperCase(),cntBy(f.key),{},f.key)).join('')+bc('BY SPRINT',cntBy('sprint'),{},'sprint');
   renderBuildSection();
   renderDashboardGraphs();
+  renderBugHeatmap();
 }
 
 // ══════════════════════════════════════════
@@ -2553,8 +3012,28 @@ function renderDashboard(){
 // ══════════════════════════════════════════
 function renderNotifs(){
   loadNotifs();const el=document.getElementById('notifsWrap');if(!el)return;
-  if(!S.localNotifs.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>`;return;}
-  el.innerHTML=S.localNotifs.map(n=>`
+  // Show push enable button if not granted
+  const pushBtn = document.getElementById('pushEnableBtn');
+  if(pushBtn) pushBtn.style.display = (('Notification' in window) && Notification.permission !== 'granted') ? '' : 'none';
+
+  // Watchlist section
+  const watched = getWatchedBugs();
+  const watchHtml = watched.length ? `
+    <div style="margin-bottom:18px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">👁 WATCHLIST (${watched.length})</div>
+      ${watched.map(b=>`
+        <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openDetail('${b.id}')">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.title||'')}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">${esc(b.id)} · ${pChip(b.priority)} ${stChip(b.status)}</div>
+          </div>
+          <button onclick="event.stopPropagation();toggleWatch('${b.id}');renderNotifs()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;font-family:var(--mono)">✕ Unwatch</button>
+        </div>`).join('')}
+    </div>` : '';
+
+  const notifHtml = S.localNotifs.length ? `
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:10px">🔔 NOTIFICATIONS</div>
+    ${S.localNotifs.map(n=>`
     <div class="notif-item ${n.read?'':'unread'}" onclick="clickNotif(${n.id},'${n.bugId||''}')">
       <div style="flex-shrink:0;margin-top:3px">${n.read?'<div style="width:7px;height:7px"></div>':'<div class="notif-dot"></div>'}</div>
       <div style="flex:1;min-width:0">
@@ -2565,7 +3044,13 @@ function renderNotifs(){
           <button onclick="event.stopPropagation();navigator.clipboard.writeText('${APP_URL}?bug=${n.bugId}').then(()=>toast('Link copied ✓','ok'))" style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.25);color:var(--g2);font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:6px;cursor:pointer">🔗 Copy Link</button>
         </div>`:''}
       </div>
-    </div>`).join('');
+    </div>`).join('')}` : '';
+
+  if(!watched.length && !S.localNotifs.length) {
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>`;
+    return;
+  }
+  el.innerHTML = watchHtml + notifHtml;
 }
 function clickNotif(id,bugId){
   const n=S.localNotifs.find(x=>x.id==id);if(n){n.read=true;saveNotifs();updateNotifBadge();}
@@ -2818,6 +3303,7 @@ function openDetail(id){
       ${DD_FIELDS.filter(f=>bug[f.key]).map(f=>`<div class="dgi"><div class="dgi-l">${esc(f.label)}</div><div class="dgi-v">${esc(bug[f.key])}</div></div>`).join("")}
       <div class="dgi"><div class="dgi-l">Build</div><div class="dgi-v" style="font-family:var(--mono);font-size:11px">${esc(bug.build||'—')}</div></div>
       ${bug.build_link?`<div class="dgi"><div class="dgi-l">Build Link</div><div class="dgi-v"><a href="${esc(bug.build_link)}" target="_blank" rel="noopener" style="color:var(--g2);text-decoration:none;font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:4px">📦 Download / Open ↗</a></div></div>`:''}
+      ${bug.clickup_task_id?`<div class="dgi"><div class="dgi-l">ClickUp Task</div><div class="dgi-v"><a href="https://app.clickup.com/t/${esc(bug.clickup_task_id)}" target="_blank" rel="noopener" style="color:var(--g1);font-family:var(--mono);font-size:11px;text-decoration:none">${esc(bug.clickup_task_id)} ↗</a></div></div>`:''}
       <div class="dgi"><div class="dgi-l">Device / UID</div><div class="dgi-v">${esc(bug.device||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Created</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.created_at||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Updated</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.updated_at||'—')}</div></div>
@@ -3036,9 +3522,32 @@ const NATASHA_IMGS={
   celebrate:['natasha_celebrate.png','center'],
   search:   ['natasha1.png',        'center'],
 };
+// ── Natasha pref ──────────────────────────────────────────────────────────────
+const NATASHA_PREF_KEY = u => `hwt_natasha_${(u||'').replace(/\W/g,'_')}`;
+
+function loadNatashaPref() {
+  try {
+    const off = localStorage.getItem(NATASHA_PREF_KEY(S.user?.email)) === 'off';
+    const icon = document.getElementById('natashaPrefIcon');
+    const lbl  = document.getElementById('natashaPrefLabel');
+    if(icon) icon.textContent = off ? '🔔' : '🔕';
+    if(lbl)  lbl.textContent  = off ? 'Enable Natasha' : 'Disable Natasha';
+    return off;
+  } catch(e) { return false; }
+}
+
+function toggleNatashaPref() {
+  const off = loadNatashaPref();
+  try { localStorage.setItem(NATASHA_PREF_KEY(S.user?.email), off ? 'on' : 'off'); } catch(e) {}
+  loadNatashaPref();
+  toast(off ? 'Natasha re-enabled 🏏' : 'Natasha disabled 🔕', 'ok');
+}
+
 function showNatasha(msg, mood='default'){
   const intro=document.getElementById('natashaIntro');
   if(!intro) return; // guard — DOM not ready yet
+  // Respect user pref
+  if(S.user && localStorage.getItem(NATASHA_PREF_KEY(S.user?.email)) === 'off') return;
   const wrap=intro.querySelector('.natasha-wrap');
   const img=document.getElementById('natashaImg');
   if(img){
@@ -3094,11 +3603,228 @@ function openEdit(id){
   if(isOpen){document.getElementById('overlay').classList.remove('on');document.getElementById('panel').classList.remove('on');setTimeout(go,280);}else go();
 }
 
+// ══════════════════════════════════════════
+// BUG TEMPLATES
+// ══════════════════════════════════════════
+const BUG_TEMPLATES_KEY = 'hwt_bug_templates_v2';
+
+const DEFAULT_TEMPLATES = [
+  {
+    id: 'iap', name: '💰 IAP Payment', icon: '💰',
+    data: {
+      priority: 'Critical', severity: 'S1 - Blocker', feature: 'IAP',
+      steps: '1. Open Store\n2. Select offer\n3. Tap Buy\n4. Complete payment',
+      expected: 'Purchase completes, item credited to account',
+      actual: '',
+      device: '', platform: 'Android',
+    }
+  },
+  {
+    id: 'crash', name: '💥 Crash / Force Close', icon: '💥',
+    data: {
+      priority: 'Critical', severity: 'S1 - Blocker',
+      steps: '1. Open app\n2. Navigate to [screen]\n3. Tap [action]\n4. App crashes',
+      expected: 'App stays stable',
+      actual: 'App force closes / crashes to home screen',
+      repro: '100% — Always',
+    }
+  },
+  {
+    id: 'ui', name: '🎨 UI / Visual Bug', icon: '🎨',
+    data: {
+      priority: 'Medium', severity: 'S4 - Minor',
+      steps: '1. Open [screen]\n2. Observe [element]',
+      expected: 'Element renders correctly per design',
+      actual: 'Visual glitch / misalignment / wrong asset shown',
+    }
+  },
+  {
+    id: 'match', name: '🏏 Match Engine', icon: '🏏',
+    data: {
+      priority: 'High', severity: 'S2 - Critical', feature: 'Match Flow',
+      steps: '1. Set up match\n2. Play [shot type]\n3. Observe outcome',
+      expected: 'Shot probability and result correct per match engine spec',
+      actual: '',
+    }
+  },
+  {
+    id: 'network', name: '🌐 Network / API', icon: '🌐',
+    data: {
+      priority: 'High', severity: 'S2 - Critical',
+      steps: '1. [Action that triggers API call]\n2. Check response / behaviour',
+      expected: 'API responds correctly, data saved/loaded',
+      actual: 'Error / timeout / wrong data returned',
+      repro: '~50% — Sometimes',
+    }
+  },
+  {
+    id: 'regression', name: '🔁 Regression', icon: '🔁',
+    data: {
+      priority: 'High', severity: 'S2 - Critical',
+      steps: '1. Test previously fixed flow\n2. Observe behaviour',
+      expected: 'Feature works as previously verified',
+      actual: 'Previously fixed issue has returned',
+    }
+  },
+];
+
+function getTemplates() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(BUG_TEMPLATES_KEY)||'null');
+    return saved || DEFAULT_TEMPLATES;
+  } catch { return DEFAULT_TEMPLATES; }
+}
+
+function saveTemplates(tmpl) {
+  try { localStorage.setItem(BUG_TEMPLATES_KEY, JSON.stringify(tmpl)); } catch(e) {}
+}
+
+function openTemplateSelector(onSelect) {
+  const tmpl = getTemplates();
+  document.getElementById('panelTitle').textContent = '📋 BUG TEMPLATES';
+  document.getElementById('panelId').textContent = 'SELECT TEMPLATE';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Cancel</button>
+    <button class="btn btn-g" onclick="openManageTemplates()">⚙ Manage</button>`;
+  document.getElementById('panelBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:4px">Select a template to pre-fill the bug form</div>
+      ${tmpl.map(t => `
+        <div onclick="${onSelect ? `(${onSelect.toString()})('${t.id}')` : `applyTemplate('${t.id}')`}"
+          style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;cursor:pointer;transition:border-color .15s"
+          onmouseenter="this.style.borderColor='var(--g1)'" onmouseleave="this.style.borderColor='var(--bd)'">
+          <div style="font-size:16px;margin-bottom:5px">${t.icon||'📋'}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(t.name)}</div>
+          ${t.data?.feature ? `<div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:3px">${esc(t.data.feature)}</div>` : ''}
+          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">
+            ${t.data?.priority||'Medium'} · ${t.data?.severity||'—'}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  openPanel();
+}
+
+function applyTemplate(templateId) {
+  const tmpl = getTemplates().find(t => t.id === templateId);
+  if(!tmpl) return;
+  closePanel();
+  setTimeout(() => {
+    openNew();
+    setTimeout(() => {
+      const d = tmpl.data || {};
+      if(d.priority)  { const el = document.getElementById('f-p');  if(el) el.value = d.priority; }
+      if(d.severity)  { const el = document.getElementById('f-sv'); if(el) el.value = d.severity; }
+      if(d.feature)   { const el = document.getElementById('f-feat'); if(el) el.value = d.feature; }
+      if(d.steps)     { const el = document.getElementById('f-steps'); if(el) el.value = d.steps; }
+      if(d.expected)  { const el = document.getElementById('f-exp'); if(el) el.value = d.expected; }
+      if(d.actual)    { const el = document.getElementById('f-actual'); if(el) el.value = d.actual; }
+      if(d.platform)  { const el = document.getElementById('f-dd-platform'); if(el) el.value = d.platform; }
+      if(d.repro)     { const el = document.getElementById('f-repro'); if(el) el.value = d.repro; }
+      if(d.device)    { const el = document.getElementById('f-dev'); if(el) el.value = d.device; }
+      toast(`Template "${tmpl.name}" applied ✓`, 'ok');
+    }, 320);
+  }, 280);
+}
+
+function openManageTemplates() {
+  const tmpl = getTemplates();
+  document.getElementById('panelTitle').textContent = '⚙ MANAGE TEMPLATES';
+  document.getElementById('panelId').textContent = 'TEMPLATES';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="openTemplateSelector()">← Back</button>
+    <button class="btn btn-v" onclick="addCustomTemplate()">＋ New Template</button>`;
+  document.getElementById('panelBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${tmpl.map((t,i) => `
+        <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">${t.icon||'📋'}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:var(--text)">${esc(t.name)}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim)">${t.data?.priority||''} ${t.data?.feature?'· '+t.data.feature:''}</div>
+          </div>
+          ${i >= DEFAULT_TEMPLATES.length ? `<button onclick="deleteTemplate('${t.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--mono)">Delete</button>` : `<span style="font-family:var(--mono);font-size:8px;color:var(--dim)">built-in</span>`}
+        </div>`).join('')}
+    </div>`;
+  openPanel();
+}
+
+function addCustomTemplate() {
+  const name = prompt('Template name (e.g. "Login Bug"):');
+  if(!name?.trim()) return;
+  const icon = prompt('Icon emoji (e.g. 🔐):', '📋') || '📋';
+  const feature = prompt('Default Feature (optional):') || '';
+  const id = 'custom_' + Date.now();
+  const tmpl = getTemplates();
+  tmpl.push({ id, name: name.trim(), icon, data: { feature, priority:'Medium', severity:'S3 - Major' } });
+  saveTemplates(tmpl);
+  openManageTemplates();
+  toast('Template created ✓', 'ok');
+}
+
+function deleteTemplate(id) {
+  if(!confirm('Delete this template?')) return;
+  saveTemplates(getTemplates().filter(t => t.id !== id));
+  openManageTemplates();
+  toast('Template deleted', 'ok');
+}
+
+// ══════════════════════════════════════════
+// FEATURE KANBAN VIEW IN BUG FORM
+// ══════════════════════════════════════════
+function openFeatureKanban() {
+  const features = [...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort();
+  const systems  = [...new Set(S.bugs.map(b=>b.pod||b.platform).filter(Boolean))].sort();
+
+  document.getElementById('panelTitle').textContent = '🎮 FEATURE / SYSTEM VIEW';
+  document.getElementById('panelId').textContent = S.bugs.length + ' bugs';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Close</button>`;
+
+  const COLORS = ['#7c3aed','#06b6d4','#f59e0b','#10b981','#ef4444','#db2777','#0d9488','#a78bfa'];
+  const statusOpen = s => !['Dev Fixed','Done','QA Pass','Closed'].includes(s);
+
+  // Group by feature, show open bugs only
+  const featGroups = features.map((feat, i) => {
+    const bugs = S.bugs.filter(b => b.feature === feat && statusOpen(b.status));
+    if(!bugs.length) return '';
+    const c = COLORS[i % COLORS.length];
+    const crit = bugs.filter(b => ['Critical','Urgent'].includes(b.priority)).length;
+    return `
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:10px;min-width:220px;max-width:260px;flex-shrink:0;display:flex;flex-direction:column">
+        <div style="padding:9px 12px;border-bottom:1px solid var(--bd);background:var(--bg3);border-radius:10px 10px 0 0">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${c}">${esc(feat)}</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${bugs.length} open${crit?' · '+`<span style="color:var(--g5)">${crit} crit</span>`:''}
+          </div>
+        </div>
+        <div style="padding:6px;display:flex;flex-direction:column;gap:5px;flex:1;overflow-y:auto;max-height:380px">
+          ${bugs.sort((a,b) => (['Critical','Urgent'].includes(b.priority)?1:0) - (['Critical','Urgent'].includes(a.priority)?1:0))
+            .map(bug => `
+            <div onclick="closePanel();setTimeout(()=>openDetail('${bug.id}'),100)"
+              style="background:var(--bg3);border:1px solid var(--bd);border-radius:7px;padding:8px 10px;cursor:pointer;transition:border-color .12s"
+              onmouseenter="this.style.borderColor='${c}'" onmouseleave="this.style.borderColor='var(--bd)'">
+              <div style="font-family:var(--mono);font-size:9px;color:${c};margin-bottom:3px">${esc(bug.id)}</div>
+              <div style="font-size:11px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:5px">${esc((bug.title||'').slice(0,60))}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">${pChip(bug.priority)}${stChip(bug.status)}${avStack(bug.assignees||[],16)}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).filter(Boolean).join('');
+
+  document.getElementById('panelBody').innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px">
+      Showing open bugs by feature. Click any bug to open its detail.
+    </div>
+    <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;min-height:200px">
+      ${featGroups || '<div style="color:var(--dim);font-family:var(--mono);font-size:11px;padding:20px">No features found. Tag bugs with a Feature to see them here.</div>'}
+    </div>`;
+  openPanel();
+}
+
 function buildBugForm(bug,full){
   const spOpts=S.sprints.map(s=>`<option value="${esc(s.name)}"${bug?.sprint===s.name?' selected':''}>${esc(s.name)}</option>`).join('');
   const stOpts=ALL_STATUSES.map(v=>`<option value="${v}"${(bug?.status||'Open')===v?' selected':''}>${v}</option>`).join('');
   document.getElementById('panelTitle').textContent=bug?(full?'EDIT '+bug.id:'UPDATE '+bug.id):'NEW BUG';
-  document.getElementById('panelFooter').innerHTML=`<button class="btn btn-g" onclick="closePanel()">Cancel</button><button class="btn btn-v" id="panelSave" onclick="saveBug()">💾 SAVE</button>`;
+  document.getElementById('panelFooter').innerHTML=`<button class="btn btn-g" onclick="closePanel()">Cancel</button>${!bug?'<button class="btn btn-g" onclick="openTemplateSelector()">📋 Template</button>':''}<button class="btn btn-v" id="panelSave" onclick="saveBug()">💾 SAVE</button>`;
 
   if(bug&&!full){
     document.getElementById('panelBody').innerHTML=`
@@ -3116,9 +3842,10 @@ function buildBugForm(bug,full){
 
   document.getElementById('panelBody').innerHTML=`
     <div class="dup-box" id="dupBox"><div class="dup-title">⚠ SIMILAR BUGS FOUND</div><div id="dupList"></div></div>
+    <div id="recurBox" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:11px 14px;margin-bottom:14px"><span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:#f87171;font-weight:700">🔁 RECURRENCE DETECTED</span><div id="recurDetail" style="font-size:12px;color:var(--mist);margin-top:5px;line-height:1.6"></div></div>
     <div class="fg2">
       <div class="fg fc2"><label class="fl">Title / Issue *</label>
-        <textarea class="fi2" id="f-title" rows="2" placeholder="Describe the bug clearly…" oninput="checkDup(this.value,'${bug?.id||''}')">${esc(bug?.title||'')}</textarea>
+        <textarea class="fi2" id="f-title" rows="2" placeholder="Describe the bug clearly…" oninput="checkDup(this.value,'${bug?.id||''}');checkRecurrenceUI(this.value,document.getElementById('f-feat')?.value||''))">${esc(bug?.title||'')}</textarea>
       </div>
       <div class="fg"><label class="fl">Priority</label>
         <select class="fi2" id="f-p">${['Low','Medium','High','Critical','Urgent'].map(v=>`<option value="${v}"${(bug?.priority||'Medium')===v?' selected':''}>${v}</option>`).join('')}</select>
@@ -3143,13 +3870,17 @@ function buildBugForm(bug,full){
           </div>
         </div>
       </div>
+      <div class="fg"><label class="fl">Sub-feature / Screen <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — e.g. "Login Flow", "Icon Issue")</span></label>
+        <input class="fi2" id="f-sub-feat" value="${esc(bug?.sub_feature||'')}" placeholder="e.g. Dashboard → Stats, Match → Shot Selection">
+      </div>
       <div class="fg"><label class="fl">Sprint</label><select class="fi2" id="f-sp"><option value="">No Sprint</option>${spOpts}</select></div>
       <div class="fg"><label class="fl">Build Version</label><input class="fi2" id="f-build" value="${esc(bug?.build||'')}" placeholder="e.g. v3.2.1" list="buildHistoryList" oninput="onBuildInput(this.value)"><datalist id="buildHistoryList">${getRecentBuilds().map(b=>`<option value="${esc(b)}">`).join('')}</datalist></div>
       <div class="fg"><label class="fl">Build Link / APK URL <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input class="fi2" id="f-build-link" value="${esc(bug?.build_link||'')}" placeholder="https://drive.google.com/… or https://appdistribution/…"></div>
+      <div class="fg"><label class="fl">ClickUp Task ID <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — enables 2-way status sync)</span></label><input class="fi2" id="f-cu-id" value="${esc(bug?.clickup_task_id||'')}" placeholder="e.g. 86a1234bc or paste full ClickUp task URL"></div>
       <div class="build-notif-section">
         <div class="build-notif-title">🔔 NOTIFY TEAM ABOUT THIS BUG</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:8px" id="notifChannelStatus">
-          ${(()=>{const cfg=getWebhookConfig();const ch=[];if(cfg.gchat_url&&cfg.notif_new_bug!==false)ch.push('📢 GChat webhook');ch.push('🔔 In-app');return ch.join(' · ')||'🔔 In-app only';})()}
+          ${(()=>{const cfg=getWebhookConfig();const ch=[];if(cfg.gchat_url&&cfg.notif_new_bug!==false)ch.push('📢 GChat');if(cfg.slack_url&&cfg.notif_new_bug!==false)ch.push('💬 Slack');ch.push('🔔 In-app');return ch.join(' · ')||'🔔 In-app only';})()}
         </div>
         <div class="notif-toggle-row">
           <button class="notif-toggle${bug?'':' on'}" id="notifToggle" onclick="toggleNotif(this)"></button>
@@ -3189,6 +3920,70 @@ function buildBugForm(bug,full){
 
 // AI-powered duplicate detector
 let _dupTimer=null,_dupLastTxt='';
+// ── Recurrence UI ─────────────────────────────────────────────────────────────
+let _recurTimer = null;
+function checkRecurrenceUI(title, feature) {
+  clearTimeout(_recurTimer);
+  const box = document.getElementById('recurBox');
+  const det = document.getElementById('recurDetail');
+  if(!box || !title || title.length < 8) { box && (box.style.display='none'); return; }
+  _recurTimer = setTimeout(() => {
+    const found = checkRecurrence(title, feature);
+    if(!found) { box.style.display='none'; return; }
+    box.style.display='block';
+    det.innerHTML = `This bug was previously filed as <strong style="color:#f87171;cursor:pointer" onclick="openDetail('${found.id}');closePanel()">${found.id}</strong> — <em>${esc(found.title||'')}</em> and marked <strong>${found.status}</strong>. Is this a regression?`;
+  }, 600);
+}
+
+// ── SLA Config Panel ──────────────────────────────────────────────────────────
+function openSLASettings() {
+  const cfg = getSLAConfig();
+  document.getElementById('panelTitle').textContent = '⏱ SLA RULES';
+  document.getElementById('panelId').textContent = 'SETTINGS';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Cancel</button>
+    <button class="btn btn-v" onclick="saveSLASettings()">💾 Save SLA Rules</button>`;
+
+  const priorities = ['critical','urgent','high','medium','low'];
+  const defaults   = {critical:1,urgent:1,high:2,medium:3,low:5};
+  const defBreach  = {critical:3,urgent:3,high:5,medium:7,low:14};
+  const colors     = {critical:'#ef4444',urgent:'#ef4444',high:'#f59e0b',medium:'#3b82f6',low:'#10b981'};
+
+  document.getElementById('panelBody').innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:16px;line-height:1.8">
+      Set warn and breach thresholds per priority. Age chips and SLA badge update automatically.
+    </div>
+    ${priorities.map(p => `
+      <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${colors[p]};margin-bottom:10px">${p.replace('_',' ')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg" style="margin:0"><label class="fl">Warn after (days)</label>
+            <input class="fi2" type="number" min="1" max="30" id="sla-warn-${p}" value="${cfg['p_'+p+'_warn'] ?? defaults[p]}">
+          </div>
+          <div class="fg" style="margin:0"><label class="fl">Breach after (days)</label>
+            <input class="fi2" type="number" min="1" max="60" id="sla-breach-${p}" value="${cfg['p_'+p+'_breach'] ?? defBreach[p]}">
+          </div>
+        </div>
+      </div>`).join('')}
+    <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.8">
+      ⚡ Critical &amp; Urgent share the tightest SLAs. Adjust to match your team's commitments.
+    </div>`;
+  openPanel();
+}
+
+function saveSLASettings() {
+  const priorities = ['critical','urgent','high','medium','low'];
+  const cfg = {};
+  priorities.forEach(p => {
+    cfg['p_'+p+'_warn']   = parseInt(document.getElementById('sla-warn-'+p)?.value)   || 3;
+    cfg['p_'+p+'_breach'] = parseInt(document.getElementById('sla-breach-'+p)?.value) || 7;
+  });
+  saveSLAConfig(cfg);
+  renderSlaWarnings();
+  toast('SLA rules saved ✓', 'ok');
+  closePanel();
+}
+
 function checkDup(txt,curId){
   const box=document.getElementById('dupBox'),lst=document.getElementById('dupList');
   if(!box||!lst||!txt||txt.length<6){box?.classList.remove('on');_dupLastTxt='';return;}
@@ -3256,11 +4051,52 @@ async function _aiDup(txt,curId,candidates){
   }
 }
 
+function toggleExportDrop() {
+  const d = document.getElementById('exportDrop');
+  if(!d) return;
+  d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  if(d.style.display === 'block') {
+    setTimeout(() => {
+      const close = e => { if(!document.getElementById('exportDropWrap')?.contains(e.target)) { d.style.display='none'; document.removeEventListener('click',close); } };
+      document.addEventListener('click', close);
+    }, 10);
+  }
+}
+
 function openPanel(){document.getElementById('overlay').classList.add('on');document.getElementById('panel').classList.add('on');}
 function closePanel(){
   document.getElementById('overlay').classList.remove('on');document.getElementById('panel').classList.remove('on');
   S.editing=null;_mapAssignees=[];
   setTimeout(()=>{if(!document.getElementById('panel').classList.contains('on')){document.getElementById('panelBody').innerHTML='';document.getElementById('panelId').textContent='';}},300);
+}
+
+// ══════════════════════════════════════════
+// WATCHLIST — subscribe to bugs without being assignee/reporter
+// ══════════════════════════════════════════
+const WATCHLIST_KEY = 'hwt_watchlist_v1';
+function getWatchlist() {
+  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY)||'[]'); } catch { return []; }
+}
+function isWatching(bugId) {
+  return getWatchlist().includes(bugId);
+}
+function toggleWatch(bugId) {
+  let wl = getWatchlist();
+  if(wl.includes(bugId)) {
+    wl = wl.filter(id => id !== bugId);
+    toast('Removed from watchlist','ok');
+  } else {
+    wl.push(bugId);
+    toast('Added to watchlist 👁','ok');
+  }
+  try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(wl)); } catch(e) {}
+  // Update button if visible
+  const btn = document.getElementById('watchBtn-'+bugId);
+  if(btn) { btn.textContent = wl.includes(bugId) ? '👁 Watching' : '👁 Watch'; btn.classList.toggle('btn-v', wl.includes(bugId)); btn.classList.toggle('btn-g', !wl.includes(bugId)); }
+}
+function getWatchedBugs() {
+  const wl = getWatchlist();
+  return S.bugs.filter(b => wl.includes(b.id));
 }
 
 // ══════════════════════════════════════════
@@ -3330,12 +4166,14 @@ async function saveBug(){
         assignees,assignee:assignees[0]?.name||'',assignee_email:assignees[0]?.email||'',assignee_picture:assignees[0]?.picture||'',
         reporter:document.getElementById('f-rep')?.value||S.user?.name||'',
         reporter_email:S.user?.email||'',reporter_picture:S.user?.picture||'',
-        feature:document.getElementById('f-feat')?.value||'',sprint:document.getElementById('f-sp')?.value||'',
+        feature:document.getElementById('f-feat')?.value||'',
+        sub_feature:document.getElementById('f-sub-feat')?.value?.trim()||'',sprint:document.getElementById('f-sp')?.value||'',
         build:document.getElementById('f-build')?.value||'',
         device:document.getElementById('f-dev')?.value||'',
         steps:document.getElementById('f-steps')?.value||'',repro:document.getElementById('f-repro')?.value||'',expected:document.getElementById('f-expected')?.value||'',actual:document.getElementById('f-actual')?.value||'',
         attachment:getAttachmentValue(),
         build_link:document.getElementById('f-build-link')?.value||'',
+        clickup_task_id:(document.getElementById('f-cu-id')?.value||'').trim().replace(/.*\/t\//,'').split('/')[0]||'',
         ...ddVals,
         app_url:APP_URL,
       };
@@ -3345,6 +4183,7 @@ async function saveBug(){
         if(assignees.length)addNotif('Assignees updated',data.title,S.editing);
         if(prev&&data.status!==prev.status){
           addNotif(`Status: ${res.bug?.id||S.editing}`,`${data.title} → ${data.status}`,S.editing);
+          syncStatusToClickUp(res.bug||{...prev,...data}, data.status);
           setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,data.title);showNatasha(msg,mood);},800);
         }
         toast('Bug updated ✓','ok');
@@ -3413,12 +4252,40 @@ async function delBug(id){
   try{await api(`/bugs/${id}`,'DELETE');toast(`${id} deleted`,'ok');await refreshAll();}
   catch(e){toast(e.message,'err');}
 }
-function exportCSV(){
-  const src=S.filtered.length?S.filtered:S.bugs;
-  if(!src.length){toast('No data','err');return;}
-  const keys=['id','title','priority','severity','status','pod','assignees','reporter','feature','sprint','build','device','steps','actual','expected','attachment'];
-  const csv=[keys.join(','),...src.map(b=>keys.map(k=>k==='assignees'?`"${(b.assignees||[]).map(a=>a.name).join('; ')}"`:`"${String(b[k]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`hw_bugs_${new Date().toISOString().slice(0,10)}.csv`;a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+function exportCSV(scope) {
+  let src;
+  if(scope === 'all') src = S.bugs;
+  else if(scope === 'selection') src = S.bugs.filter(b => S.selected?.has(b.id));
+  else src = S.filtered.length ? S.filtered : S.bugs;
+  if(!src.length){toast('No data to export','err');return;}
+
+  const nowLabel = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'short',timeStyle:'short'}).replace(/[,:\/\s]+/g,'-');
+  const scopeLabel = scope==='all'?'all':scope==='selection'?'selected':'filtered';
+  const filename = `bugpulse_${scopeLabel}_${nowLabel}.csv`;
+
+  const COLS = [
+    {k:'id',l:'Bug ID'},{k:'title',l:'Title'},{k:'priority',l:'Priority'},
+    {k:'severity',l:'Severity'},{k:'status',l:'Status'},{k:'feature',l:'Feature'},
+    {k:'sprint',l:'Sprint'},{k:'build',l:'Build'},{k:'platform',l:'Platform'},
+    {k:'device',l:'Device'},{k:'pod',l:'Pod'},{k:'assignees',l:'Assignees'},
+    {k:'reporter',l:'Reporter'},{k:'steps',l:'Steps to Reproduce'},
+    {k:'actual',l:'Actual'},{k:'expected',l:'Expected'},
+    {k:'attachment',l:'Attachment'},{k:'created_at',l:'Created'},
+    {k:'updated_at',l:'Updated'},{k:'age_days',l:'Age (days)'},
+  ];
+  const cell = v => `"${String(v||'').replace(/"/g,'""')}"`;
+  const rows = [COLS.map(c=>c.l).join(',')];
+  for(const b of src) {
+    rows.push(COLS.map(c => {
+      if(c.k==='assignees') return cell((b.assignees||[]).map(a=>a.name).join('; '));
+      if(c.k==='age_days')  return cell(b.created_ts?Math.floor((Date.now()-b.created_ts)/86400000):'');
+      return cell(b[c.k]);
+    }).join(','));
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download = filename; a.style.display='none';
+  document.body.appendChild(a); a.click(); a.remove();
   toast(`Exported ${src.length} bugs ✓`,'ok');
 }
 
@@ -3499,25 +4366,36 @@ function ageChip(bug) {
   if(!active.includes(bug.status)) return '';
   const days = bugAgeDays(bug);
   if(days === null) return '';
-  const SLA_WARN = 3, SLA_BREACH = 7;
-  if(days <= 1)           return `<span class="age-badge age-fresh">NEW</span>`;
-  if(days < SLA_WARN)     return `<span class="age-badge age-normal">${days}d</span>`;
-  if(days < SLA_BREACH)   return `<span class="age-badge age-warn" title="Approaching SLA">${days}d ⚠</span>`;
-  return `<span class="age-badge age-sla" title="SLA BREACHED — ${days} days old">🔴 ${days}d</span>`;
+  const slaCfg = getSLAConfig();
+  const pKey = (bug.priority||'Medium').toLowerCase().replace(/\s+/g,'_');
+  const warn   = slaCfg['p_'+pKey+'_warn']   ?? slaCfg.warn   ?? 3;
+  const breach = slaCfg['p_'+pKey+'_breach'] ?? slaCfg.breach ?? 7;
+  if(days <= 1)       return `<span class="age-badge age-fresh">NEW</span>`;
+  if(days < warn)     return `<span class="age-badge age-normal">${days}d</span>`;
+  if(days < breach)   return `<span class="age-badge age-warn" title="Approaching SLA (${breach}d limit)">${days}d ⚠</span>`;
+  return `<span class="age-badge age-sla" title="SLA BREACHED — ${days}d (limit: ${breach}d)">🔴 ${days}d</span>`;
 }
 
 // ══════════════════════════════════════════
 // FEATURE: SLA TRACKING
 // ══════════════════════════════════════════
-const SLA_BREACH_DAYS = 7;
+const SLA_KEY = 'hwt_sla_config_v1';
+function getSLAConfig() {
+  try { return JSON.parse(localStorage.getItem(SLA_KEY)||'{}'); } catch { return {}; }
+}
+function saveSLAConfig(cfg) {
+  try { localStorage.setItem(SLA_KEY, JSON.stringify(cfg)); } catch(e) {}
+}
 
 function renderSlaWarnings() {
+  const slaCfg = getSLAConfig();
   const active = ['Open','In Progress','Bugged','In Review'];
-  const breached = S.bugs.filter(b =>
-    active.includes(b.status) &&
-    b.created_ts &&
-    Math.floor((Date.now() - b.created_ts) / 86400000) >= SLA_BREACH_DAYS
-  );
+  const breached = S.bugs.filter(b => {
+    if(!active.includes(b.status) || !b.created_ts) return false;
+    const pKey = (b.priority||'Medium').toLowerCase().replace(' ','_');
+    const breach = slaCfg[pKey+'_breach'] ?? slaCfg.breach ?? 7;
+    return Math.floor((Date.now() - b.created_ts) / 86400000) >= breach;
+  });
   // Add SLA count to sidebar if any
   let slaEl = document.getElementById('sla-count-badge');
   if(!slaEl) {
@@ -3609,6 +4487,38 @@ async function applyBulk() {
   clearBulk();
   await refreshAll();
   if(btn){ btn.disabled=false; btn.innerHTML='✓ Apply'; }
+}
+
+function copyBulkLink() {
+  if(!_bulkSelected.size) { toast('Select bugs first','err'); return; }
+  const ids = [..._bulkSelected].join(',');
+  const url = APP_URL + '?bugs=' + encodeURIComponent(ids);
+  navigator.clipboard.writeText(url).then(() => toast(`Link to ${_bulkSelected.size} bugs copied ✓`,'ok'));
+}
+
+function copyBulkReport() {
+  if(!_bulkSelected.size) { toast('Select bugs first','err'); return; }
+  const bugs = S.bugs.filter(b => _bulkSelected.has(b.id));
+  const bugLink = id => `${APP_URL}?bug=${id}`;
+  const lines = ['📋 BUG REPORT — ' + bugs.length + ' issue' + (bugs.length!==1?'s':''),
+    '━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Generated: ' + new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),
+    ''];
+  bugs.forEach(b => {
+    const assignees = (b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
+    lines.push(`[${b.id}] ${b.title||''}`);
+    lines.push(`  Priority : ${b.priority||'—'} | Status: ${b.status||'—'} | Severity: ${b.severity||'—'}`);
+    lines.push(`  Feature  : ${b.feature||'—'} | Sprint: ${b.sprint||'—'} | Build: ${b.build||'—'}`);
+    lines.push(`  Assignee : ${assignees}`);
+    if(b.steps)   lines.push(`  Steps    : ${b.steps.slice(0,120)}`);
+    if(b.actual)  lines.push(`  Actual   : ${b.actual.slice(0,120)}`);
+    lines.push(`  🔗 ${bugLink(b.id)}`);
+    lines.push('');
+  });
+  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━');
+  lines.push(`Shared link: ${APP_URL}?bugs=${encodeURIComponent([..._bulkSelected].join(','))}`);
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(() => toast(`Report for ${bugs.length} bugs copied ✓`,'ok'));
 }
 
 function clearBulk() {
@@ -3760,6 +4670,8 @@ document.addEventListener('keydown', e => {
 
   if(e.key === '?') { document.getElementById('shortcutsModal')?.classList.add('on'); return; }
   if(e.key === 'n' || e.key === 'N') { openNew(); return; }
+  if(e.key === 't' || e.key === 'T') { openTemplateSelector(); return; }
+  if(e.key === 'r' || e.key === 'R') { goTab('builds'); setTimeout(goTestRuns,300); return; }
   if(e.key === 'b' || e.key === 'B') { goTab('board'); return; }
   if(e.key === 'l' || e.key === 'L') { goToBugsClean(); return; }
   if(e.key === 'h' || e.key === 'H') { goTab('home'); return; }
@@ -3881,6 +4793,88 @@ async function cuFetch(path) {
   return r.json();
 }
 
+// ══════════════════════════════════════════
+// CLICKUP 2-WAY STATUS SYNC
+// ══════════════════════════════════════════
+
+// BugPulse status → ClickUp status name mapping (customisable)
+const CU_STATUS_PUSH_MAP = {
+  'Open':            'open',
+  'In Progress':     'in progress',
+  'In Review':       'review',
+  'Bugged':          'bug',
+  'Dev Fixed':       'dev fixed',
+  'QA Pass':         'qa pass',
+  'Done':            'complete',
+  'Closed':          'closed',
+  'Non-Recreatable': 'non-recreatable',
+  'Not a bug':       'not a bug',
+};
+
+// ClickUp status name → BugPulse status (for pull direction)
+const CU_STATUS_PULL_MAP = {
+  'open':            'Open',
+  'in progress':     'In Progress',
+  'in review':       'In Review',
+  'review':          'In Review',
+  'bug':             'Bugged',
+  'dev fixed':       'Dev Fixed',
+  'qa pass':         'QA Pass',
+  'complete':        'Done',
+  'closed':          'Closed',
+  'won\'t fix':     'Closed',
+};
+
+async function cuPushStatus(cuTaskId, bpStatus) {
+  if(!cuTaskId) return false;
+  const cuStatus = CU_STATUS_PUSH_MAP[bpStatus];
+  if(!cuStatus) return false;
+  try {
+    const r = await fetch(CU_API + '/task/' + cuTaskId, {
+      method: 'PUT',
+      headers: { Authorization: CU_TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: cuStatus }),
+    });
+    if(!r.ok) { console.warn('[cu push] failed', r.status); return false; }
+    // Update local cache too
+    const task = _cuTasks.find(t => t.id === cuTaskId);
+    if(task) { task.status = { ...task.status, status: cuStatus }; }
+    return true;
+  } catch(e) { console.warn('[cu push]', e.message); return false; }
+}
+
+// Called after bug status changes — push to linked CU task
+async function syncStatusToClickUp(bug, newStatus) {
+  const cuId = (bug.clickup_task_id || '').trim();
+  if(!cuId) return;
+  const pushed = await cuPushStatus(cuId, newStatus);
+  if(pushed) toast(`Status synced to ClickUp ✓`, 'ok');
+}
+
+// Called during loadClickUp — pull CU status → BugPulse for linked bugs
+async function syncStatusFromClickUp() {
+  const linked = S.bugs.filter(b => b.clickup_task_id?.trim());
+  if(!linked.length || !_cuTasks.length) return;
+  let updated = 0;
+  for(const bug of linked) {
+    const cuId = bug.clickup_task_id.trim();
+    const cuTask = _cuTasks.find(t => t.id === cuId);
+    if(!cuTask) continue;
+    const cuStatus = (cuTask.status?.status || '').toLowerCase();
+    const bpStatus = CU_STATUS_PULL_MAP[cuStatus];
+    if(!bpStatus || bpStatus === bug.status) continue;
+    try {
+      await api('/bugs/' + bug.id, 'PUT', { status: bpStatus, _restricted: true });
+      bug.status = bpStatus;
+      updated++;
+    } catch(e) { console.warn('[cu pull]', bug.id, e.message); }
+  }
+  if(updated > 0) {
+    applyF();
+    toast(`${updated} bug${updated!==1?'s':''} updated from ClickUp ✓`, 'ok');
+  }
+}
+
 async function loadClickUp(force) {
   // Restore from cache first (instant, no spinner, no API call)
   if (!force && !_cuLoaded) {
@@ -3953,6 +4947,7 @@ async function loadClickUp(force) {
     document.getElementById('cu-sub').textContent = `${_cuTasks.length} tasks · ${_cuLists.length} lists · ${teams[0].name}`;
     cuRender();
     toast(`ClickUp synced — ${_cuTasks.length} tasks ✓`, 'ok');
+    syncStatusFromClickUp(); // pull CU status → BugPulse for linked bugs
   } catch(e) {
     document.getElementById('cuBody').innerHTML = `<div class="empty"><div class="empty-icon">🟣</div><h3>CLICKUP ERROR</h3><p>${esc(e.message)}</p></div>`;
     toast('ClickUp: '+e.message,'err');
@@ -4577,6 +5572,7 @@ function buildPageCard(b) {
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${!b.is_current?`<button class="btn btn-g btn-xs" onclick="setCurrentBuild('${vEsc}')">📍 Set Current</button>`:''}
+          <button class="btn btn-g btn-xs" onclick="openReleaseNotes('${vEsc}')">🚀 Notes</button>
           <button class="btn btn-g btn-xs" onclick="editBuildEntry('${vEsc}')">✏️</button>
           <button class="btn btn-r btn-xs" onclick="deleteBuildEntry('${vEsc}')">🗑</button>
         </div>
@@ -4729,6 +5725,18 @@ async function saveBuildEntry(editVersion) {
         const gchatText = `📦 *New Build Available — ${version}*\n${entry.platform?'Platform: '+entry.platform+'\n':''}${entry.notes?'Notes: '+entry.notes.slice(0,120)+'\n':''}${downloadLine}\n🔗 Build Tracker: ${buildTrackerUrl}`;
         await sendGChatWebhook(gchatText);
       }
+      if(cfg.slack_url && cfg.notif_build_available !== false) {
+        const btu = APP_URL + '#builds';
+        await sendSlackWebhook(null, [
+          { type:'section', text:{ type:'mrkdwn', text:`📦 *New Build Available — ${version}*${entry.platform?' ('+entry.platform+')':''}` } },
+          { type:'section', fields:[
+            ...(entry.notes?[{ type:'mrkdwn', text:`*Notes:* ${entry.notes.slice(0,120)}` }]:[]),
+            ...(entry.link?[{ type:'mrkdwn', text:`*Download:* <${entry.link}|Install Build>` }]:[]),
+            { type:'mrkdwn', text:`*Logged by:* ${entry.logged_by||S.user?.name||'Team'}` },
+            { type:'mrkdwn', text:`*BugPulse:* <${btu}|View Builds>` },
+          ]},
+        ]);
+      }
       // Email via Resend through worker
       if(cfg.team_emails && cfg.team_emails.trim()) {
         const recipients = cfg.team_emails.split(',').map(function(e){return e.trim();}).filter(Boolean);
@@ -4788,6 +5796,416 @@ async function saveBuildEntry(editVersion) {
     toast('Error: '+e.message,'err');
     if(btn){btn.disabled=false;btn.innerHTML='💾 Save Build';}
   }
+}
+
+// ══════════════════════════════════════════
+// RELEASE NOTES GENERATOR
+// ══════════════════════════════════════════
+function openReleaseNotes(version) {
+  const bugMap = getBuildBugMap();
+  const buildBugs = bugMap[version] || [];
+  const DONE = ['Done','QA Pass','Dev Fixed','Closed'];
+  const fixed  = buildBugs.filter(b => DONE.includes(b.status));
+  const open   = buildBugs.filter(b => !DONE.includes(b.status));
+
+  document.getElementById('panelTitle').textContent = '🚀 RELEASE NOTES';
+  document.getElementById('panelId').textContent = version;
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Close</button>
+    <button class="btn btn-g" onclick="copyReleaseNotes('${version}')">📋 Copy</button>
+    <button class="btn btn-v" onclick="sendReleaseNotesToGChat('${version}')">📢 Send to GChat</button>`;
+
+  const groupBy = (bugs, key) => bugs.reduce((acc, b) => {
+    const k = b[key] || 'General'; (acc[k]=acc[k]||[]).push(b); return acc;
+  }, {});
+
+  const byFeature = groupBy(fixed, 'feature');
+
+  const fixedHtml = Object.entries(byFeature).map(([feat, bugs]) => `
+    <div style="margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:6px">${esc(feat)}</div>
+      ${bugs.map(b => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:7px;margin-bottom:4px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--g4);flex-shrink:0;padding-top:2px">✓</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(b.title||'')}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${esc(b.id)} · ${pChip(b.priority)}</div>
+          </div>
+        </div>`).join('')}
+    </div>`).join('') || '<div style="color:var(--dim);font-family:var(--mono);font-size:11px">No fixed bugs tagged to this build yet</div>';
+
+  const openHtml = open.length ? `
+    <div style="margin-top:16px;padding:12px 14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171;margin-bottom:8px">⚠ ${open.length} KNOWN ISSUE${open.length!==1?'S':''}</div>
+      ${open.map(b=>`<div style="font-size:12px;color:var(--mist);padding:3px 0">${esc(b.id)} — ${esc(b.title||'')}</div>`).join('')}
+    </div>` : '';
+
+  document.getElementById('panelBody').innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">Build ${esc(version)}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">${fixed.length} fix${fixed.length!==1?'es':''} · ${open.length} known issue${open.length!==1?'s':''}</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">✅ FIXED IN THIS BUILD</div>
+      ${fixedHtml}
+    </div>
+    ${openHtml}`;
+  openPanel();
+}
+
+function buildReleaseNotesText(version) {
+  const bugMap = getBuildBugMap();
+  const buildBugs = bugMap[version] || [];
+  const DONE = ['Done','QA Pass','Dev Fixed','Closed'];
+  const fixed = buildBugs.filter(b => DONE.includes(b.status));
+  const open  = buildBugs.filter(b => !DONE.includes(b.status));
+  const groupBy = (bugs, key) => bugs.reduce((acc, b) => {
+    const k = b[key] || 'General'; (acc[k]=acc[k]||[]).push(b); return acc;
+  }, {});
+  const byFeature = groupBy(fixed, 'feature');
+
+  let txt = `🚀 *Release Notes — Build ${version}*\n`;
+  txt += `${new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium'})}\n\n`;
+
+  if(fixed.length) {
+    txt += `✅ *Fixed (${fixed.length})*\n`;
+    Object.entries(byFeature).forEach(([feat, bugs]) => {
+      txt += `\n*${feat}*\n`;
+      bugs.forEach(b => { txt += `• ${b.title||''} _(${b.id})_\n`; });
+    });
+  }
+  if(open.length) {
+    txt += `\n⚠ *Known Issues (${open.length})*\n`;
+    open.forEach(b => { txt += `• ${b.title||''} _(${b.id} · ${b.priority})_\n`; });
+  }
+  txt += `\n🔗 ${APP_URL}#builds`;
+  return txt;
+}
+
+function copyReleaseNotes(version) {
+  navigator.clipboard.writeText(buildReleaseNotesText(version).replace(/\*/g,'').replace(/_/g,''))
+    .then(() => toast('Release notes copied ✓', 'ok'));
+}
+
+async function sendReleaseNotesToGChat(version) {
+  const cfg = getWebhookConfig();
+  if(!cfg.gchat_url) { toast('No GChat webhook configured', 'err'); return; }
+  await sendGChatWebhook(buildReleaseNotesText(version));
+  // Slack too
+  if(cfg.slack_url) await sendSlackWebhook(buildReleaseNotesText(version).replace(/\*/g,'*'));
+  toast('Release notes sent to GChat ✓', 'ok');
+}
+
+// ══════════════════════════════════════════
+// TEST RUN TRACKER
+// ══════════════════════════════════════════
+const TEST_RUNS_KEY = 'hwt_test_runs_v1';
+
+function getTestRuns() {
+  try { return JSON.parse(localStorage.getItem(TEST_RUNS_KEY)||'[]'); } catch { return []; }
+}
+function saveTestRuns(runs) {
+  try { localStorage.setItem(TEST_RUNS_KEY, JSON.stringify(runs)); } catch(e) {}
+}
+
+function goTestRuns() {
+  const wrap = document.getElementById('testRunsWrap');
+  const buildsWrap = document.getElementById('buildsWrap');
+  const banner = document.getElementById('buildsCurrentBanner');
+  if(!wrap) return;
+  const isOpen = wrap.style.display !== 'none';
+  if(isOpen) {
+    wrap.style.display = 'none';
+    buildsWrap.style.display = '';
+    banner.style.display = '';
+  } else {
+    buildsWrap.style.display = 'none';
+    banner.style.display = 'none';
+    wrap.style.display = '';
+    renderTestRuns();
+  }
+}
+
+function renderTestRuns() {
+  const wrap = document.getElementById('testRunsWrap');
+  if(!wrap) return;
+  const runs = getTestRuns();
+
+  const runsHtml = runs.length ? runs.map((run, ri) => {
+    const total = run.cases?.length || 0;
+    const passed = run.cases?.filter(c => c.result === 'pass').length || 0;
+    const failed = run.cases?.filter(c => c.result === 'fail').length || 0;
+    const blocked = run.cases?.filter(c => c.result === 'blocked').length || 0;
+    const pct = total ? Math.round(passed/total*100) : 0;
+    return `
+      <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--text)">${esc(run.name||'Unnamed Run')}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">Build: ${esc(run.build||'—')} · ${esc(run.date||'')} · ${total} cases</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <div style="font-family:var(--mono);font-size:18px;font-weight:800;color:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'}">${pct}%</div>
+            <button class="btn btn-g btn-sm" onclick="openTestRun(${ri})">Open</button>
+            <button class="btn btn-r btn-sm" onclick="deleteTestRun(${ri})">✕</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(16,185,129,.15);color:#34d399">✓ ${passed} pass</span>
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">✕ ${failed} fail</span>
+          ${blocked?`<span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,.15);color:#fbbf24">⊘ ${blocked} blocked</span>`:''}
+        </div>
+        <div style="height:6px;background:var(--bg3);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'};transition:width .4s"></div>
+        </div>
+      </div>`;
+  }).join('') : `<div class="empty"><div class="empty-icon">🧪</div><h3>NO TEST RUNS</h3><p>Create a test run to track pass/fail for a build</p></div>`;
+
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g2)">🧪 TEST RUNS</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-g btn-sm" onclick="goTestRuns()">← Builds</button>
+        <button class="btn btn-v btn-sm" onclick="openNewTestRun()">＋ New Run</button>
+      </div>
+    </div>
+    ${runsHtml}`;
+}
+
+function openNewTestRun() {
+  const builds = [];
+  try {
+    // get recent build versions from bugs
+    const bvSet = new Set(S.bugs.map(b=>b.build).filter(Boolean));
+    bvSet.forEach(v => builds.push(v));
+  } catch(e) {}
+
+  document.getElementById('panelTitle').textContent = '🧪 NEW TEST RUN';
+  document.getElementById('panelId').textContent = 'TEST RUN';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Cancel</button>
+    <button class="btn btn-v" onclick="createTestRun()">＋ Create Run</button>`;
+  document.getElementById('panelBody').innerHTML = `
+    <div class="fg"><label class="fl">Run Name</label>
+      <input class="fi2" id="tr-name" placeholder="e.g. Sprint 14 Regression" value="">
+    </div>
+    <div class="fg"><label class="fl">Build Version</label>
+      <input class="fi2" id="tr-build" list="tr-build-list" placeholder="e.g. v3.2.1">
+      <datalist id="tr-build-list">${builds.map(v=>`<option value="${esc(v)}">`).join('')}</datalist>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">📋 IMPORT TEST CASES</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn ${!document.getElementById('tr-source-csv')?.checked?'btn-v':'btn-g'} btn-sm" id="tr-src-bugs" onclick="trSetSource('bugs')">From BugPulse Bugs</button>
+        <button class="btn btn-g btn-sm" id="tr-src-csv" onclick="trSetSource('csv')">📄 Upload CSV</button>
+      </div>
+      <div id="tr-source-bugs-panel">
+        <div class="fg" style="margin:0"><label class="fl">Filter bugs to import</label>
+          <select class="fi2" id="tr-filter">
+            <option value="">— All active bugs —</option>
+            ${S.sprints.map(s=>`<option value="sprint:${esc(s.name)}">Sprint: ${esc(s.name)}</option>`).join('')}
+            ${[...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].map(f=>`<option value="feature:${esc(f)}">Feature: ${esc(f)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div id="tr-source-csv-panel" style="display:none">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:8px;line-height:1.8">
+          CSV columns: <b>id</b>, <b>title</b> (required) + optional: steps, expected, section<br>
+          Compatible with TestRail CSV export format.
+        </div>
+        <div style="border:2px dashed var(--bd2);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:rgba(124,58,237,.03)" onclick="document.getElementById('tr-csv-input').click()" id="tr-csv-drop" ondragover="event.preventDefault();this.style.borderColor='var(--g1)'" ondragleave="this.style.borderColor='var(--bd2)'" ondrop="trHandleCsvDrop(event)">
+          <div style="font-size:24px;margin-bottom:6px">📄</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">Drop TestRail/CSV here or click to browse</div>
+          <div id="tr-csv-preview" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--g4)"></div>
+        </div>
+        <input type="file" id="tr-csv-input" accept=".csv" style="display:none" onchange="trHandleCsvFile(this.files[0])">
+      </div>
+    </div>`;
+  openPanel();
+}
+
+let _trCsvCases = []; // parsed from CSV
+let _trSource = 'bugs'; // 'bugs' or 'csv'
+
+function trSetSource(src) {
+  _trSource = src;
+  document.getElementById('tr-source-bugs-panel').style.display = src === 'bugs' ? '' : 'none';
+  document.getElementById('tr-source-csv-panel').style.display  = src === 'csv'  ? '' : 'none';
+  document.getElementById('tr-src-bugs').className = 'btn ' + (src==='bugs'?'btn-v':'btn-g') + ' btn-sm';
+  document.getElementById('tr-src-csv').className  = 'btn ' + (src==='csv' ?'btn-v':'btn-g') + ' btn-sm';
+}
+
+function trHandleCsvDrop(e) {
+  e.preventDefault();
+  document.getElementById('tr-csv-drop').style.borderColor = 'var(--bd2)';
+  const file = e.dataTransfer?.files?.[0];
+  if(file) trHandleCsvFile(file);
+}
+
+function trHandleCsvFile(file) {
+  if(!file || !file.name.endsWith('.csv')) { toast('Select a .csv file','err'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim());
+    if(lines.length < 2) { toast('CSV needs header + data rows','err'); return; }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g,''));
+    _trCsvCases = [];
+    for(let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+      const row = {};
+      headers.forEach((h,idx) => { row[h] = (vals[idx]||'').replace(/^"|"$/g,'').trim(); });
+      const title = row.title || row.name || row.test_case || row.case_title || row.summary || '';
+      if(!title) continue;
+      _trCsvCases.push({
+        bugId: row.id || row.case_id || row.tc_id || ('TC-'+(i)),
+        title,
+        steps:    row.steps || row.steps_to_reproduce || row.preconditions || '',
+        expected: row.expected || row.expected_result || '',
+        section:  row.section || row.suite || row.module || '',
+        result:   'pending',
+        note:     ''
+      });
+    }
+    const preview = document.getElementById('tr-csv-preview');
+    if(preview) preview.textContent = `✓ ${_trCsvCases.length} test cases loaded`;
+    toast(`${_trCsvCases.length} test cases parsed ✓`, 'ok');
+  };
+  reader.readAsText(file);
+}
+
+function createTestRun() {
+  const name  = document.getElementById('tr-name')?.value?.trim();
+  const build = document.getElementById('tr-build')?.value?.trim();
+  const filter = document.getElementById('tr-filter')?.value || '';
+  if(!name) { toast('Run name required', 'err'); return; }
+
+  let cases;
+  if(_trSource === 'csv') {
+    if(!_trCsvCases.length) { toast('Upload a CSV file first','err'); return; }
+    cases = _trCsvCases.map(c => ({...c}));
+  } else {
+    let src = S.bugs.filter(b => !['Done','QA Pass','Closed'].includes(b.status));
+    if(filter.startsWith('sprint:'))  src = src.filter(b => b.sprint === filter.slice(7));
+    if(filter.startsWith('feature:')) src = src.filter(b => b.feature === filter.slice(8));
+    cases = src.map(b => ({ bugId: b.id, title: b.title||'', steps: b.steps||'', expected: b.expected||'', result: 'pending', note: '' }));
+  }
+
+  const run = {
+    id: Date.now(),
+    name,
+    build: build || '',
+    source: _trSource,
+    date: new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium'}),
+    cases,
+  };
+  const runs = getTestRuns();
+  runs.unshift(run);
+  saveTestRuns(runs);
+  closePanel();
+  renderTestRuns();
+  toast(`Test run created — ${run.cases.length} cases ✓`, 'ok');
+}
+
+function openTestRun(idx) {
+  const runs = getTestRuns();
+  const run = runs[idx];
+  if(!run) return;
+
+  const RESULTS = { pass:'✓ Pass', fail:'✕ Fail', blocked:'⊘ Blocked', pending:'— Pending' };
+  const COLORS  = { pass:'#34d399', fail:'#f87171', blocked:'#fbbf24', pending:'var(--dim)' };
+
+  document.getElementById('panelTitle').textContent = '🧪 ' + (run.name||'Test Run');
+  document.getElementById('panelId').textContent = run.build || '';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel();renderTestRuns()">Close</button>
+    <button class="btn btn-v" onclick="exportTestRun(${idx})">📥 Export</button>`;
+
+  const renderCases = () => {
+    document.getElementById('tr-cases').innerHTML = run.cases.map((c, ci) => `
+      <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:7px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(c.title)}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${esc(c.bugId)}${c.section?' · '+esc(c.section):''}</div>
+            ${c.steps?`<div style="margin-top:5px;font-family:var(--mono);font-size:9px;color:var(--mute);line-height:1.6"><b style="color:var(--dim)">Steps:</b> ${esc(c.steps.slice(0,120))}</div>`:''}
+            ${c.expected?`<div style="font-family:var(--mono);font-size:9px;color:var(--mute)"><b style="color:var(--dim)">Expected:</b> ${esc(c.expected.slice(0,100))}</div>`:''}
+          </div>
+          <select onchange="setTestResult(${idx},${ci},this.value)"
+            style="font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:7px;border:1px solid ${COLORS[c.result]||'var(--bd)'};background:var(--bg2);color:${COLORS[c.result]||'var(--text)'};cursor:pointer">
+            ${Object.entries(RESULTS).map(([v,l])=>`<option value="${v}" ${c.result===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <input class="fi2" placeholder="Note (optional)" value="${esc(c.note||'')}"
+          oninput="setTestNote(${idx},${ci},this.value)"
+          style="margin-top:7px;font-size:11px;padding:5px 10px">
+      </div>`).join('');
+  };
+
+  document.getElementById('panelBody').innerHTML = `
+    <div id="tr-summary" style="margin-bottom:14px"></div>
+    <div id="tr-cases"></div>`;
+  renderCases();
+  updateTestSummary(idx);
+}
+
+function updateTestSummary(idx) {
+  const run = getTestRuns()[idx];
+  if(!run) return;
+  const total   = run.cases.length;
+  const passed  = run.cases.filter(c=>c.result==='pass').length;
+  const failed  = run.cases.filter(c=>c.result==='fail').length;
+  const blocked = run.cases.filter(c=>c.result==='blocked').length;
+  const pending = run.cases.filter(c=>c.result==='pending').length;
+  const pct = total ? Math.round(passed/total*100) : 0;
+  const el = document.getElementById('tr-summary');
+  if(el) el.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(16,185,129,.15);color:#34d399">✓ ${passed}</span>
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">✕ ${failed}</span>
+      ${blocked?`<span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(245,158,11,.15);color:#fbbf24">⊘ ${blocked}</span>`:''}
+      ${pending?`<span style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:4px 12px;border-radius:20px;background:var(--bg3)">— ${pending} pending</span>`:''}
+      <span style="font-family:var(--mono);font-size:18px;font-weight:800;color:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'};margin-left:auto">${pct}%</span>
+    </div>
+    <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:14px">
+      <div style="height:100%;width:${pct}%;background:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'}"></div>
+    </div>`;
+}
+
+function setTestResult(runIdx, caseIdx, result) {
+  const runs = getTestRuns();
+  if(!runs[runIdx]?.cases[caseIdx]) return;
+  runs[runIdx].cases[caseIdx].result = result;
+  saveTestRuns(runs);
+  updateTestSummary(runIdx);
+}
+
+function setTestNote(runIdx, caseIdx, note) {
+  const runs = getTestRuns();
+  if(!runs[runIdx]?.cases[caseIdx]) return;
+  runs[runIdx].cases[caseIdx].note = note;
+  saveTestRuns(runs);
+}
+
+function deleteTestRun(idx) {
+  if(!confirm('Delete this test run?')) return;
+  const runs = getTestRuns();
+  runs.splice(idx, 1);
+  saveTestRuns(runs);
+  renderTestRuns();
+  toast('Test run deleted', 'ok');
+}
+
+function exportTestRun(idx) {
+  const run = getTestRuns()[idx];
+  if(!run) return;
+  const rows = [['Bug ID','Title','Result','Note']];
+  run.cases.forEach(c => rows.push([c.bugId, c.title, c.result, c.note||'']));
+  const csv = rows.map(r => r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = `testrun_${(run.name||'run').replace(/\s+/g,'_')}_${run.build||''}.csv`;
+  a.style.display='none'; document.body.appendChild(a); a.click(); a.remove();
+  toast('Test run exported ✓', 'ok');
 }
 
 async function setCurrentBuild(version) {
@@ -5002,18 +6420,41 @@ function toggleNotif(btn) {
 }
 
 // ══════════════════════════════════════════
-// WEBHOOK SETTINGS — stored per user in localStorage
+// WEBHOOK SETTINGS — stored in D1 via worker /settings
+// localStorage used only as a fast cache; D1 is the source of truth
 // ══════════════════════════════════════════
-const WEBHOOK_KEY = 'hwt_webhooks_v1';
+const WEBHOOK_KEY = 'hwt_webhooks_v2';
+let _webhookCfgCache = null;
+
 function getWebhookConfig() {
+  // Return cache or localStorage fallback synchronously (for callers that can't await)
+  if (_webhookCfgCache) return _webhookCfgCache;
   try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
 }
-function saveWebhookConfig(cfg) {
-  try { localStorage.setItem(WEBHOOK_KEY, JSON.stringify(cfg)); } catch(e) {}
+
+async function loadWebhookConfig() {
+  try {
+    const data = await api('/settings');
+    _webhookCfgCache = data.settings || {};
+    localStorage.setItem(WEBHOOK_KEY, JSON.stringify(_webhookCfgCache));
+    return _webhookCfgCache;
+  } catch(e) {
+    // Fallback to localStorage if offline or not logged in
+    try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
+  }
 }
 
-function openWebhookSettings() {
-  const cfg = getWebhookConfig();
+async function saveWebhookConfig(cfg) {
+  _webhookCfgCache = cfg;
+  try { localStorage.setItem(WEBHOOK_KEY, JSON.stringify(cfg)); } catch(e) {}
+  try { await api('/settings', 'POST', cfg); } catch(e) { console.error('[settings] save failed', e.message); }
+}
+
+async function openWebhookSettings() {
+  // Show panel immediately with cached config, then refresh from server
+  let cfg = getWebhookConfig();
+  openPanel();
+  cfg = await loadWebhookConfig();
   document.getElementById('panelTitle').textContent = '🔔 WEBHOOK SETTINGS';
   document.getElementById('panelId').textContent = 'NOTIFICATIONS';
   document.getElementById('panelFooter').innerHTML = `
@@ -5029,10 +6470,144 @@ function openWebhookSettings() {
         <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.8">Get it from GChat: open a Space → Apps & Integrations → Manage Webhooks → Add</div>
       </div>
 
+      <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.25);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#4a90e2;margin-bottom:12px">💬 SLACK WEBHOOK</div>
+        <div class="fg"><label class="fl">Slack Incoming Webhook URL</label>
+          <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/…">
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.8">Slack → Apps → Incoming Webhooks → Add to Slack → copy Webhook URL</div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-g" onclick="testSlackWebhook()" style="font-size:11px">🧪 Test Slack</button>
+        </div>
+      </div>
+
+      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f59e0b;margin-bottom:4px">🏗️ JENKINS INBOUND WEBHOOKS</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">
+          One URL per team. Jenkins POST: <span style="color:var(--g2)">{&quot;version&quot;:&quot;1.4.2&quot;,&quot;platform&quot;:&quot;Android&quot;,&quot;link&quot;:&quot;…&quot;,&quot;notes&quot;:&quot;…&quot;}</span>
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#06b6d4">Openers</span>
+            ${cfg.jenkins_openers_token ? `
+              <div style="position:relative;display:inline-block">
+                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('openers',this)">⋯</button>
+                <div id="jk-menu-openers" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+                  <div class="jk-mi" onclick="jkCopyUrl('openers')">📋 Copy Webhook URL</div>
+                  <div class="jk-mi" onclick="jkReveal('openers')">👁 Reveal Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('openers','Openers')">🔄 Regenerate Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('openers','Openers')">🗑 Delete Webhook</div>
+                </div>
+              </div>` : ''}
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label class="fl">GChat Webhook URL</label>
+            <input class="fi2" id="wh-jk-gchat-openers" value="${esc(cfg.jenkins_openers_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
+          </div>
+          <div class="fg" style="margin-bottom:10px">
+            <label class="fl">Team Emails (comma-separated)</label>
+            <input class="fi2" id="wh-jk-emails-openers" value="${esc(cfg.jenkins_openers_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
+          </div>
+          ${cfg.jenkins_openers_token ? `
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
+              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-openers">${cfg.jenkins_openers_token && cfg.jenkins_openers_token!=='••set••' ? WORKER+'/webhook/jenkins?team=openers&token='+cfg.jenkins_openers_token : WORKER+'/webhook/jenkins?team=openers&token='+'•'.repeat(16)}</span>
+            </div>` : `
+            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('openers')">＋ Generate Webhook URL</button>`}
+          <input type="hidden" id="wh-jk-token-openers" value="${esc(cfg.jenkins_openers_token||'')}">
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#a78bfa">Middle Order</span>
+            ${cfg.jenkins_middle_order_token ? `
+              <div style="position:relative;display:inline-block">
+                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('middle_order',this)">⋯</button>
+                <div id="jk-menu-middle_order" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+                  <div class="jk-mi" onclick="jkCopyUrl('middle_order')">📋 Copy Webhook URL</div>
+                  <div class="jk-mi" onclick="jkReveal('middle_order')">👁 Reveal Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('middle_order','Middle Order')">🔄 Regenerate Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('middle_order','Middle Order')">🗑 Delete Webhook</div>
+                </div>
+              </div>` : ''}
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label class="fl">GChat Webhook URL</label>
+            <input class="fi2" id="wh-jk-gchat-middle_order" value="${esc(cfg.jenkins_middle_order_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
+          </div>
+          <div class="fg" style="margin-bottom:10px">
+            <label class="fl">Team Emails (comma-separated)</label>
+            <input class="fi2" id="wh-jk-emails-middle_order" value="${esc(cfg.jenkins_middle_order_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
+          </div>
+          ${cfg.jenkins_middle_order_token ? `
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
+              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-middle_order">${cfg.jenkins_middle_order_token && cfg.jenkins_middle_order_token!=='••set••' ? WORKER+'/webhook/jenkins?team=middle_order&token='+cfg.jenkins_middle_order_token : WORKER+'/webhook/jenkins?team=middle_order&token='+'•'.repeat(16)}</span>
+            </div>` : `
+            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('middle_order')">＋ Generate Webhook URL</button>`}
+          <input type="hidden" id="wh-jk-token-middle_order" value="${esc(cfg.jenkins_middle_order_token||'')}">
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#34d399">Tech Infra</span>
+            ${cfg.jenkins_tech_infra_token ? `
+              <div style="position:relative;display:inline-block">
+                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('tech_infra',this)">⋯</button>
+                <div id="jk-menu-tech_infra" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+                  <div class="jk-mi" onclick="jkCopyUrl('tech_infra')">📋 Copy Webhook URL</div>
+                  <div class="jk-mi" onclick="jkReveal('tech_infra')">👁 Reveal Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('tech_infra','Tech Infra')">🔄 Regenerate Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('tech_infra','Tech Infra')">🗑 Delete Webhook</div>
+                </div>
+              </div>` : ''}
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label class="fl">GChat Webhook URL</label>
+            <input class="fi2" id="wh-jk-gchat-tech_infra" value="${esc(cfg.jenkins_tech_infra_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
+          </div>
+          <div class="fg" style="margin-bottom:10px">
+            <label class="fl">Team Emails (comma-separated)</label>
+            <input class="fi2" id="wh-jk-emails-tech_infra" value="${esc(cfg.jenkins_tech_infra_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
+          </div>
+          ${cfg.jenkins_tech_infra_token ? `
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
+              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-tech_infra">${cfg.jenkins_tech_infra_token && cfg.jenkins_tech_infra_token!=='••set••' ? WORKER+'/webhook/jenkins?team=tech_infra&token='+cfg.jenkins_tech_infra_token : WORKER+'/webhook/jenkins?team=tech_infra&token='+'•'.repeat(16)}</span>
+            </div>` : `
+            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('tech_infra')">＋ Generate Webhook URL</button>`}
+          <input type="hidden" id="wh-jk-token-tech_infra" value="${esc(cfg.jenkins_tech_infra_token||'')}">
+        </div>
+        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171">LiveOps</span>
+            ${cfg.jenkins_liveops_token ? `
+              <div style="position:relative;display:inline-block">
+                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('liveops',this)">⋯</button>
+                <div id="jk-menu-liveops" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
+                  <div class="jk-mi" onclick="jkCopyUrl('liveops')">📋 Copy Webhook URL</div>
+                  <div class="jk-mi" onclick="jkReveal('liveops')">👁 Reveal Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('liveops','LiveOps')">🔄 Regenerate Token</div>
+                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('liveops','LiveOps')">🗑 Delete Webhook</div>
+                </div>
+              </div>` : ''}
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label class="fl">GChat Webhook URL</label>
+            <input class="fi2" id="wh-jk-gchat-liveops" value="${esc(cfg.jenkins_liveops_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
+          </div>
+          <div class="fg" style="margin-bottom:10px">
+            <label class="fl">Team Emails (comma-separated)</label>
+            <input class="fi2" id="wh-jk-emails-liveops" value="${esc(cfg.jenkins_liveops_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
+          </div>
+          ${cfg.jenkins_liveops_token ? `
+            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
+              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-liveops">${cfg.jenkins_liveops_token && cfg.jenkins_liveops_token!=='••set••' ? WORKER+'/webhook/jenkins?team=liveops&token='+cfg.jenkins_liveops_token : WORKER+'/webhook/jenkins?team=liveops&token='+'•'.repeat(16)}</span>
+            </div>` : `
+            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('liveops')">＋ Generate Webhook URL</button>`}
+          <input type="hidden" id="wh-jk-token-liveops" value="${esc(cfg.jenkins_liveops_token||'')}">
+        </div>
+      </div>
+
       <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
         <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">🔔 NOTIFY ON EVENTS</div>
         ${['new_bug','build_available','day_end_report'].map(ev => {
-          const labels = {new_bug:'New Bug Filed / Assigned', build_available:'New Build Available', day_end_report:'Day-End Report'};
+          const labels = {new_bug:'New Bug Filed (GChat + Slack)', build_available:'New Build Available (GChat + Slack)', day_end_report:'Day-End Report (GChat)'};
           return `<div class="notif-toggle-row" style="margin-bottom:10px">
             <button class="notif-toggle${cfg['notif_'+ev]!==false?' on':''}" id="wh-ev-${ev}" onclick="this.classList.toggle('on')"></button>
             <span class="notif-toggle-label">${labels[ev]}</span>
@@ -5066,23 +6641,149 @@ function openWebhookSettings() {
       <div style="display:flex;gap:8px">
         <button class="btn btn-g" onclick="testWebhook()">🧪 Test Webhook</button>
       </div>
+
+      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:8px">DESKTOP PUSH NOTIFICATIONS</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">
+          Notifies team of new bugs, status changes and builds — even when browser is closed.<br>
+          Requires VAPID keys set as Cloudflare Worker env vars.
+        </div>
+        <div id="vapid-setup-section">
+          <button class="btn btn-g btn-sm" onclick="showVapidSetup()">Generate VAPID Keys</button>
+        </div>
+        <div id="vapid-generated" style="display:none;margin-top:10px">
+          <div class="fg" style="margin-bottom:8px">
+            <label class="fl">VAPID_PUBLIC_KEY (add to Cloudflare Worker env vars)</label>
+            <div style="display:flex;gap:8px">
+              <input class="fi2" id="vapid-pub" readonly style="font-family:var(--mono);font-size:10px;flex:1">
+              <button class="btn btn-g btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('vapid-pub').value).then(()=>toast('Copied','ok'))">Copy</button>
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom:10px">
+            <label class="fl">VAPID_PRIVATE_KEY (add to Cloudflare Worker env vars — keep secret!)</label>
+            <div style="display:flex;gap:8px">
+              <input class="fi2" id="vapid-priv" readonly style="font-family:var(--mono);font-size:10px;flex:1">
+              <button class="btn btn-g btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('vapid-priv').value).then(()=>toast('Copied','ok'))">Copy</button>
+            </div>
+          </div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--g3);line-height:1.8;margin-bottom:10px">
+            Also set: VAPID_SUBJECT = mailto:kunal@hitwicket.com in Cloudflare env vars.<br>
+            Then redeploy the worker. Then click Enable below.
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-v btn-sm" onclick="closePanel();requestPushPermission()">Enable Push Notifs</button>
+          <button class="btn btn-g btn-sm" onclick="closePanel();disablePushNotifications()">Disable</button>
+        </div>
+      </div>
     </div>`;
   openPanel();
   // Re-init scheduler after panel opens (so toggle state is fresh)
   setTimeout(initEODScheduler, 100);
 }
 
-function saveWebhookSettings() {
+// ── Jenkins webhook token management ──────────────────────────────────────
+function jkMenu(team, btn) {
+  // Close all other menus first
+  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => {
+    if (m.id !== 'jk-menu-' + team) m.style.display = 'none';
+  });
+  const menu = document.getElementById('jk-menu-' + team);
+  if (!menu) return;
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  // Close on outside click
+  setTimeout(() => {
+    const close = (e) => { if (!menu.contains(e.target) && e.target !== btn) { menu.style.display='none'; document.removeEventListener('click', close); } };
+    document.addEventListener('click', close);
+  }, 10);
+}
+
+function jkGetToken(team) {
+  return document.getElementById('wh-jk-token-' + team)?.value || '';
+}
+
+function jkCopyUrl(team) {
+  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
+  const token = jkGetToken(team);
+  if (!token) return;
+  const url = WORKER + '/webhook/jenkins?team=' + team + '&token=' + token;
+  navigator.clipboard.writeText(url).then(() => toast('Webhook URL copied ✓', 'ok'));
+}
+
+function jkReveal(team) {
+  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
+  const token = jkGetToken(team);
+  if (!token) return;
+  const url = WORKER + '/webhook/jenkins?team=' + team + '&token=' + token;
+  const disp = document.getElementById('jk-url-display-' + team);
+  if (!disp) return;
+  if (disp.dataset.revealed === '1') {
+    disp.textContent = WORKER + '/webhook/jenkins?team=' + team + '&token=' + '•'.repeat(16);
+    disp.dataset.revealed = '0';
+  } else {
+    disp.textContent = url;
+    disp.dataset.revealed = '1';
+  }
+}
+
+function jkRegenerate(team, label) {
+  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
+  const existing = jkGetToken(team);
+  const warn = existing ? '\n\n⚠️ This will break your Jenkins pipeline until you update the URL + Cloudflare env var.' : '';
+  if (!confirm('Regenerate webhook token for ' + label + '?' + warn)) return;
+  const t = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  document.getElementById('wh-jk-token-' + team).value = t;
+  const disp = document.getElementById('jk-url-display-' + team);
+  if (disp) { disp.textContent = WORKER + '/webhook/jenkins?team=' + team + '&token=' + t; disp.dataset.revealed = '1'; }
+  toast('Token regenerated — copy URL and update Jenkins + Cloudflare env var', 'warn');
+}
+
+async function jkDelete(team, label) {
+  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
+  if (!confirm('Delete webhook for ' + label + '?\n\nJenkins calls will stop working immediately.')) return;
+  document.getElementById('wh-jk-token-' + team).value = '';
+  document.getElementById('wh-jk-gchat-' + team).value = '';
+  document.getElementById('wh-jk-emails-' + team).value = '';
+  // Save immediately so it persists
+  await saveWebhookSettings();
+  // Re-open panel to refresh UI
+  await openWebhookSettings();
+  toast(label + ' webhook deleted', 'ok');
+}
+
+async function jkGenerate(team) {
+  const t = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+  document.getElementById('wh-jk-token-' + team).value = t;
+  // Save and re-open to show locked state
+  await saveWebhookSettings();
+  await openWebhookSettings();
+  toast('Webhook created — set JENKINS_TOKEN_' + team.toUpperCase() + ' in Cloudflare env vars', 'ok');
+}
+
+async function saveWebhookSettings() {
   const cfg = {
     gchat_url: document.getElementById('wh-gchat')?.value?.trim()||'',
+    slack_url: document.getElementById('wh-slack')?.value?.trim()||'',
     team_emails: document.getElementById('wh-emails')?.value?.trim()||'',
     notif_new_bug: document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
     notif_build_available: document.getElementById('wh-ev-build_available')?.classList.contains('on'),
     notif_day_end_report: document.getElementById('wh-ev-day_end_report')?.classList.contains('on'),
     eod_time: document.getElementById('wh-eod-time')?.value||'21:00',
     eod_schedule_on: document.getElementById('wh-eod-on')?.classList.contains('on'),
+    jenkins_openers_token:  document.getElementById('wh-jk-token-openers')?.value?.trim()||'',
+    jenkins_openers_gchat:  document.getElementById('wh-jk-gchat-openers')?.value?.trim()||'',
+    jenkins_openers_emails: document.getElementById('wh-jk-emails-openers')?.value?.trim()||'',
+    jenkins_middle_order_token:  document.getElementById('wh-jk-token-middle_order')?.value?.trim()||'',
+    jenkins_middle_order_gchat:  document.getElementById('wh-jk-gchat-middle_order')?.value?.trim()||'',
+    jenkins_middle_order_emails: document.getElementById('wh-jk-emails-middle_order')?.value?.trim()||'',
+    jenkins_tech_infra_token:  document.getElementById('wh-jk-token-tech_infra')?.value?.trim()||'',
+    jenkins_tech_infra_gchat:  document.getElementById('wh-jk-gchat-tech_infra')?.value?.trim()||'',
+    jenkins_tech_infra_emails: document.getElementById('wh-jk-emails-tech_infra')?.value?.trim()||'',
+    jenkins_liveops_token:  document.getElementById('wh-jk-token-liveops')?.value?.trim()||'',
+    jenkins_liveops_gchat:  document.getElementById('wh-jk-gchat-liveops')?.value?.trim()||'',
+    jenkins_liveops_emails: document.getElementById('wh-jk-emails-liveops')?.value?.trim()||'',
   };
-  saveWebhookConfig(cfg);
+  await saveWebhookConfig(cfg);
   initEODScheduler();
   toast('Webhook settings saved ✓','ok');
   closePanel();
@@ -5121,7 +6822,10 @@ async function sendAutoEODReport() {
   const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
   const text = generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday);
   const sent = await sendGChatWebhook(text);
-  if (sent) toast('📊 EOD report auto-sent to GChat ✓','ok');
+  if (sent) {
+    toast('📊 EOD report auto-sent to GChat ✓','ok');
+    sendDesktopNotification('📊 EOD Report Sent', `${todayBugs.length} filed · ${resolvedToday.length} resolved · ${critOpen.length} critical open`);
+  }
 }
 
 async function sendGChatWebhook(text) {
@@ -5138,6 +6842,45 @@ async function sendGChatWebhook(text) {
     console.warn('[gchat webhook]', e.message);
     return false;
   }
+}
+
+async function sendSlackWebhook(text, blocks) {
+  const cfg = getWebhookConfig();
+  if(!cfg.slack_url) return false;
+  try {
+    const payload = blocks ? { blocks } : { text };
+    await fetch(cfg.slack_url, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    return true;
+  } catch(e) { console.warn('[slack webhook]', e.message); return false; }
+}
+
+async function testSlackWebhook() {
+  const url = document.getElementById('wh-slack')?.value?.trim();
+  if(!url) { toast('Enter a Slack webhook URL first','err'); return; }
+  try {
+    await fetch(url, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text:`🧪 BugPulse test from ${S.user?.name||'team'} — Slack webhook working! ✅`})
+    });
+    toast('Test sent to Slack ✓','ok');
+  } catch(e) { toast('Slack webhook failed: '+e.message,'err'); }
+}
+
+// ── Bug recurrence detection ──────────────────────────────────────────────────
+function checkRecurrence(title, featureKey) {
+  if(!title || !S.bugs.length) return null;
+  const t = title.toLowerCase().trim();
+  const feat = (featureKey||'').toLowerCase();
+  const DONE_STATUSES = ['Done','QA Pass','Closed'];
+  const prev = S.bugs.filter(b =>
+    DONE_STATUSES.includes(b.status) &&
+    ( b.title?.toLowerCase().includes(t.slice(0,30)) ||
+      (feat && (b.feature||'').toLowerCase() === feat && b.title?.toLowerCase().slice(0,20) === t.slice(0,20)) )
+  );
+  return prev.length ? prev[0] : null;
 }
 
 async function testWebhook() {
@@ -5172,6 +6915,23 @@ async function sendBugNotification(bug, customMsg) {
     const assigneeNames = assignees.map(a=>a.name).join(', ')||'Unassigned';
     const gchatText = `🐛 *New Bug Filed — ${bug.id||''}*\n*${bug.title||''}*\nPriority: ${bug.priority||'Medium'} | Status: ${bug.status||'Open'}\nBuild: ${bug.build||'—'} | Assignee: ${assigneeNames}\n🔗 View: ${bugUrl}`;
     await sendGChatWebhook(gchatText);
+  }
+
+  // Slack notification
+  const slackCfg = getWebhookConfig();
+  if(slackCfg.slack_url && slackCfg.notif_new_bug !== false) {
+    const aNames = (bug.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
+    const bUrl = `${APP_URL}?bug=${bug.id||''}`;
+    const slackBlocks = [
+      { type:'section', text:{ type:'mrkdwn', text:`🐛 *New Bug: <${bUrl}|${bug.id}>*\n${bug.title||''}` } },
+      { type:'section', fields:[
+        { type:'mrkdwn', text:`*Priority:* ${bug.priority||'Medium'}` },
+        { type:'mrkdwn', text:`*Status:* ${bug.status||'Open'}` },
+        { type:'mrkdwn', text:`*Build:* ${bug.build||'—'}` },
+        { type:'mrkdwn', text:`*Assignee:* ${aNames}` },
+      ]},
+    ];
+    await sendSlackWebhook(`🐛 New Bug: ${bug.id} — ${bug.title}`, slackBlocks);
   }
 
   toast('Team notified ✓','ok');
@@ -5323,11 +7083,19 @@ function openDayEndReport() {
   document.getElementById('panelId').textContent = getTodayIST();
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Close</button>
-    <button class="btn btn-v" onclick="copyDayEndReport()">📋 Copy Report</button>`;
+    <button class="btn btn-v" onclick="copyDayEndReport()">📋 Copy Report</button>
+    ${S.user?.role==='admin'?'<button class="btn btn-v" onclick="sendEODToGChat()" style="background:linear-gradient(135deg,var(--g4),var(--g2))">📢 Send to GChat</button>':''}`;
   document.getElementById('panelBody').innerHTML = `
     <div style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:12px;padding:16px 18px;margin-bottom:18px">
       <div style="font-family:var(--disp);font-size:11px;font-weight:800;letter-spacing:2px;color:var(--g2);margin-bottom:4px">DAILY BUG REPORT</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--mute)">${dateStr}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:10px">${dateStr}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <label style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:1px">FILTER BY TEAM:</label>
+        <select class="fi" id="eod-team-filter" style="width:auto;padding:4px 10px;font-size:11px" onchange="refreshEODReport()">
+          <option value="">All Teams</option>
+          ${DD_FIELDS.find(f=>f.key==='pod')?.options?.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')||''}
+        </select>
+      </div>
     </div>
     <div class="dash-grid" style="margin-bottom:18px;margin-top:0;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))">
       <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g5);font-size:32px">${todayBugs.length}</div><div class="sc-l" style="margin-top:6px">FILED TODAY</div></div>
@@ -5399,6 +7167,49 @@ function openDayEndReport() {
     </div>`;
   openPanel();
 }
+function getEODTeamFilter() {
+  return document.getElementById('eod-team-filter')?.value || '';
+}
+
+function filterBugsByTeam(bugs, team) {
+  if(!team) return bugs;
+  // Filter by pod dropdown
+  return bugs.filter(b => (b.pod||'').toLowerCase() === team.toLowerCase());
+}
+
+function refreshEODReport() {
+  const team = getEODTeamFilter();
+  const allToday = getTodayBugs();
+  const allClosed = getClosedTodayBugs();
+  const allUpdated = getUpdatedTodayBugs();
+  const todayBugs = filterBugsByTeam(allToday, team);
+  const closedToday = filterBugsByTeam(allClosed, team);
+  const resolvedToday = filterBugsByTeam(allUpdated, team).filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
+  const critOpen = filterBugsByTeam(S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)), team);
+  const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const teamLabel = team ? ` [${team}]` : '';
+  const txt = generateReportText(todayBugs, resolvedToday, critOpen, dateStr + teamLabel, closedToday);
+  const el = document.getElementById('dayEndReportText');
+  if(el) el.value = txt;
+}
+
+async function sendEODToGChat() {
+  const txt = document.getElementById('dayEndReportText')?.value;
+  if(!txt) return;
+  const cfg = getWebhookConfig();
+  const team = getEODTeamFilter();
+  // Pick team-specific GChat URL if available
+  let gchatUrl = cfg.gchat_url;
+  if(team) {
+    const teamKey = 'jenkins_' + team.toLowerCase().replace(/\s+/g,'_') + '_gchat';
+    if(cfg[teamKey]) gchatUrl = cfg[teamKey];
+  }
+  if(!gchatUrl) { toast('No GChat webhook configured', 'err'); return; }
+  const sent = await fetch(gchatUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:txt}) }).then(r=>r.ok).catch(()=>false);
+  if(sent) toast('EOD report sent to GChat ✓', 'ok');
+  else toast('GChat send failed', 'err');
+}
+
 function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday) {
   closedToday = closedToday || [];
   const bugLink = id => `${APP_URL}?bug=${id}`;
@@ -5468,8 +7279,25 @@ function featureInputFilter(q) {
   const dd = document.getElementById('featDropdown');
   if(!dd) return;
   const allFeats = [...new Set(S.bugs.map(b=>b.feature).filter(Boolean))];
-  const filtered = q ? allFeats.filter(f=>f.toLowerCase().includes(q.toLowerCase())) : allFeats;
+  // Also include sub-features from title patterns like "Feature > Sub"
+  const allSubFeats = [...new Set(S.bugs.map(b=>b.sub_feature).filter(Boolean))];
+  const filtered = q
+    ? [...allFeats, ...allSubFeats].filter(f=>f.toLowerCase().includes(q.toLowerCase()))
+    : allFeats;
   if(!filtered.length) { dd.style.display='none'; return; }
+  // Group: features first, then sub-features
+  const feats = filtered.filter(f => allFeats.includes(f));
+  const subs  = filtered.filter(f => !allFeats.includes(f));
+  let html = '';
+  if(feats.length) {
+    html += `<div style="padding:5px 10px 2px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase">Features</div>`;
+    html += feats.slice(0,8).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.1)'" onmouseleave="this.style.background=''"><span style="font-size:14px">🎮</span><span>${esc(f)}</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>b.feature===f).length} bugs</span></div>`).join('');
+  }
+  if(subs.length && !q) {
+    html += `<div style="padding:5px 10px 2px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:4px">Recent Sub-features</div>`;
+    html += subs.slice(0,5).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:7px 13px 7px 26px;cursor:pointer;font-size:12px;color:var(--mist);border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.08)'" onmouseleave="this.style.background=''">↳ ${esc(f)}</div>`).join('');
+  }
+  dd.innerHTML = html || '<div style="padding:14px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">No features found</div>';
   dd.style.display = 'block';
   document.addEventListener('click', e => {
     if(!e.target.closest('#f-feat') && !e.target.closest('#featDropdown')) dd.style.display='none';
