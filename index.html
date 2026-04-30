@@ -3662,6 +3662,85 @@ function filterByDate(daysAgo) {
   toast(`Showing bugs filed on ${dateStr} (${S.filtered.length})`, 'ok');
 }
 
+let _chartInstances = {};
+function destroyChart(id) {
+  if(_chartInstances[id]) { try { _chartInstances[id].destroy(); } catch(e) {} delete _chartInstances[id]; }
+}
+
+function renderDashboardGraphs() {
+  const el = document.getElementById('dashGraphs');
+  if(!el || typeof Chart === 'undefined') return;
+
+  const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+  const podOpts = pods.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const months = {};
+  S.bugs.forEach(b => {
+    const d = b.created_ts ? new Date(b.created_ts) : b.created_at ? new Date(b.created_at) : null;
+    if(!d) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    months[key] = d.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  });
+  const monthOpts = Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0]))
+    .map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+
+  el.innerHTML = `
+    <div class="chart-card">
+      <div class="chart-card-title">BY STATUS</div>
+      <canvas id="chartStatus"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">BY PRIORITY</div>
+      <canvas id="chartPriority"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">BUGS OVER TIME</div>
+        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+          <select id="tlMode" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderTimelineChart()">
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="month">By Month (12mo)</option>
+          </select>
+          <select id="tlPod" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderTimelineChart()">
+            <option value="">All Pods</option>${podOpts}
+          </select>
+        </div>
+      </div>
+      <canvas id="chartTimeline" style="max-height:200px"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">MONTH-WISE STATS</div>
+        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+          <select id="mwMonth" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">${monthOpts}</select>
+          <button class="btn btn-g btn-sm" onclick="copyMonthReport()">Copy Report</button>
+        </div>
+      </div>
+      <div id="monthwiseStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px"></div>
+      <canvas id="chartMonthwise" style="max-height:180px"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">POD COMPARISON</div>
+        <div style="display:flex;gap:6px;margin-left:auto">
+          <select id="podCmpM1" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderPodComparison()">${monthOpts}</select>
+          <span style="color:var(--dim);font-size:11px;align-self:center">vs</span>
+          <select id="podCmpM2" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderPodComparison()">${monthOpts}</select>
+          <button class="btn btn-g btn-sm" onclick="copyPodReport()">Copy for Presentation</button>
+        </div>
+      </div>
+      <canvas id="chartPodComp" style="max-height:200px"></canvas>
+    </div>`;
+
+  setTimeout(() => {
+    renderStatusChart();
+    renderPriorityChart();
+    renderTimelineChart();
+    renderMonthwiseChart();
+    renderPodComparison();
+  }, 50);
+}
+
 function renderDashboard(){
   renderStats('dashStats');
   const el=document.getElementById('dashCharts');if(!el)return;
@@ -7808,8 +7887,8 @@ function showTourStep() {
   if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
   const step = TOUR_STEPS[_tourStep];
   if (step.action === 'goTestRuns') {
-    goTab('builds');
-    setTimeout(() => { try { goTestRuns(); } catch(e) {} _showTourCard(); }, 400);
+    try { goTab('builds'); } catch(e) {}
+    setTimeout(() => { try { goTestRuns(); } catch(e) {} setTimeout(_showTourCard, 200); }, 500);
     return;
   }
   if (step.tab) {
@@ -7889,8 +7968,14 @@ function _showTourCard() {
   document.body.appendChild(card);
 }
 
-function advanceTour() { _tourStep++; showTourStep(); }
-function prevTour() { _tourStep = Math.max(0, _tourStep-1); showTourStep(); }
+function advanceTour() {
+  _tourStep++;
+  try { showTourStep(); } catch(e) { console.error('[tour]', e); _showTourCard(); }
+}
+function prevTour() {
+  _tourStep = Math.max(0, _tourStep-1);
+  try { showTourStep(); } catch(e) { _showTourCard(); }
+}
 
 function endTour() {
   closeTourUI();
