@@ -1340,6 +1340,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
                   <button class="btn btn-v" id="importSubmitBtn" onclick="importSubmit()">📥 IMPORT ALL</button>
                 </div>
               </div>
+              <div id="importRollbackBtn" onclick="rollbackLastImport()" class="btn btn-r btn-sm" style="display:none;margin-bottom:10px;width:100%;text-align:center"></div>
               <div id="importProgress" style="display:none;margin-top:16px">
                 <div style="font-family:var(--mono);font-size:11px;color:var(--g2);margin-bottom:8px" id="importProgressLabel">Importing…</div>
                 <div style="height:4px;background:var(--bd);border-radius:2px;overflow:hidden">
@@ -2202,6 +2203,16 @@ function onLogin(){
   updatePushMenuLabel();
   const _bdb = document.getElementById('bulkDeleteBtn');
   if(_bdb && S.user?.role==='admin') _bdb.style.display='';
+  // Show rollback button if previous import exists
+  if(S.user?.role==='admin') {
+    try {
+      const stored = JSON.parse(localStorage.getItem('hwt_last_import')||'{}');
+      if(stored.ids?.length) {
+        const rb = document.getElementById('importRollbackBtn');
+        if(rb) { rb.style.display=''; rb.textContent='Rollback last import ('+stored.ids.length+' bugs)'; }
+      }
+    } catch(e) {}
+  }
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
   initPushNotifications();
@@ -2603,6 +2614,7 @@ function homeBugRow(bug){
 function renderTable(){
   if(S.view!=='backlog')return;
   renderStats('statsRow');
+  renderPersonalStats();
   const total=S.filtered.length,ps=S.ps;
   const tp=Math.max(1,Math.ceil(total/ps));
   S.page=Math.min(Math.max(1,S.page),tp);
@@ -2648,6 +2660,40 @@ function renderTable(){
   });
   h+=`</tbody></table>`;
   document.getElementById('tBody').innerHTML=h;
+}
+
+
+function renderPersonalStats() {
+  const el = document.getElementById('personalStatsRow');
+  if(!el || !S.user) return;
+  const mine = S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user.email));
+  const myOpen   = mine.filter(b=>['Open','In Progress','Bugged'].includes(b.status)).length;
+  const myFixed  = mine.filter(b=>['Dev Fixed','QA Pass','Done'].includes(b.status)).length;
+  const myCrit   = mine.filter(b=>['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).length;
+  const myTotal  = mine.length;
+
+  // Today's activity for this user
+  const dayMs = 86400000;
+  const IST = 5.5*3600000;
+  const todayStart = Math.floor((Date.now()+IST)/dayMs)*dayMs - IST;
+  const todayBugs = S.bugs.filter(b=>b.created_ts && b.created_ts>=todayStart);
+  const myToday   = todayBugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user.email)).length;
+  const myReported = S.bugs.filter(b=>b.reporter_email===S.user.email).length;
+
+  el.innerHTML = `
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;padding:0 2px">YOUR ACTIVITY</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${[
+        ['#a78bfa', myOpen,     'Assigned Open'],
+        ['#ef4444', myCrit,     'Critical Assigned'],
+        ['#10b981', myFixed,    'Fixed/Passed'],
+        ['#06b6d4', myReported, 'Bugs Reported'],
+        ['#f59e0b', myToday,    'Active Today'],
+      ].map(([c,v,l])=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;flex:1;min-width:110px;text-align:center;border-top:2px solid ${c}">
+        <div style="font-size:22px;font-weight:800;color:${c};font-family:var(--disp)">${v}</div>
+        <div style="font-size:9px;color:var(--dim);font-family:var(--mono);margin-top:3px;letter-spacing:.5px">${l}</div>
+      </div>`).join('')}
+    </div>`;
 }
 
 function renderStats(id){
@@ -3804,51 +3850,127 @@ function applyTemplate(templateId) {
       if(d.platform)  { const el = document.getElementById('f-dd-platform'); if(el) el.value = d.platform; }
       if(d.repro)     { const el = document.getElementById('f-repro'); if(el) el.value = d.repro; }
       if(d.device)    { const el = document.getElementById('f-dev'); if(el) el.value = d.device; }
-      toast(`Template "${tmpl.name}" applied ✓`, 'ok');
+      if(d.sprint)    { const el = document.getElementById('f-sp'); if(el) el.value = d.sprint; }
+      if(d.title)     { const el = document.getElementById('f-title'); if(el && !el.value) el.value = d.title; }
+      toast('Template applied: ' + tmpl.name, 'ok');
     }, 320);
   }, 280);
 }
 
 function openManageTemplates() {
   const tmpl = getTemplates();
-  document.getElementById('panelTitle').textContent = '⚙ MANAGE TEMPLATES';
-  document.getElementById('panelId').textContent = 'TEMPLATES';
+  document.getElementById('panelTitle').textContent = 'MANAGE TEMPLATES';
+  document.getElementById('panelId').textContent = tmpl.length + ' templates';
   document.getElementById('panelFooter').innerHTML = `
-    <button class="btn btn-g" onclick="openTemplateSelector()">← Back</button>
-    <button class="btn btn-v" onclick="addCustomTemplate()">＋ New Template</button>`;
+    <button class="btn btn-g" onclick="openTemplateSelector()">Back</button>
+    <button class="btn btn-v" onclick="openEditTemplate(null)">+ New Template</button>`;
   document.getElementById('panelBody').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px">
       ${tmpl.map((t,i) => `
         <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px">
-          <span style="font-size:18px">${t.icon||'📋'}</span>
+          <span style="font-size:20px">${t.icon||'📋'}</span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:700;color:var(--text)">${esc(t.name)}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--dim)">${t.data?.priority||''} ${t.data?.feature?'· '+t.data.feature:''}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(t.name)}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">
+              ${t.data?.priority||'Medium'} ${t.data?.feature?'· '+esc(t.data.feature):''} ${t.data?.severity?'· '+esc(t.data.severity):''}
+            </div>
           </div>
-          ${i >= DEFAULT_TEMPLATES.length ? `<button onclick="deleteTemplate('${t.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;padding:3px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--mono)">Delete</button>` : `<span style="font-family:var(--mono);font-size:8px;color:var(--dim)">built-in</span>`}
+          <div style="display:flex;gap:5px">
+            <button onclick="openEditTemplate('${t.id}')" style="background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.3);color:#a78bfa;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">Edit</button>
+            ${i >= DEFAULT_TEMPLATES.length ? `<button onclick="deleteTemplate('${t.id}')" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer">Delete</button>` : `<span style="font-family:var(--mono);font-size:8px;color:var(--dim);padding:4px">built-in</span>`}
+          </div>
         </div>`).join('')}
     </div>`;
   openPanel();
 }
 
-function addCustomTemplate() {
-  const name = prompt('Template name (e.g. "Login Bug"):');
-  if(!name?.trim()) return;
-  const icon = prompt('Icon emoji (e.g. 🔐):', '📋') || '📋';
-  const feature = prompt('Default Feature (optional):') || '';
-  const id = 'custom_' + Date.now();
+function openEditTemplate(id) {
   const tmpl = getTemplates();
-  tmpl.push({ id, name: name.trim(), icon, data: { feature, priority:'Medium', severity:'S3 - Major' } });
+  const t = id ? tmpl.find(x=>x.id===id) : null;
+  const isNew = !t;
+  const spOpts = S.sprints.map(s=>`<option value="${esc(s.name)}" ${t?.data?.sprint===s.name?'selected':''}>${esc(s.name)}</option>`).join('');
+  const featOpts = [...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort()
+    .map(f=>`<option value="${esc(f)}" ${t?.data?.feature===f?'selected':''}>${esc(f)}</option>`).join('');
+
+  document.getElementById('panelTitle').textContent = isNew ? 'NEW TEMPLATE' : 'EDIT TEMPLATE';
+  document.getElementById('panelId').textContent = isNew ? '' : esc(t.name);
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="openManageTemplates()">Cancel</button>
+    <button class="btn btn-v" onclick="saveEditedTemplate('${id||''}')">Save Template</button>`;
+  document.getElementById('panelBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="fg"><label class="fl">Template Name</label>
+        <input class="fi2" id="tmpl-name" value="${esc(t?.name||'')}" placeholder="e.g. Crash Bug, UI Bug">
+      </div>
+      <div class="fg"><label class="fl">Icon Emoji</label>
+        <input class="fi2" id="tmpl-icon" value="${esc(t?.icon||'📋')}" placeholder="📋" style="width:80px">
+      </div>
+      <div class="fg"><label class="fl">Default Title Prefix</label>
+        <input class="fi2" id="tmpl-title" value="${esc(t?.data?.title||'')}" placeholder="e.g. [Crash] ">
+      </div>
+      <div class="fg"><label class="fl">Priority</label>
+        <select class="fi2" id="tmpl-priority">
+          ${['Critical','High','Medium','Low','Urgent'].map(p=>`<option ${(t?.data?.priority||'Medium')===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Severity</label>
+        <select class="fi2" id="tmpl-severity">
+          <option value="">—</option>
+          ${['S1 - Blocker','S2 - Critical','S3 - Major','S4 - Minor'].map(s=>`<option ${t?.data?.severity===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Default Feature</label>
+        <select class="fi2" id="tmpl-feature">
+          <option value="">—</option>${featOpts}
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Default Sprint</label>
+        <select class="fi2" id="tmpl-sprint">
+          <option value="">—</option>${spOpts}
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Default Steps to Reproduce</label>
+        <textarea class="fi2" id="tmpl-steps" rows="4" placeholder="1. Open app&#10;2. Navigate to...">${esc(t?.data?.steps||'')}</textarea>
+      </div>
+      <div class="fg"><label class="fl">Default Expected Result</label>
+        <textarea class="fi2" id="tmpl-expected" rows="2" placeholder="Expected behavior...">${esc(t?.data?.expected||'')}</textarea>
+      </div>
+    </div>`;
+  openPanel();
+}
+
+function saveEditedTemplate(id) {
+  const name = document.getElementById('tmpl-name')?.value?.trim();
+  if(!name) { toast('Template name required','err'); return; }
+  const tmpl = getTemplates();
+  const data = {
+    title:    document.getElementById('tmpl-title')?.value?.trim()||'',
+    priority: document.getElementById('tmpl-priority')?.value||'Medium',
+    severity: document.getElementById('tmpl-severity')?.value||'',
+    feature:  document.getElementById('tmpl-feature')?.value||'',
+    sprint:   document.getElementById('tmpl-sprint')?.value||'',
+    steps:    document.getElementById('tmpl-steps')?.value||'',
+    expected: document.getElementById('tmpl-expected')?.value||'',
+  };
+  const icon = document.getElementById('tmpl-icon')?.value||'📋';
+  if(id) {
+    const idx = tmpl.findIndex(t=>t.id===id);
+    if(idx>=0) tmpl[idx] = {...tmpl[idx], name, icon, data};
+  } else {
+    tmpl.push({ id:'custom_'+Date.now(), name, icon, data });
+  }
   saveTemplates(tmpl);
   openManageTemplates();
-  toast('Template created ✓', 'ok');
+  toast('Template saved ✓','ok');
 }
+
+function addCustomTemplate() { openEditTemplate(null); }
 
 function deleteTemplate(id) {
   if(!confirm('Delete this template?')) return;
   saveTemplates(getTemplates().filter(t => t.id !== id));
   openManageTemplates();
-  toast('Template deleted', 'ok');
+  toast('Template deleted','ok');
 }
 
 // ══════════════════════════════════════════
@@ -5546,6 +5668,28 @@ function closeCuPanel(){
 // ══════════════════════════════════════════
 let _importRows = [];
 
+let _importedBugIds = [];
+
+async function rollbackLastImport() {
+  if(S.user?.role !== 'admin') { toast('Admin only','err'); return; }
+  let ids = [];
+  try {
+    const stored = JSON.parse(localStorage.getItem('hwt_last_import') || '{}');
+    ids = stored.ids || [];
+  } catch(e) {}
+  if(!ids.length) { toast('No import to rollback','err'); return; }
+  if(!confirm('Delete ' + ids.length + ' imported bugs? This cannot be undone.')) return;
+  let done = 0;
+  for(const id of ids) {
+    try { await api('/bugs/' + id, 'DELETE'); done++; } catch(e) {}
+  }
+  localStorage.removeItem('hwt_last_import');
+  const rb = document.getElementById('importRollbackBtn');
+  if(rb) rb.style.display = 'none';
+  toast('Rolled back ' + done + ' bugs', 'ok');
+  await refreshAll();
+}
+
 function importHandleDrop(e) {
   e.preventDefault();
   const dz = document.getElementById('importDropZone');
@@ -5674,12 +5818,13 @@ function importReset() {
 async function importSubmit() {
   if (!_importRows.length) return;
   if (S.user?.role !== 'admin') { toast('Admin only', 'err'); return; }
-  if (!confirm(`Import ${_importRows.length} bug${_importRows.length!==1?'s':''}? This cannot be undone.`)) return;
+  if (!confirm('Import ' + _importRows.length + ' bug' + (_importRows.length!==1?'s':'') + '? You can rollback after.')) return;
   document.getElementById('importPreview').style.display = 'none';
   document.getElementById('importProgress').style.display = 'block';
   const bar = document.getElementById('importProgressBar');
   const lbl = document.getElementById('importProgressLabel');
   let done = 0, failed = 0;
+  _importedBugIds = [];
   for (const row of _importRows) {
     const data = {
       // id intentionally omitted — worker generates a fresh HW-XXXXX id
@@ -5700,12 +5845,29 @@ async function importSubmit() {
       attachment: row.attachment || '',
       assignees: [], app_url: APP_URL,
     };
-    try { await api('/bugs', 'POST', data); done++; } catch(e) { failed++; }
+    try {
+      const res = await api('/bugs', 'POST', data);
+      if(res?.bug?.id) _importedBugIds.push(res.bug.id);
+      done++;
+    } catch(e) { failed++; }
     bar.style.width = Math.round(((done+failed)/_importRows.length)*100) + '%';
     lbl.textContent = `Importing… ${done+failed} / ${_importRows.length}`;
   }
-  lbl.textContent = `✅ Done — ${done} imported${failed ? `, ${failed} failed` : ''}`;
-  toast(`Imported ${done} bugs ✓`, 'ok');
+  lbl.textContent = '✅ Done - ' + done + ' imported' + (failed ? ', '+failed+' failed' : '');
+  toast('Imported ' + done + ' bugs', 'ok');
+  // Store imported IDs for rollback (admin only)
+  if(_importedBugIds.length) {
+    try {
+      localStorage.setItem('hwt_last_import', JSON.stringify({
+        ts: Date.now(),
+        ids: _importedBugIds,
+        count: done,
+      }));
+    } catch(e) {}
+    // Show rollback button
+    const rb = document.getElementById('importRollbackBtn');
+    if(rb) { rb.style.display=''; rb.textContent = 'Rollback last import (' + done + ' bugs)'; }
+  }
   importReset();
   await refreshAll();
 }
@@ -7598,21 +7760,292 @@ function destroyChart(id) {
 function renderDashboardGraphs() {
   const el = document.getElementById('dashGraphs');
   if(!el || typeof Chart === 'undefined') return;
+
+  // Build month options for selectors
+  const months = {};
+  S.bugs.forEach(b => {
+    const d = b.created_ts ? new Date(b.created_ts) : b.created_at ? new Date(b.created_at) : null;
+    if(!d) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const label = d.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    months[key] = label;
+  });
+  const monthOpts = Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0]))
+    .map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+  const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+  const podOpts = pods.map(p=>`<option value="${p}">${p}</option>`).join('');
+
   el.innerHTML = `
     <div class="chart-card">
-      <div class="chart-card-title">📊 BUGS BY STATUS</div>
+      <div class="chart-card-title">BUGS BY STATUS</div>
       <canvas id="chartStatus"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">🎯 PRIORITY BREAKDOWN</div>
+      <div class="chart-card-title">PRIORITY BREAKDOWN</div>
       <canvas id="chartPriority"></canvas>
     </div>
     <div class="chart-card" style="grid-column:1/-1">
-      <div class="chart-card-title">📅 BUGS OVER TIME (last 30 days)</div>
-      <canvas id="chartTimeline" style="max-height:180px"></canvas>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">BUGS OVER TIME</div>
+        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+          <select id="tlMode" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderTimelineChart()">
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="month">By Month (12mo)</option>
+          </select>
+          <select id="tlPod" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderTimelineChart()">
+            <option value="">All Pods</option>
+            ${podOpts}
+          </select>
+        </div>
+      </div>
+      <canvas id="chartTimeline" style="max-height:200px"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">MONTH-WISE STATS</div>
+        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+          <select id="mwMonth" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
+            ${monthOpts}
+          </select>
+          <button class="btn btn-g btn-sm" onclick="copyMonthReport()">Copy Report</button>
+        </div>
+      </div>
+      <div id="monthwiseStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px"></div>
+      <canvas id="chartMonthwise" style="max-height:180px"></canvas>
+    </div>
+    <div class="chart-card" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">POD COMPARISON</div>
+        <div style="display:flex;gap:6px;margin-left:auto">
+          <select id="podCmpM1" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderPodComparison()">
+            ${monthOpts}
+          </select>
+          <span style="color:var(--dim);font-size:11px;align-self:center">vs</span>
+          <select id="podCmpM2" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderPodComparison()">
+            ${monthOpts}
+          </select>
+          <button class="btn btn-g btn-sm" onclick="copyPodReport()">Copy for Presentation</button>
+        </div>
+      </div>
+      <canvas id="chartPodComp" style="max-height:200px"></canvas>
     </div>`;
-  setTimeout(() => { renderStatusChart(); renderPriorityChart(); renderTimelineChart(); }, 50);
+
+  setTimeout(() => {
+    renderStatusChart();
+    renderPriorityChart();
+    renderTimelineChart();
+    renderMonthwiseChart();
+    renderPodComparison();
+  }, 50);
 }
+
+// ══════════════════════════════════════════
+// ENHANCED CHARTS — month/date/pod analytics
+// ══════════════════════════════════════════
+
+function bugsForMonth(monthKey, pod) {
+  return S.bugs.filter(b => {
+    const d = b.created_ts ? new Date(b.created_ts) : b.created_at ? new Date(b.created_at) : null;
+    if(!d) return false;
+    const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if(k !== monthKey) return false;
+    if(pod && b.pod !== pod) return false;
+    return true;
+  });
+}
+
+function renderTimelineChart() {
+  destroyChart('timeline');
+  const mode = document.getElementById('tlMode')?.value || '30d';
+  const pod  = document.getElementById('tlPod')?.value  || '';
+  const ctx  = document.getElementById('chartTimeline');
+  if(!ctx) return;
+
+  let labels = [], filed = [], resolved = [];
+
+  if(mode === 'month') {
+    // Last 12 months
+    for(let i = 11; i >= 0; i--) {
+      const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+      const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      const lbl = d.toLocaleDateString('en-IN', {month:'short', year:'2-digit'});
+      labels.push(lbl);
+      const mb = bugsForMonth(key, pod);
+      filed.push(mb.length);
+      resolved.push(mb.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length);
+    }
+  } else {
+    const days = mode === '90d' ? 90 : 30;
+    for(let i = days-1; i >= 0; i--) {
+      const d = new Date(Date.now() - i*86400000);
+      labels.push(d.toLocaleDateString('en-IN', {day:'2-digit', month:'short'}));
+      const dayStr = d.toISOString().slice(0,10);
+      const dayBugs = S.bugs.filter(b => {
+        const bd = b.created_ts ? new Date(b.created_ts).toISOString().slice(0,10) :
+                   b.created_at ? b.created_at.slice(0,10) : '';
+        return bd === dayStr && (!pod || b.pod === pod);
+      });
+      filed.push(dayBugs.length);
+      resolved.push(dayBugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length);
+    }
+  }
+
+  _chartInstances['timeline'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label:'Filed', data:filed, borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,.1)', pointRadius:2, tension:0.4, fill:true },
+      { label:'Resolved', data:resolved, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.08)', pointRadius:2, tension:0.4, fill:true },
+    ]},
+    options: { responsive:true, maintainAspectRatio:true,
+      plugins: { legend:{ labels:{ color:'#9090c0', font:{size:10}, boxWidth:10 } } },
+      scales: {
+        x:{ ticks:{color:'#6868a0',font:{size:9},maxTicksLimit:12,maxRotation:0}, grid:{color:'rgba(255,255,255,.04)'} },
+        y:{ ticks:{color:'#6868a0',font:{size:10}}, grid:{color:'rgba(255,255,255,.04)'}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function renderMonthwiseChart() {
+  destroyChart('monthwise');
+  const monthKey = document.getElementById('mwMonth')?.value || '';
+  if(!monthKey) return;
+  const bugs = bugsForMonth(monthKey, '');
+  const statsEl = document.getElementById('monthwiseStats');
+  if(statsEl) {
+    const open   = bugs.filter(b=>b.status==='Open').length;
+    const active = bugs.filter(b=>['In Progress','Bugged'].includes(b.status)).length;
+    const qaPass = bugs.filter(b=>b.status==='QA Pass').length;
+    const crit   = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length;
+    const color = (c,v) => `<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:12px 16px;text-align:center"><div style="font-size:24px;font-weight:800;color:${c};font-family:var(--disp)">${v}</div><div style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:4px">${arguments[2]}</div></div>`;
+    statsEl.innerHTML =
+      color('#a78bfa', bugs.length, 'TOTAL FILED') +
+      color('#ef4444', crit, 'CRITICAL') +
+      color('#06b6d4', active, 'ACTIVE') +
+      color('#10b981', qaPass, 'QA PASS') +
+      color('#f59e0b', open, 'OPEN');
+  }
+
+  // Day-wise breakdown for the month
+  const [yr, mo] = monthKey.split('-').map(Number);
+  const daysInMonth = new Date(yr, mo, 0).getDate();
+  const dayLabels = [], dayData = [];
+  for(let d = 1; d <= daysInMonth; d++) {
+    const dateStr = yr + '-' + String(mo).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    dayLabels.push(String(d));
+    dayData.push(bugs.filter(b => {
+      const bd = b.created_ts ? new Date(b.created_ts).toISOString().slice(0,10) :
+                 b.created_at ? b.created_at.slice(0,10) : '';
+      return bd === dateStr;
+    }).length);
+  }
+
+  const ctx = document.getElementById('chartMonthwise');
+  if(!ctx) return;
+  _chartInstances['monthwise'] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels:dayLabels, datasets:[{ label:'Bugs Filed', data:dayData,
+      backgroundColor:'rgba(124,58,237,.5)', borderColor:'#7c3aed', borderWidth:1, borderRadius:4 }] },
+    options: { responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ticks:{color:'#6868a0',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#6868a0',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+function renderPodComparison() {
+  destroyChart('podcomp');
+  const m1 = document.getElementById('podCmpM1')?.value || '';
+  const m2 = document.getElementById('podCmpM2')?.value || '';
+  if(!m1 || !m2) return;
+  const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+  if(!pods.length) return;
+  const ctx = document.getElementById('chartPodComp');
+  if(!ctx) return;
+
+  const d1 = pods.map(p => bugsForMonth(m1, p).length);
+  const d2 = pods.map(p => bugsForMonth(m2, p).length);
+  const [yr1,mo1] = m1.split('-'); const lbl1 = new Date(yr1,mo1-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'});
+  const [yr2,mo2] = m2.split('-'); const lbl2 = new Date(yr2,mo2-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'});
+
+  _chartInstances['podcomp'] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: pods, datasets: [
+      { label: lbl1, data:d1, backgroundColor:'rgba(124,58,237,.6)', borderColor:'#7c3aed', borderWidth:1, borderRadius:4 },
+      { label: lbl2, data:d2, backgroundColor:'rgba(16,185,129,.6)', borderColor:'#10b981', borderWidth:1, borderRadius:4 },
+    ]},
+    options: { responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{labels:{color:'#9090c0',font:{size:10},boxWidth:10}} },
+      scales:{
+        x:{ticks:{color:'#6868a0',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#6868a0',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+function copyMonthReport() {
+  const monthKey = document.getElementById('mwMonth')?.value || '';
+  if(!monthKey) { toast('Select a month first','err'); return; }
+  const [yr,mo] = monthKey.split('-').map(Number);
+  const monthLabel = new Date(yr,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const bugs = bugsForMonth(monthKey, '');
+  const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+
+  let text = '=== BUG REPORT: ' + monthLabel + ' ===\n\n';
+  text += 'Total Filed : ' + bugs.length + '\n';
+  text += 'Critical    : ' + bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length + '\n';
+  text += 'QA Pass     : ' + bugs.filter(b=>b.status==='QA Pass').length + '\n';
+  text += 'Active      : ' + bugs.filter(b=>['In Progress','Bugged'].includes(b.status)).length + '\n\n';
+
+  text += '--- BY POD ---\n';
+  pods.forEach(p => {
+    const pb = bugsForMonth(monthKey, p);
+    text += p.padEnd(18) + ': ' + pb.length + ' filed, ' + pb.filter(b=>b.status==='QA Pass').length + ' QA pass\n';
+  });
+
+  text += '\n--- BY PRIORITY ---\n';
+  ['Critical','Urgent','High','Medium','Low'].forEach(p => {
+    const n = bugs.filter(b=>b.priority===p).length;
+    if(n) text += p.padEnd(12) + ': ' + n + '\n';
+  });
+
+  navigator.clipboard.writeText(text).then(()=>toast('Month report copied ✓','ok'));
+}
+
+function copyPodReport() {
+  const m1 = document.getElementById('podCmpM1')?.value || '';
+  const m2 = document.getElementById('podCmpM2')?.value || '';
+  if(!m1||!m2) { toast('Select both months first','err'); return; }
+  const [yr1,mo1] = m1.split('-').map(Number);
+  const [yr2,mo2] = m2.split('-').map(Number);
+  const l1 = new Date(yr1,mo1-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const l2 = new Date(yr2,mo2-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+
+  let text = '=== POD COMPARISON: ' + l1 + ' vs ' + l2 + ' ===\n\n';
+  text += ('POD').padEnd(20) + l1.padEnd(20) + l2.padEnd(20) + 'TREND\n';
+  text += '-'.repeat(65) + '\n';
+  pods.forEach(p => {
+    const n1 = bugsForMonth(m1,p).length;
+    const n2 = bugsForMonth(m2,p).length;
+    const trend = n2 < n1 ? 'IMPROVING' : n2 > n1 ? 'REGRESSING' : 'STABLE';
+    text += p.padEnd(20) + String(n1).padEnd(20) + String(n2).padEnd(20) + trend + '\n';
+  });
+
+  const t1 = bugsForMonth(m1,'').length;
+  const t2 = bugsForMonth(m2,'').length;
+  text += '-'.repeat(65) + '\n';
+  text += 'TOTAL'.padEnd(20) + String(t1).padEnd(20) + String(t2).padEnd(20);
+  text += (t2 < t1 ? 'IMPROVING' : t2 > t1 ? 'REGRESSING' : 'STABLE') + '\n';
+
+  navigator.clipboard.writeText(text).then(()=>toast('Pod comparison report copied ✓','ok'));
+}
+
 function renderStatusChart() {
   destroyChart('status');
   const statusColors = {'Open':'#a78bfa','In Progress':'#06b6d4','In Review':'#f59e0b','Dev Fixed':'#6ee7b7','Done':'#10b981','Bugged':'#ef4444','QA Pass':'#34d399','Closed':'#4b5563','Non-Recreatable':'#9ca3af','Not a bug':'#6b7280'};
