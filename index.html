@@ -7809,35 +7809,34 @@ const TOUR_STEPS = [
     ]},
 
   { tab:null, target:null,
-    title:'Manage Dropdowns',
-    speech:'Admin can customise all dropdown options — Pod, Platform and any custom fields — from Profile menu → Manage Dropdowns!',
+    title:'Customise Dropdowns',
+    speech:'All the dropdown options in BugPulse can be customised to match your team — pods, platforms and any custom fields!',
     features:[
-      {icon:'🏏',text:'Pod — add/remove team pods (Openers, Middle Order, LiveOps etc.)'},
+      {icon:'🏏',text:'Pod — Openers, Middle Order, LiveOps, Tech Infra and more'},
       {icon:'📱',text:'Platform — Android, iOS, Web, PC, Console'},
-      {icon:'➕',text:'Add any custom dropdown field for your team'},
-      {icon:'🗑️',text:'Reorder and delete options — changes reflect instantly in all forms'},
+      {icon:'➕',text:'Custom fields can be added for your specific workflow'},
+      {icon:'⚡',text:'Changes reflect instantly across all bug forms and filters'},
     ]},
 
   { tab:null, target:null,
-    title:'SLA & Severity Settings',
-    speech:'Configure how many days before a bug is flagged as breaching SLA — separately for each priority level!',
+    title:'SLA Breach Alerts',
+    speech:'BugPulse automatically flags bugs that have been open too long — so nothing slips through the cracks!',
     features:[
-      {icon:'⏱️',text:'Critical: default 1 day — goes red after 1 day open'},
-      {icon:'🔴',text:'High: default 3 days, Medium: 7 days, Low: 14 days'},
+      {icon:'🔴',text:'Critical bugs go red after 1 day, High after 3 days'},
+      {icon:'🟠',text:'Medium bugs flagged after 7 days, Low after 14 days'},
       {icon:'🚨',text:'SLA breached rows highlighted in red in the backlog'},
-      {icon:'⚙️',text:'Change from Profile menu → SLA Settings'},
+      {icon:'👀',text:'Instantly see which bugs need urgent attention'},
     ]},
 
   { tab:null, target:null,
-    title:'Webhooks & Integrations',
-    speech:'Configure all integrations from Profile menu → Webhook Settings. Set up GChat per pod, Slack, Jenkins and EOD schedule!',
+    title:'Notifications & Integrations',
+    speech:'BugPulse keeps your whole team connected — bugs, builds and reports reach everyone through the channels they use!',
     features:[
-      {icon:'💬',text:'GChat global + per pod — each team gets their own space'},
-      {icon:'💬',text:'Slack webhook with rich Block Kit messages'},
-      {icon:'📧',text:'Email via Brevo — new bugs, assignments, EOD, builds'},
-      {icon:'🏗️',text:'Jenkins CI/CD — per team webhook token, fires on build completion'},
-      {icon:'⏰',text:'EOD schedule — set IST time, auto-sends Mon-Fri from server'},
-      {icon:'🔑',text:'VAPID keys for Web Push — generate inside BugPulse settings'},
+      {icon:'💬',text:'GChat — get bug alerts and EOD reports in your team space'},
+      {icon:'💬',text:'Slack — rich notifications with bug details and direct links'},
+      {icon:'📧',text:'Email — get notified when bugs are assigned to you'},
+      {icon:'🏗️',text:'Jenkins — build completion triggers a notification automatically'},
+      {icon:'⏰',text:'EOD report — daily summary sent automatically every evening'},
     ]},
 
   { tab:null, target:null,
@@ -7879,6 +7878,9 @@ function startTour(force) {
   try { if (!force && localStorage.getItem(TOUR_KEY)) return; } catch(e) {}
   _tourStep = 0;
   _tourActive = true;
+  // Hide Natasha during tour
+  const nIntro = document.getElementById('natashaIntro');
+  if(nIntro) nIntro.style.display = 'none';
   showTourStep();
 }
 
@@ -7982,7 +7984,10 @@ function endTour() {
   _tourActive = false;
   try { localStorage.setItem(TOUR_KEY, '1'); } catch(e) {}
   goTab('home');
-  showNatasha('Tour complete! Come back anytime via Profile menu → Feature Tour.', 'happy');
+  // Re-show Natasha with welcome message after tour
+  const nIntro = document.getElementById('natashaIntro');
+  if(nIntro) nIntro.style.display = '';
+  setTimeout(() => showNatasha("You know everything now! Come back via Profile menu → Feature Tour anytime. Let's catch some bugs!", 'happy'), 500);
 }
 
 function closeTourUI() {
