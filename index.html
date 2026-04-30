@@ -900,15 +900,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
 @keyframes slideInRight{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* ── SHIMMER LOADING ─────────────────────────────────────────────────────── */
-@keyframes shimmer{0%{background-position:-1000px 0}100%{background-position:1000px 0}}
-.shimmer{
-  background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);
-  background-size:2000px 100%;
-  animation:shimmer 1.5s infinite linear;
-  border-radius:6px;
-}
-.shimmer-row{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);align-items:center}
-.shimmer-cell{height:14px;border-radius:4px;background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:2000px 100%;animation:shimmer 1.5s infinite linear}
+
 
 /* ── ROUNDED POPUPS / PANELS ─────────────────────────────────────────────── */
 .panel{border-radius:20px 0 0 20px!important}
@@ -2437,20 +2429,8 @@ function setCloud(s,l){
 // ══════════════════════════════════════════
 // REFRESH
 // ══════════════════════════════════════════
-function showTableShimmer() {
-  const el = document.getElementById('tBody');
-  if (!el) return;
-  const widths = [30, 110, 220, 75, 60, 90];
-  const rows = Array(8).fill(0).map(() =>
-    '<tr style="pointer-events:none">' + widths.map(w =>
-      '<td style="padding:10px 12px;border-bottom:1px solid var(--bd)"><div style="height:13px;border-radius:4px;width:'+w+'px;background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:2000px 100%;animation:shimmer 1.4s infinite linear"></div></td>'
-    ).join('') + '</tr>'
-  ).join('');
-  el.innerHTML = '<table style="width:100%"><tbody>' + rows + '</tbody></table>';
-}
 
 async function refreshAll(){
-  if(!S.bugs.length) showTableShimmer(); // only on first load
   setCloud('busy','loading…');
   try{
     const [bugsD,sprintsD,teamD,settingsD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team'),api('/settings').catch(()=>({settings:null}))]);
@@ -3030,6 +3010,8 @@ function renderHome(){
   const recent=[...S.bugs].sort((a,b)=>(b.created_ts||0)-(a.created_ts||0)).slice(0,8);
   document.getElementById('homeRecent').innerHTML=recent.length?recent.map(homeBugRow).join(''):emptySmall('🦗','No bugs yet');
   renderHomeBuildsStrip();
+  renderPersonalStats();
+  setTimeout(renderHomePieCharts, 80);
 }
 function emptySmall(icon,msg){return`<div style="padding:20px;text-align:center"><div style="font-size:28px;opacity:.2;margin-bottom:6px">${icon}</div><div style="font-family:var(--mono);font-size:11px;color:var(--dim)">${msg}</div></div>`;}
 function homeBugRow(bug){
@@ -3104,6 +3086,10 @@ let _homePieCharts = {};
 
 function renderHomePieCharts() {
   if(typeof Chart === 'undefined') return;
+  // Only render when home tab is visible
+  if(S.view !== 'home') return;
+  const ctxCheck = document.getElementById('homePieStatus');
+  if(!ctxCheck) { setTimeout(renderHomePieCharts, 200); return; }
 
   // Destroy old
   Object.values(_homePieCharts).forEach(c => { try { c.destroy(); } catch(e) {} });
