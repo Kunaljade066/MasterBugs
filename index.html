@@ -7843,6 +7843,7 @@ async function saveWebhookSettings() {
   const cfg = {
     gchat_url: document.getElementById('wh-gchat')?.value?.trim()||'',
     ..._podGChatUrls,
+    sheet_webhook_url: document.getElementById('wh-sheet-webhook')?.value?.trim()||'',
     slack_url: document.getElementById('wh-slack')?.value?.trim()||'',
     team_emails: document.getElementById('wh-emails')?.value?.trim()||'',
     notif_new_bug: document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
