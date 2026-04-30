@@ -935,6 +935,22 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
 /* ── STAT CARDS INSTANT UPDATE ───────────────────────────────────────────── */
 .stat-card{transition:all .3s cubic-bezier(.2,.8,.2,1)}
 .stat-val{transition:all .25s ease}
+
+/* ── MULTI-SELECT FILTER DROPDOWNS ──────────────────────────────────────── */
+.mf-wrap{position:relative;display:inline-block}
+.mf-btn{cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:80px;justify-content:space-between;user-select:none}
+.mf-btn:hover{border-color:var(--g1)!important}
+.mf-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:2000;background:var(--bg2);border:1px solid var(--bd2);border-radius:12px;min-width:180px;max-width:260px;max-height:280px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5);padding:6px}
+.mf-drop.open{display:block}
+.mf-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:12px;color:var(--mist);transition:background .1s}
+.mf-item:hover{background:rgba(124,58,237,.12)}
+.mf-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--g1);flex-shrink:0;cursor:pointer}
+.mf-item label{cursor:pointer;flex:1;font-family:var(--mono);font-size:11px}
+.mf-sep{height:1px;background:var(--bd);margin:4px 6px}
+.mf-badge{background:var(--g1);color:#fff;border-radius:8px;padding:1px 5px;font-size:9px;font-family:var(--mono);font-weight:700;margin-right:2px}
+.mf-actions{display:flex;gap:6px;padding:6px;border-top:1px solid var(--bd);margin-top:4px}
+.mf-act-btn{flex:1;padding:5px;border-radius:6px;font-size:10px;font-family:var(--mono);cursor:pointer;border:1px solid var(--bd);background:var(--bg3);color:var(--mist)}
+.mf-act-btn:hover{background:rgba(124,58,237,.15);border-color:var(--g1);color:var(--g1)}
 </style>
 </head>
 <body>
@@ -1177,13 +1193,34 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="stats" id="statsRow"></div>
           <div class="fbar">
             <input type="text" class="fi fi-q" id="fq" placeholder="🔍 Search bugs…" oninput="applyF()">
-            <select class="fi" id="fs" onchange="applyF()"><option value="">All Status</option></select>
-            <select class="fi" id="fp" onchange="applyF()"><option value="">All Priority</option></select>
-            <select class="fi" id="fa" onchange="applyF()"><option value="">All Assignees</option></select>
-            <select class="fi" id="ff" onchange="applyF()"><option value="">All Features</option></select>
-            <select class="fi" id="fsp" onchange="applyF()"><option value="">All Sprints</option></select>
-            <select class="fi" id="f-issue-type-filter" onchange="applyF()"><option value="">All Types</option></select>
+            <div class="mf-wrap" id="mfw-status"><button class="mf-btn fi" onclick="toggleMF('status')">Status <span id="mfbadge-status" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-status"></div></div>
+            <div class="mf-wrap" id="mfw-priority"><button class="mf-btn fi" onclick="toggleMF('priority')">Priority <span id="mfbadge-priority" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-priority"></div></div>
+            <div class="mf-wrap" id="mfw-assignee"><button class="mf-btn fi" onclick="toggleMF('assignee')">Assignee <span id="mfbadge-assignee" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-assignee"></div></div>
+            <div class="mf-wrap" id="mfw-feature"><button class="mf-btn fi" onclick="toggleMF('feature')">Feature <span id="mfbadge-feature" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-feature"></div></div>
+            <div class="mf-wrap" id="mfw-sprint"><button class="mf-btn fi" onclick="toggleMF('sprint')">Sprint <span id="mfbadge-sprint" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-sprint"></div></div>
+            <div class="mf-wrap" id="mfw-type"><button class="mf-btn fi" onclick="toggleMF('type')">Type <span id="mfbadge-type" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-type"></div></div>
+            <div class="mf-wrap" id="mfw-reporter"><button class="mf-btn fi" onclick="toggleMF('reporter')">Reporter <span id="mfbadge-reporter" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-reporter"></div></div>
+            <div class="mf-wrap" id="mfw-pod"><button class="mf-btn fi" onclick="toggleMF('pod')">Pod <span id="mfbadge-pod" class="mf-badge" style="display:none"></span>▾</button><div class="mf-drop" id="mfd-pod"></div></div>
+            <button class="btn btn-g btn-sm" onclick="toggleDateFilter()" id="dateFilterBtn" title="Date range filter" style="white-space:nowrap">📅 Date</button>
+            <button class="btn btn-g btn-sm" onclick="clearAllFilters()" title="Clear all filters">✕ Clear</button>
           </div>
+          <div id="dateFilterBar" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:8px 12px">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:1px">DATE RANGE</span>
+            <input type="date" class="fi" id="fDateFrom" onchange="applyF()" style="width:140px">
+            <span style="color:var(--dim);font-size:11px">to</span>
+            <input type="date" class="fi" id="fDateTo" onchange="applyF()" style="width:140px">
+            <select class="fi" id="fDatePreset" onchange="applyDatePreset()" style="width:auto">
+              <option value="">Custom range</option>
+              <option value="today">Today</option>
+              <option value="week">This week</option>
+              <option value="month">This month</option>
+              <option value="last7">Last 7 days</option>
+              <option value="last30">Last 30 days</option>
+              <option value="last90">Last 90 days</option>
+            </select>
+            <button class="btn btn-g btn-sm" onclick="clearDateFilter()">Clear</button>
+          </div>
+          <div id="filterStatsBar" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:11px"></div>
           <div class="tw">
             <div class="tw-hd"><span class="tw-hd-t" id="tTitle">Issues</span><span style="font-family:var(--mono);font-size:10px;color:var(--dim)" id="tMeta"></span></div>
             <div class="tscroll" id="tBody"></div>
@@ -2515,34 +2552,403 @@ function populateDropdowns(){
     itEl.innerHTML = '<option value="">All Types</option>' + types.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
   }
   fill('fsp',S.sprints.map(s=>s.name),'All Sprints');
+  populateMFDropdowns();
+
+  // Reporter filter
+  const repEl = document.getElementById('f-reporter-filter');
+  if(repEl) {
+    const cur = repEl.value;
+    const reporters = [...new Set(S.bugs.map(b=>b.reporter).filter(Boolean))].sort();
+    repEl.innerHTML = '<option value="">All Reporters</option>' +
+      reporters.map(r=>`<option value="${r}"${r===cur?' selected':''}>${r}</option>`).join('');
+  }
+
+  // Pod filter
+  const podEl = document.getElementById('f-pod-filter');
+  if(podEl) {
+    const cur = podEl.value;
+    const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+    podEl.innerHTML = '<option value="">All Pods</option>' +
+      pods.map(p=>`<option value="${p}"${p===cur?' selected':''}>${p}</option>`).join('');
+  }
+}
+
+
+
+// ══════════════════════════════════════════
+// MULTI-SELECT FILTERS
+// ══════════════════════════════════════════
+const MF_STATE = {
+  status:   new Set(),
+  priority: new Set(),
+  assignee: new Set(),
+  feature:  new Set(),
+  sprint:   new Set(),
+  type:     new Set(),
+  reporter: new Set(),
+  pod:      new Set(),
+};
+
+const MF_CONFIG = {
+  status:   { label:'Status',   field:'status',     opts:() => ALL_STATUSES },
+  priority: { label:'Priority', field:'priority',   opts:() => ['Critical','Urgent','High','Medium','Low'] },
+  assignee: { label:'Assignee', field:'assignees',  opts:() => {
+    const all = [...new Set(S.bugs.flatMap(b=>(b.assignees||[]).map(a=>a.name)).filter(Boolean))].sort();
+    return ['__unassigned__', ...all];
+  }},
+  feature:  { label:'Feature',  field:'feature',    opts:() => [...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort() },
+  sprint:   { label:'Sprint',   field:'sprint',     opts:() => S.sprints.map(s=>s.name) },
+  type:     { label:'Type',     field:'issue_type', opts:() => ['Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration','Security'] },
+  reporter: { label:'Reporter', field:'reporter',   opts:() => [...new Set(S.bugs.map(b=>b.reporter).filter(Boolean))].sort() },
+  pod:      { label:'Pod',      field:'pod',        opts:() => [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort() },
+};
+
+function toggleMF(key) {
+  const drop = document.getElementById('mfd-'+key);
+  if(!drop) return;
+  const isOpen = drop.classList.contains('open');
+  // Close all others first
+  document.querySelectorAll('.mf-drop.open').forEach(d => d.classList.remove('open'));
+  if(isOpen) return;
+  buildMFDrop(key);
+  drop.classList.add('open');
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener('click', function closeMF(e) {
+      if(!e.target.closest('#mfw-'+key)) { drop.classList.remove('open'); document.removeEventListener('click', closeMF); }
+    });
+  }, 0);
+}
+
+function buildMFDrop(key) {
+  const cfg = MF_CONFIG[key];
+  const drop = document.getElementById('mfd-'+key);
+  if(!drop||!cfg) return;
+  const opts = cfg.opts();
+  const sel = MF_STATE[key];
+
+  const checkItem = (val) => {
+    const label = val === '__unassigned__' ? '— No Assignee —' : val;
+    const checked = sel.has(val) ? 'checked' : '';
+    return `<div class="mf-item" onclick="toggleMFItem('${key}','${val.replace(/'/g,"\\'")}',this)">
+      <input type="checkbox" ${checked} onclick="event.stopPropagation();toggleMFItem('${key}','${val.replace(/'/g,"\\'")}',this.parentElement)">
+      <label>${label}</label>
+    </div>`;
+  };
+
+  drop.innerHTML = `
+    <div class="mf-item" style="border-bottom:1px solid var(--bd);margin-bottom:4px;padding-bottom:8px" onclick="selectAllMF('${key}')">
+      <input type="checkbox" ${sel.size===0?'checked':''} onclick="event.stopPropagation();selectAllMF('${key}')">
+      <label style="color:var(--g2);font-weight:700">All ${cfg.label}s</label>
+    </div>
+    ${opts.map(o => checkItem(o)).join('')}
+    <div class="mf-actions">
+      <button class="mf-act-btn" onclick="selectAllMF('${key}')">All</button>
+      <button class="mf-act-btn" onclick="clearMF('${key}')">Clear</button>
+      <button class="mf-act-btn" style="background:rgba(124,58,237,.2);border-color:var(--g1);color:var(--g1)" onclick="document.getElementById('mfd-${key}').classList.remove('open');applyF()">Apply</button>
+    </div>`;
+}
+
+function toggleMFItem(key, val, el) {
+  const sel = MF_STATE[key];
+  if(sel.has(val)) sel.delete(val); else sel.add(val);
+  // Update checkbox state
+  const cb = el?.querySelector('input[type=checkbox]');
+  if(cb) cb.checked = sel.has(val);
+  updateMFBadge(key);
+  applyF();
+}
+
+function selectAllMF(key) {
+  MF_STATE[key].clear();
+  updateMFBadge(key);
+  buildMFDrop(key);
+  applyF();
+}
+
+function clearMF(key) {
+  MF_STATE[key].clear();
+  updateMFBadge(key);
+  buildMFDrop(key);
+  applyF();
+}
+
+function clearAllFilters() {
+  Object.keys(MF_STATE).forEach(k => MF_STATE[k].clear());
+  document.getElementById('fq').value = '';
+  document.getElementById('fDateFrom').value = '';
+  document.getElementById('fDateTo').value = '';
+  Object.keys(MF_STATE).forEach(k => updateMFBadge(k));
+  applyF();
+}
+
+function updateMFBadge(key) {
+  const badge = document.getElementById('mfbadge-'+key);
+  const btn   = document.querySelector('#mfw-'+key+' .mf-btn');
+  const n = MF_STATE[key].size;
+  if(badge) { badge.textContent = n; badge.style.display = n ? '' : 'none'; }
+  if(btn) btn.style.borderColor = n ? 'var(--g1)' : '';
+}
+
+function populateMFDropdowns() {
+  // Just update badges — actual options built on open
+  Object.keys(MF_STATE).forEach(k => updateMFBadge(k));
+}
+
+// ══════════════════════════════════════════
+// DATE FILTER + FILTER STATS
+// ══════════════════════════════════════════
+function toggleDateFilter() {
+  const bar = document.getElementById('dateFilterBar');
+  const btn = document.getElementById('dateFilterBtn');
+  if(!bar) return;
+  const open = bar.style.display !== 'none';
+  bar.style.display = open ? 'none' : 'flex';
+  if(btn) btn.style.background = open ? '' : 'var(--g1)';
+}
+
+function applyDatePreset() {
+  const preset = document.getElementById('fDatePreset')?.value;
+  if(!preset) return;
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const today = fmt(now);
+  let from = today, to = today;
+
+  if(preset==='today')  { from = today; to = today; }
+  else if(preset==='week') {
+    const mon = new Date(now); mon.setDate(now.getDate()-now.getDay()+1);
+    from = fmt(mon); to = today;
+  }
+  else if(preset==='month') {
+    from = now.getFullYear()+'-'+pad(now.getMonth()+1)+'-01'; to = today;
+  }
+  else if(preset==='last7')  { const d=new Date(now-6*86400000); from=fmt(d); to=today; }
+  else if(preset==='last30') { const d=new Date(now-29*86400000); from=fmt(d); to=today; }
+  else if(preset==='last90') { const d=new Date(now-89*86400000); from=fmt(d); to=today; }
+
+  const fromEl = document.getElementById('fDateFrom');
+  const toEl   = document.getElementById('fDateTo');
+  if(fromEl) fromEl.value = from;
+  if(toEl)   toEl.value   = to;
+  applyF();
+}
+
+function clearDateFilter() {
+  const fromEl = document.getElementById('fDateFrom');
+  const toEl   = document.getElementById('fDateTo');
+  const preset = document.getElementById('fDatePreset');
+  if(fromEl) fromEl.value = '';
+  if(toEl)   toEl.value   = '';
+  if(preset) preset.value = '';
+  applyF();
+}
+
+// ── Filter stats bar + copy with issues list ──────────────────────────────────
+function updateFilterStats() {
+  const el = document.getElementById('filterStatsBar');
+  if(!el) return;
+  const bugs = S.filtered;
+  if(!bugs.length) { el.style.display='none'; return; }
+
+  const happy    = bugs.filter(b=>b.issue_type==='Happy Flow').length;
+  const edge     = bugs.filter(b=>b.issue_type==='Edge Case').length;
+  const crash    = bugs.filter(b=>b.issue_type==='Crash').length;
+  const crit     = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length;
+  const qaPass   = bugs.filter(b=>b.status==='QA Pass').length;
+
+  // Reporter breakdown
+  const repMap = {};
+  bugs.forEach(b=>{ if(b.reporter) repMap[b.reporter]=(repMap[b.reporter]||0)+1; });
+  const topReporters = Object.entries(repMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  // Assignee breakdown
+  const devMap = {};
+  bugs.forEach(b=>(b.assignees||[]).forEach(a=>{if(a.name) devMap[a.name]=(devMap[a.name]||0)+1;}));
+  const topDevs = Object.entries(devMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  el.style.display='flex';
+  el.innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;flex:1">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text);font-weight:700">${bugs.length} issues</span>
+      ${happy  ? `<span style="font-family:var(--mono);font-size:9px;background:rgba(16,185,129,.15);color:#6ee7b7;padding:2px 8px;border-radius:10px">Happy Flow: ${happy}</span>` : ''}
+      ${edge   ? `<span style="font-family:var(--mono);font-size:9px;background:rgba(245,158,11,.15);color:#fcd34d;padding:2px 8px;border-radius:10px">Edge Case: ${edge}</span>` : ''}
+      ${crash  ? `<span style="font-family:var(--mono);font-size:9px;background:rgba(239,68,68,.15);color:#f87171;padding:2px 8px;border-radius:10px">Crash: ${crash}</span>` : ''}
+      ${crit   ? `<span style="font-family:var(--mono);font-size:9px;background:rgba(239,68,68,.1);color:var(--g5);padding:2px 8px;border-radius:10px">Critical: ${crit}</span>` : ''}
+      ${qaPass ? `<span style="font-family:var(--mono);font-size:9px;background:rgba(16,185,129,.1);color:var(--g4);padding:2px 8px;border-radius:10px">QA Pass: ${qaPass}</span>` : ''}
+      ${topReporters.length ? `<span style="font-family:var(--mono);font-size:9px;color:var(--dim)">by: ${topReporters.map(([n,c])=>n+' ('+c+')').join(', ')}</span>` : ''}
+      ${topDevs.length ? `<span style="font-family:var(--mono);font-size:9px;color:var(--dim)">assigned: ${topDevs.map(([n,c])=>n+' ('+c+')').join(', ')}</span>` : ''}
+    </div>
+    <button class="btn btn-g btn-sm" onclick="copyFilteredStats()" style="flex-shrink:0">Copy Stats + Issues</button>`;
+}
+
+function copyFilteredStats() {
+  const bugs = S.filtered;
+  if(!bugs.length) { toast('No bugs in current filter','err'); return; }
+
+  const dateFrom = document.getElementById('fDateFrom')?.value||'';
+  const dateTo   = document.getElementById('fDateTo')?.value||'';
+  const fs  = document.getElementById('fs')?.value||'';
+  const fp  = document.getElementById('fp')?.value||'';
+  const fa  = document.getElementById('fa')?.value||'';
+  const fit = document.getElementById('f-issue-type-filter')?.value||'';
+  const frep= document.getElementById('f-reporter-filter')?.value||'';
+  const fpod= document.getElementById('f-pod-filter')?.value||'';
+
+  const filters = [
+    dateFrom&&dateTo ? dateFrom+' to '+dateTo : dateFrom||dateTo,
+    fs, fp, fa, fit, frep&&'Reporter: '+frep, fpod&&'Pod: '+fpod,
+  ].filter(Boolean).join(' | ');
+
+  // Stats summary
+  const happy  = bugs.filter(b=>b.issue_type==='Happy Flow').length;
+  const edge   = bugs.filter(b=>b.issue_type==='Edge Case').length;
+  const crash  = bugs.filter(b=>b.issue_type==='Crash').length;
+  const crit   = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length;
+  const qaPass = bugs.filter(b=>b.status==='QA Pass').length;
+
+  // Reporter breakdown
+  const repMap = {};
+  bugs.forEach(b=>{ if(b.reporter) repMap[b.reporter]=(repMap[b.reporter]||0)+1; });
+
+  // Dev breakdown
+  const devMap = {};
+  bugs.forEach(b=>(b.assignees||[]).forEach(a=>{ if(a.name) devMap[a.name]=(devMap[a.name]||0)+1; }));
+
+  // Flow type breakdown
+  const flowMap = {};
+  bugs.forEach(b=>{ const t=b.issue_type||'Untagged'; flowMap[t]=(flowMap[t]||0)+1; });
+
+  let text = '=== BUG REPORT ===\n';
+  if(filters) text += 'Filters: '+filters+'\n';
+  text += 'Total    : '+bugs.length+'\n';
+  text += 'Critical : '+crit+'\n';
+  text += 'QA Pass  : '+qaPass+'\n\n';
+
+  if(Object.keys(flowMap).length>1||flowMap['Untagged']!==bugs.length) {
+    text += '--- ISSUE TYPE BREAKDOWN ---\n';
+    Object.entries(flowMap).sort((a,b)=>b[1]-a[1]).forEach(([t,n])=>{
+      text += (t+'            ').slice(0,14)+': '+n+'\n';
+    });
+    text += '\n';
+  }
+
+  if(Object.keys(repMap).length) {
+    text += '--- BY REPORTER (QA) ---\n';
+    Object.entries(repMap).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>{
+      const rBugs = bugs.filter(b=>b.reporter===n);
+      const rHappy = rBugs.filter(b=>b.issue_type==='Happy Flow').length;
+      const rEdge  = rBugs.filter(b=>b.issue_type==='Edge Case').length;
+      text += (n+'                    ').slice(0,20)+': '+c+' bugs';
+      if(rHappy) text += ', '+rHappy+' happy';
+      if(rEdge)  text += ', '+rEdge+' edge';
+      text += '\n';
+    });
+    text += '\n';
+  }
+
+  if(Object.keys(devMap).length) {
+    text += '--- BY DEV (ASSIGNED) ---\n';
+    Object.entries(devMap).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>{
+      const dBugs = bugs.filter(b=>(b.assignees||[]).some(a=>a.name===n));
+      const dCrit = dBugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length;
+      const dPass = dBugs.filter(b=>b.status==='QA Pass').length;
+      text += (n+'                    ').slice(0,20)+': '+c+' bugs';
+      if(dCrit) text += ', '+dCrit+' critical';
+      if(dPass) text += ', '+dPass+' QA pass';
+      text += '\n';
+    });
+    text += '\n';
+  }
+
+  // All issues list
+  text += '--- ALL ISSUES ('+bugs.length+') ---\n';
+  bugs.forEach(b => {
+    const assignees = (b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
+    text += '['+b.id+'] '+( b.title||'')+' \n';
+    text += '  '+( b.priority||'Medium')+' | '+(b.status||'')+' | '+(b.issue_type||'')+' | Reporter: '+(b.reporter||'—')+' | Dev: '+assignees+'\n';
+    text += '  '+APP_URL+'?bug='+b.id+'\n';
+  });
+
+  navigator.clipboard.writeText(text).then(()=>toast('Stats + '+bugs.length+' issues copied','ok'));
 }
 
 function applyF(){
   window._idFilter = null;
-  const q=(document.getElementById('fq')?.value||'').toLowerCase();
-  const fs=document.getElementById('fs')?.value||'';
-  const fp=document.getElementById('fp')?.value||'';
-  const fa=document.getElementById('fa')?.value||'';
-  const ff=document.getElementById('ff')?.value||'';
-  const fsp=document.getElementById('fsp')?.value||'';
-  S.filtered=S.bugs.filter(b=>{
+  const q = (document.getElementById('fq')?.value||'').toLowerCase();
+
+  // Multi-select state
+  const ms = MF_STATE;
+
+  // Date range
+  const dateFrom = document.getElementById('fDateFrom')?.value||'';
+  const dateTo   = document.getElementById('fDateTo')?.value||'';
+  const fromTs   = dateFrom ? new Date(dateFrom).getTime() : 0;
+  const toTs     = dateTo   ? new Date(dateTo).getTime() + 86399999 : Infinity;
+
+  S.filtered = S.bugs.filter(b => {
+    // Sidebar mode filters
     if(S.sbMode==='status'&&S.sbVal!=='all'&&b.status!==S.sbVal)return false;
     if(S.sbMode==='priority'&&b.priority!==S.sbVal)return false;
     if(S.sbMode==='assignee'&&S.sbVal==='mine'&&!(b.assignees||[]).some(a=>a.email===S.user?.email))return false;
     if(S.sbMode==='reporter'&&S.sbVal==='reporter'&&b.reporter_email!==S.user?.email)return false;
-    if(fs&&b.status!==fs)return false;
-    if(fp&&b.priority!==fp)return false;
-    if(fa==='__unassigned__'&&(b.assignees||[]).length>0)return false;
-    if(fa&&fa!=='__unassigned__'&&!(b.assignees||[]).some(a=>a.name===fa))return false;
-    if(ff&&b.feature!==ff)return false;
-    const fit = document.getElementById('f-issue-type-filter')?.value||'';
-    if(fit&&b.issue_type!==fit)return false;
-    if(fsp&&b.sprint!==fsp)return false;
-    if(q){const hay=[b.id,b.title,(b.assignees||[]).map(a=>a.name).join(' '),b.feature,b.steps,b.actual,b.build||''].join(' ').toLowerCase();if(!hay.includes(q))return false;}
+
+    // Multi-select filters
+    if(ms.status.size) {
+      if(!ms.status.has(b.status)) return false;
+    }
+    if(ms.priority.size) {
+      if(!ms.priority.has(b.priority)) return false;
+    }
+    if(ms.assignee.size) {
+      const assigneeNames = (b.assignees||[]).map(a=>a.name);
+      const unassigned = !assigneeNames.length;
+      const hasMatch = ms.assignee.has('__unassigned__') ? unassigned :
+                       assigneeNames.some(n => ms.assignee.has(n));
+      const hasUnassigned = ms.assignee.has('__unassigned__') && unassigned;
+      const hasNamed = assigneeNames.some(n => ms.assignee.has(n));
+      if(!hasUnassigned && !hasNamed) return false;
+    }
+    if(ms.feature.size) {
+      if(!ms.feature.has(b.feature||'')) return false;
+    }
+    if(ms.sprint.size) {
+      if(!ms.sprint.has(b.sprint||'')) return false;
+    }
+    if(ms.type.size) {
+      if(!ms.type.has(b.issue_type||'')) return false;
+    }
+    if(ms.reporter.size) {
+      if(!ms.reporter.has(b.reporter||'')) return false;
+    }
+    if(ms.pod.size) {
+      if(!ms.pod.has(b.pod||'')) return false;
+    }
+
+    // Date range
+    if(fromTs || toTs < Infinity) {
+      const bts = b.created_ts || (b.created_at ? new Date(b.created_at).getTime() : 0);
+      if(!bts || bts < fromTs || bts > toTs) return false;
+    }
+
+    // Text search
+    if(q) {
+      const hay = [b.id,b.title,(b.assignees||[]).map(a=>a.name).join(' '),b.feature,b.steps,b.actual,b.build||'',b.reporter||'',b.pod||'',b.issue_type||''].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
     return true;
   });
-  if(S.sortCol){S.filtered.sort((a,b)=>{const va=(a[S.sortCol]||'').toString(),vb=(b[S.sortCol]||'').toString();return S.sortDir*va.localeCompare(vb,undefined,{numeric:true});});}
-  S.page=1;renderTable();
+
+  if(S.sortCol) {
+    S.filtered.sort((a,b) => {
+      const va=(a[S.sortCol]||'').toString(), vb=(b[S.sortCol]||'').toString();
+      return S.sortDir * va.localeCompare(vb, undefined, {numeric:true});
+    });
+  }
+  S.page = 1;
+  renderTable();
+  updateFilterStats();
 }
 
 // ══════════════════════════════════════════
@@ -4175,7 +4581,7 @@ function buildBugForm(bug,full){
       </div>
       <div class="fg"><label class="fl">Issue Type <span style="color:var(--g1);font-weight:400;font-size:9px;letter-spacing:0;text-transform:none">— for trend analysis</span></label>
         <select class="fi2" id="f-issue-type">
-          ${['','Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration'].map(v=>`<option value="${v}"${(bug?.issue_type||'')===v?' selected':''}>${v||'— Select type —'}</option>`).join('')}
+          ${['','Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration','Security'].map(v=>`<option value="${v}"${(bug?.issue_type||'')===v?' selected':''}>${v||'— Select type —'}</option>`).join('')}
         </select>
       </div>
       <div class="fg"><label class="fl">Status</label><select class="fi2" id="f-st">${stOpts}</select></div>
