@@ -947,18 +947,26 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
 .mf-act-btn{flex:1;padding:5px;border-radius:6px;font-size:10px;font-family:var(--mono);cursor:pointer;border:1px solid var(--bd);background:var(--bg3);color:var(--mist)}
 .mf-act-btn:hover{background:rgba(124,58,237,.15);border-color:var(--g1);color:var(--g1)}
 
-/* ── FEATURE TOUR / FTUE ─────────────────────────────────────────────────── */
-.tour-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.7);backdrop-filter:blur(2px)}
-.tour-spotlight{position:fixed;z-index:99999;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.7),0 0 0 3px var(--g1),0 0 20px var(--g1);pointer-events:none;transition:all .35s cubic-bezier(.4,0,.2,1)}
-.tour-card{position:fixed;z-index:100000;background:var(--bg2);border:1px solid var(--g1);border-radius:16px;padding:20px 22px;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.6);animation:tourIn .3s ease}
-@keyframes tourIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.tour-step-num{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--g1);text-transform:uppercase;margin-bottom:6px}
-.tour-title{font-family:var(--disp);font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px}
-.tour-desc{font-size:13px;color:var(--mist);line-height:1.7;margin-bottom:16px}
-.tour-dots{display:flex;gap:5px;margin-bottom:14px}
-.tour-dot{width:6px;height:6px;border-radius:50%;background:var(--bd2);transition:all .2s}
-.tour-dot.on{background:var(--g1);width:18px;border-radius:3px}
-.tour-btns{display:flex;gap:8px;justify-content:flex-end}
+/* ── FEATURE TOUR / FTUE with Natasha ───────────────────────────────────── */
+.tour-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.75);backdrop-filter:blur(3px)}
+.tour-spotlight{position:fixed;z-index:99999;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.75),0 0 0 3px var(--g1),0 0 24px var(--g1);pointer-events:none;transition:all .4s cubic-bezier(.4,0,.2,1)}
+.tour-card{position:fixed;z-index:100000;background:linear-gradient(145deg,var(--bg2),var(--bg3));border:1px solid var(--g1);border-radius:20px;padding:0;max-width:420px;width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(124,58,237,.3);animation:tourIn .35s cubic-bezier(.2,.8,.2,1);overflow:hidden}
+@keyframes tourIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.tour-natasha-wrap{display:flex;align-items:flex-end;gap:0;background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(124,58,237,.05));padding:16px 18px 0;border-bottom:1px solid rgba(124,58,237,.15)}
+.tour-natasha-img{width:80px;height:100px;object-fit:contain;object-position:bottom;filter:drop-shadow(0 0 12px rgba(124,58,237,.4));flex-shrink:0;margin-bottom:-1px}
+.tour-speech{flex:1;background:var(--bg3);border:1px solid rgba(124,58,237,.25);border-radius:12px 12px 12px 2px;padding:12px 14px;margin-left:10px;margin-bottom:12px;position:relative}
+.tour-speech:before{content:'';position:absolute;bottom:8px;left:-8px;border:4px solid transparent;border-right-color:rgba(124,58,237,.25)}
+.tour-speech-title{font-family:var(--disp);font-size:14px;font-weight:800;color:var(--g1);margin-bottom:5px}
+.tour-speech-text{font-size:12px;color:var(--mist);line-height:1.7}
+.tour-body{padding:14px 18px 18px}
+.tour-feature-list{display:flex;flex-direction:column;gap:4px;margin-bottom:14px}
+.tour-feature-item{display:flex;align-items:flex-start;gap:8px;padding:5px 8px;border-radius:7px;background:rgba(124,58,237,.06);font-size:11px;color:var(--mist);line-height:1.5}
+.tour-feature-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.tour-progress{display:flex;gap:3px;margin-bottom:14px;flex-wrap:wrap}
+.tour-dot{width:7px;height:7px;border-radius:50%;background:var(--bd2);transition:all .25s;cursor:pointer;flex-shrink:0}
+.tour-dot.on{background:var(--g1);width:20px;border-radius:4px}
+.tour-btns{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.tour-step-num{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;flex:1}
 </style>
 </head>
 <body>
@@ -7539,74 +7547,171 @@ const TOUR_KEY = 'hwt_tour_done_v1';
 
 const TOUR_STEPS = [
   {
-    title: 'Welcome to BugPulse',
-    desc: 'Your complete QA hub — built for Hitwicket. Track bugs, manage sprints, log builds, run test cases and get team reports. Let\'s explore everything!',
-    target: null, tab: null, pos: 'center',
+    tab: null,
+    title: 'Hey! I am Natasha',
+    speech: 'Welcome to BugPulse — your complete QA command centre! I am going to show you everything this tool can do. Ready? Let us go!',
+    features: [],
   },
   {
-    title: '🐛 Bugs — Backlog',
-    desc: 'The main bug list. Log issues with title, priority, severity, steps to reproduce, assignee, build version, pod and screenshots. Filter by any field. Multi-select checkboxes for advanced filtering.',
-    target: '#tt-backlog', tab: 'backlog', pos: 'bottom',
+    tab: 'backlog',
+    title: 'Bug Backlog',
+    speech: 'This is your main bug list. Every issue logged by the team lives here. You can sort, filter, bulk-select and export.',
+    features: [
+      { icon: '➕', text: 'Log bugs with title, priority, severity, steps, assignee, build, pod, platform' },
+      { icon: '🎯', text: 'Issue Type: Happy Flow, Edge Case, Regression, Crash, UI/Visual, Performance' },
+      { icon: '📎', text: 'Attach Google Drive screenshots — preview shown inline in bug detail' },
+      { icon: '👥', text: 'Multi-assignee support with avatar stack' },
+      { icon: '🔔', text: 'Notify Teammates toggle — fires GChat, Slack, email and push notification' },
+      { icon: '📋', text: 'Bug templates: Crash, IAP, UI, Match Engine, Network, Regression + custom' },
+    ],
   },
   {
-    title: '➕ Log a Bug',
-    desc: 'Click "+ NEW BUG" to open the bug form. Choose from templates (Crash, IAP, UI etc), fill steps, attach Google Drive screenshots and toggle Notify Teammates to alert the team on GChat instantly.',
-    target: null, tab: 'backlog', pos: 'center',
+    tab: 'backlog',
+    title: 'Smart Filters',
+    speech: 'Find any bug in seconds. I have multi-select checkboxes on every filter so you can combine them any way you want!',
+    features: [
+      { icon: '☑️', text: 'Status filter — select multiple statuses at once' },
+      { icon: '🎯', text: 'Priority, Severity, Assignee, Feature, Sprint, Pod — all multi-select' },
+      { icon: '🔍', text: 'Full text search across title, steps, assignee, build, feature' },
+      { icon: '📅', text: 'Date range filter — Today, This Week, Last 7/30/90 days or custom range' },
+      { icon: '🏷️', text: 'Issue Type filter — filter by Happy Flow vs Edge Case vs Regression' },
+      { icon: '📊', text: 'Filter Stats bar — shows count, issue types, top reporters, top devs' },
+      { icon: '📋', text: 'Copy Stats + Issues — full report with all filtered bugs and links' },
+    ],
   },
   {
-    title: '🔍 Smart Filters',
-    desc: 'Filter by Status, Priority, Assignee, Feature, Sprint, Issue Type (Happy Flow / Edge Case), Reporter, Pod and Date Range — all with multi-select checkboxes. Use Copy Stats to get a full report for QA presentations.',
-    target: '#fq', tab: 'backlog', pos: 'bottom',
+    tab: 'backlog',
+    title: 'Bulk Actions',
+    speech: 'Select multiple bugs using the checkboxes and take action on all of them at once!',
+    features: [
+      { icon: '✅', text: 'Bulk status change, priority change, sprint assignment, assignee update' },
+      { icon: '🔗', text: 'Copy Link — share a URL that opens BugPulse filtered to exactly those bugs' },
+      { icon: '📋', text: 'Copy Report — plain text report with all selected bug details and links' },
+      { icon: '🗑️', text: 'Bulk delete (admin only)' },
+      { icon: '📥', text: 'Export selected as XLSX — formatted spreadsheet with column widths' },
+    ],
   },
   {
-    title: '📋 Board View',
-    desc: 'Kanban board — drag and drop bugs between status columns. Filter by Sprint, Assignee, Priority and Pod. Changes sync to D1 instantly and fire GChat notifications.',
-    target: '#tt-board', tab: 'board', pos: 'bottom',
+    tab: 'board',
+    title: 'Kanban Board',
+    speech: 'Visual board view — see all bugs as cards grouped by status. Drag and drop to update status instantly!',
+    features: [
+      { icon: '🎴', text: 'Cards show ID, title, priority chip, age and assignee avatars' },
+      { icon: '🖱️', text: 'Drag and drop between columns — fires GChat notification on drop' },
+      { icon: '🔽', text: 'Filter by Sprint, Assignee, Priority, Pod — board updates live' },
+      { icon: '✨', text: 'Smooth card animation when dragging — scale + rotate effect' },
+    ],
   },
   {
-    title: '🏃 Sprints',
-    desc: 'Create sprints with start/end dates. Track progress bars, see bugs grouped by sprint, view velocity and completion rates. Manage sprint goals.',
-    target: '#tt-sprints', tab: 'sprints', pos: 'bottom',
+    tab: 'sprints',
+    title: 'Sprints',
+    speech: 'Organise your work into sprints with start and end dates. Track how many bugs are open, in progress and done!',
+    features: [
+      { icon: '📅', text: 'Create sprints with start/end dates and goals' },
+      { icon: '📊', text: 'Progress bar per sprint — filed, resolved, closed counts' },
+      { icon: '🎯', text: 'SLA breach highlighting — bugs older than configured days turn red' },
+      { icon: '📋', text: 'Release Notes generator — grouped by feature, copy or send to GChat' },
+    ],
   },
   {
-    title: '🎮 Features',
-    desc: 'Bugs grouped by feature and sub-feature (e.g. Dashboard → Stats, PvP Road → Icon Issue). See open/done counts per feature with progress bars. Click any bug to open detail.',
-    target: '#tt-features', tab: 'features', pos: 'bottom',
+    tab: 'features',
+    title: 'Features',
+    speech: 'See bugs grouped by feature and sub-feature — like Dashboard, then Dashboard → Stats, Dashboard → Icon Issue!',
+    features: [
+      { icon: '🎮', text: 'Features tab groups bugs by feature with progress bars' },
+      { icon: '↳', text: 'Sub-features: nested grouping e.g. PvP Road → Shot Selection' },
+      { icon: '🔢', text: 'Bug count, critical count, completion % per feature' },
+      { icon: '🎮', text: 'Feature Kanban button in backlog — horizontal card view by feature' },
+    ],
   },
   {
-    title: '📦 Builds & Test Runs',
-    desc: 'Log build releases with version, platform, APK link and release notes. Create test runs from bug lists or upload TestRail CSV. Mark each test case Pass/Fail/Blocked and log bugs inline.',
-    target: '#tt-builds', tab: 'builds', pos: 'bottom',
+    tab: 'builds',
+    title: 'Builds & Test Runs',
+    speech: 'Log every build release and execute test cases against it. I help you track release quality over time!',
+    features: [
+      { icon: '📦', text: 'Log builds: version, platform, APK link, release notes, GChat notification' },
+      { icon: '🧪', text: 'Test Runs: create from BugPulse bugs, sprint, feature or upload CSV' },
+      { icon: '📄', text: 'Download test case template — fill in Excel/Sheets and upload back' },
+      { icon: '✅', text: 'Mark each test case: Pass, Fail, Blocked, Retest' },
+      { icon: '🐛', text: 'Log bug inline from a failing test case — pre-fills steps and expected' },
+      { icon: '📊', text: 'Test run stats: pass %, fail count, blocked, coverage per section' },
+    ],
   },
   {
-    title: '📊 Dashboard',
-    desc: 'Pie charts (by Status, Priority, Pod) on home screen. Dashboard shows trend lines, month-wise day-by-day bars, pod comparison across months with IMPROVING/REGRESSING/STABLE indicators. Copy for QA presentations.',
-    target: '#tt-dashboard', tab: 'dashboard', pos: 'bottom',
+    tab: 'dashboard',
+    title: 'Dashboard & Analytics',
+    speech: 'All the numbers you need for your QA reports and presentations. Charts, trends, pod comparisons — everything!',
+    features: [
+      { icon: '🥧', text: 'Home: 3 pie charts — By Status, By Priority, By Pod (auto-updated)' },
+      { icon: '📈', text: 'Timeline: Last 30/90 days or monthly — Filed vs Resolved trend lines' },
+      { icon: '📅', text: 'Month-wise: day-by-day bar chart + stats cards for any selected month' },
+      { icon: '🏏', text: 'Pod Comparison: pick 2 months — bar chart per pod with IMPROVING/REGRESSING/STABLE' },
+      { icon: '📋', text: 'Copy Report — plain text for QA presentations with pod breakdown' },
+      { icon: '👤', text: 'Personal stats on home: your assigned open, critical, fixed, reported today' },
+    ],
   },
   {
-    title: '🔔 Alerts & Push Notifications',
-    desc: 'Enable desktop push notifications to get alerted on new bugs, status changes and EOD reports — even when the browser is fully closed. Works on phone too.',
-    target: '#tt-notifs', tab: 'notifs', pos: 'bottom',
+    tab: 'notifs',
+    title: 'Alerts & Notifications',
+    speech: 'Never miss a critical bug! Enable push notifications and I will ping you even when the browser is closed!',
+    features: [
+      { icon: '🔔', text: 'Desktop push notifications — works even when browser is fully closed' },
+      { icon: '📱', text: 'Works on phone too — enable in Chrome on Android' },
+      { icon: '🚨', text: 'Alerts for: new bugs, status changes, builds, EOD reports' },
+      { icon: '⏰', text: 'EOD auto-report — server sends GChat + email at your configured time daily' },
+      { icon: '🌙', text: 'Cron-based — no browser needed for EOD to fire (Cloudflare Worker cron)' },
+      { icon: '🔕', text: 'Disable Natasha — toggle me on/off from profile menu per user' },
+    ],
   },
   {
-    title: '🟣 ClickUp Integration',
-    desc: 'Sync your ClickUp tasks. Filter by Space/Pod, Status, Assignee, Tags and Due Date. See linked BugPulse bugs alongside ClickUp tasks. 2-way status sync.',
-    target: '#tt-clickup', tab: 'clickup', pos: 'bottom',
+    tab: 'clickup',
+    title: 'ClickUp Integration',
+    speech: 'See your ClickUp tasks right inside BugPulse and link them to bugs. Two-way status sync!',
+    features: [
+      { icon: '🟣', text: 'Sync all ClickUp tasks — filter by Space/Pod, List, Status, Assignee, Tags' },
+      { icon: '📅', text: 'Due date range filter — see overdue or upcoming tasks' },
+      { icon: '🔗', text: 'Link any ClickUp task to a BugPulse bug — shown in bug detail' },
+      { icon: '🔄', text: '2-way status sync — update ClickUp status from BugPulse drag & drop' },
+    ],
   },
   {
-    title: '📥 Import & Google Sheets',
-    desc: 'Import bugs from CSV. Download the template, fill in Excel/Sheets, upload — all bugs created instantly. Google Sheets sync: anyone adds a row → appears in BugPulse in seconds. Bug ID auto-written back to sheet.',
-    target: '#tt-import', tab: 'import', pos: 'bottom',
+    tab: 'import',
+    title: 'Import & Google Sheets',
+    speech: 'Your whole team can log bugs from a Google Sheet — no BugPulse login needed for entry, and it syncs instantly!',
+    features: [
+      { icon: '📥', text: 'CSV import: bulk upload bugs with all fields, smart title extraction from steps' },
+      { icon: '↩️', text: 'Rollback last import — admin can undo the entire batch in one click' },
+      { icon: '📊', text: 'Google Sheets sync: fill a row → appears in BugPulse in 1-2 seconds' },
+      { icon: '🔑', text: 'Bug ID auto-written back to sheet column A after sync' },
+      { icon: '🗂️', text: 'Dropdowns synced from BugPulse — Priority, Status, Pod, Feature, Sprint' },
+      { icon: '🚫', text: 'Admin-deleted bugs never re-created from sheet — permanently blocked' },
+    ],
   },
   {
-    title: '🔔 GChat & Webhooks',
-    desc: 'Per-pod GChat webhooks — each team gets notifications in their own space. EOD reports auto-sent server-side at your configured time (no browser needed). Jenkins CI/CD webhook for build notifications.',
-    target: null, tab: null, pos: 'center',
+    tab: null,
+    title: 'Webhooks & Integrations',
+    speech: 'BugPulse connects to your whole team workflow. Configure everything from Webhook Settings in the profile menu!',
+    features: [
+      { icon: '💬', text: 'GChat per pod — each team gets notifications in their own space' },
+      { icon: '💬', text: 'Slack webhook with Block Kit rich messages' },
+      { icon: '📧', text: 'Email notifications via Brevo — new bugs, assignments, builds' },
+      { icon: '🏗️', text: 'Jenkins CI/CD webhook — per team token, fires on build completion' },
+      { icon: '📊', text: 'EOD report — auto-sent server-side at configured IST time, Mon-Fri' },
+      { icon: '🔑', text: 'VAPID keys for Web Push — generate inside BugPulse, store in Cloudflare' },
+    ],
   },
   {
-    title: '📊 All Features Summary',
-    desc: '✓ Bug logging with templates  ✓ Kanban board  ✓ Sprints & features  ✓ Build tracking  ✓ Test runs  ✓ Dashboard charts  ✓ Pod comparisons  ✓ Desktop push  ✓ GChat/Slack/Email  ✓ ClickUp sync  ✓ Sheet sync  ✓ CSV import/export  ✓ EOD auto-reports  ✓ SLA breach alerts  ✓ Release notes  ✓ Bug templates  ✓ Watchlist  ✓ Bulk actions',
-    target: null, tab: null, pos: 'center',
+    tab: null,
+    title: 'You are all set!',
+    speech: 'That is everything! BugPulse has 20+ features built just for Hitwicket QA. Go catch some bugs — I will be here if you need me!',
+    features: [
+      { icon: '🐛', text: 'Bug backlog with templates, filters, bulk actions, export' },
+      { icon: '📋', text: 'Kanban board, Sprints, Features, Sub-features' },
+      { icon: '📦', text: 'Builds, Test Runs, TestRail CSV upload' },
+      { icon: '📊', text: 'Dashboard: pie charts, trends, month-wise, pod comparison' },
+      { icon: '🔔', text: 'Push notifications, GChat, Slack, Email, EOD auto-report' },
+      { icon: '🟣', text: 'ClickUp 2-way sync, Google Sheets sync, CSV import' },
+    ],
   },
 ];
 
@@ -7614,9 +7719,7 @@ let _tourStep = 0;
 let _tourActive = false;
 
 function startTour(force) {
-  try {
-    if (!force && localStorage.getItem(TOUR_KEY)) return;
-  } catch(e) {}
+  try { if (!force && localStorage.getItem(TOUR_KEY)) return; } catch(e) {}
   _tourStep = 0;
   _tourActive = true;
   showTourStep();
@@ -7626,12 +7729,9 @@ function showTourStep() {
   closeTourUI();
   if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
   const step = TOUR_STEPS[_tourStep];
-
-  // Navigate to the tab this step is about
   if (step.tab) {
     goTab(step.tab);
-    // Small delay to let tab render before spotlighting
-    setTimeout(_showTourCard, 150);
+    setTimeout(_showTourCard, 200);
     return;
   }
   _showTourCard();
@@ -7646,10 +7746,9 @@ function _showTourCard() {
   const overlay = document.createElement('div');
   overlay.className = 'tour-overlay';
   overlay.id = 'tourOverlay';
-  overlay.onclick = () => advanceTour();
   document.body.appendChild(overlay);
 
-  // Spotlight on target
+  // Spotlight on target element if specified
   if (step.target) {
     const el = document.querySelector(step.target);
     if (el) {
@@ -7662,1194 +7761,58 @@ function _showTourCard() {
     }
   }
 
+  // Progress dots
+  const dots = TOUR_STEPS.map((_, i) =>
+    `<div class="tour-dot${i===_tourStep?' on':''}" onclick="_tourStep=${i};_showTourCard()"></div>`
+  ).join('');
+
+  // Feature list HTML
+  const featHtml = step.features.map(f =>
+    `<div class="tour-feature-item"><span class="tour-feature-icon">${f.icon}</span><span>${f.text}</span></div>`
+  ).join('');
+
   // Card
   const card = document.createElement('div');
   card.className = 'tour-card';
   card.id = 'tourCard';
-
-  const dots = TOUR_STEPS.map((_, i) =>
-    `<div class="tour-dot${i===_tourStep?' on':''}"></div>`
-  ).join('');
-
   card.innerHTML = `
-    <div class="tour-step-num">Step ${_tourStep+1} of ${TOUR_STEPS.length}</div>
-    <div class="tour-title">${step.title}</div>
-    <div class="tour-desc">${step.desc}</div>
-    <div class="tour-dots">${dots}</div>
-    <div class="tour-btns">
-      ${_tourStep > 0 ? '<button class="btn btn-g btn-sm" onclick="prevTour()">← Back</button>' : ''}
-      <button class="btn btn-g btn-sm" onclick="endTour()">Skip</button>
-      <button class="btn btn-v btn-sm" onclick="advanceTour()">${_tourStep === TOUR_STEPS.length-1 ? 'Done!' : 'Next →'}</button>
+    <div class="tour-natasha-wrap">
+      <img class="tour-natasha-img" src="natasha.png" alt="Natasha" onerror="this.src='https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png';this.style.borderRadius='50%'">
+      <div class="tour-speech">
+        <div class="tour-speech-title">${step.title}</div>
+        <div class="tour-speech-text">${step.speech}</div>
+      </div>
+    </div>
+    <div class="tour-body">
+      ${featHtml ? `<div class="tour-feature-list">${featHtml}</div>` : ''}
+      <div class="tour-progress">${dots}</div>
+      <div class="tour-btns">
+        <span class="tour-step-num">${_tourStep+1} / ${TOUR_STEPS.length}</span>
+        ${_tourStep > 0 ? `<button class="btn btn-g btn-sm" onclick="prevTour()">← Back</button>` : ''}
+        <button class="btn btn-g btn-sm" onclick="endTour()">Skip tour</button>
+        <button class="btn btn-v btn-sm" onclick="advanceTour()">${_tourStep===TOUR_STEPS.length-1?'Done!':'Next →'}</button>
+      </div>
     </div>`;
 
-  // Position card
-  if (step.pos === 'center' || !step.target) {
-    card.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
-  } else {
-    const el = step.target ? document.querySelector(step.target) : null;
-    if (el) {
-      const r = el.getBoundingClientRect();
-      const cardTop = r.bottom + 14;
-      const cardLeft = Math.min(Math.max(r.left, 10), window.innerWidth - 340);
-      card.style.cssText = `top:${cardTop}px;left:${cardLeft}px`;
-    } else {
-      card.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
-    }
-  }
-
+  // Center card on screen
+  card.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
   document.body.appendChild(card);
 }
 
-function advanceTour() {
-  _tourStep++;
-  showTourStep();
-}
-
-function prevTour() {
-  _tourStep = Math.max(0, _tourStep - 1);
-  showTourStep();
-}
+function advanceTour() { _tourStep++; showTourStep(); }
+function prevTour() { _tourStep = Math.max(0, _tourStep-1); showTourStep(); }
 
 function endTour() {
   closeTourUI();
   _tourActive = false;
   try { localStorage.setItem(TOUR_KEY, '1'); } catch(e) {}
-  toast('Tour complete! Access it anytime from your profile menu.', 'ok');
+  showNatasha('Tour complete! Come back anytime via the profile menu.', 'happy');
 }
 
 function closeTourUI() {
-  ['tourOverlay','tourSpotlight','tourCard'].forEach(id => {
-    document.getElementById(id)?.remove();
-  });
+  ['tourOverlay','tourSpotlight','tourCard'].forEach(id => document.getElementById(id)?.remove());
 }
 
-const WEBHOOK_KEY = 'hwt_webhooks_v2';
-let _webhookCfgCache = null;
-
-function getWebhookConfig() {
-  // Return cache or localStorage fallback synchronously (for callers that can't await)
-  if (_webhookCfgCache) return _webhookCfgCache;
-  try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
-}
-
-async function loadWebhookConfig() {
-  try {
-    const data = await api('/settings');
-    _webhookCfgCache = data.settings || {};
-    localStorage.setItem(WEBHOOK_KEY, JSON.stringify(_webhookCfgCache));
-    return _webhookCfgCache;
-  } catch(e) {
-    // Fallback to localStorage if offline or not logged in
-    try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
-  }
-}
-
-async function saveWebhookConfig(cfg) {
-  _webhookCfgCache = cfg;
-  try { localStorage.setItem(WEBHOOK_KEY, JSON.stringify(cfg)); } catch(e) {}
-  try { await api('/settings', 'POST', cfg); } catch(e) { console.error('[settings] save failed', e.message); }
-}
-
-
-function buildPodGChatFields(cfg) {
-  const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
-  if(!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured — add pods in Manage Dropdowns first.</div>';
-  return pods.map(pod => {
-    const safeId = pod.replace(/[^a-z0-9]/gi,'_');
-    const key = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    const val = esc(cfg[key]||'');
-    return '<div class="fg" style="margin-bottom:8px">' +
-      '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">' + esc(pod) + '</label>' +
-      '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + val + '" placeholder="GChat webhook for ' + esc(pod) + '">' +
-      '</div>';
-  }).join('');
-}
-
-async function openWebhookSettings() {
-  // Show panel immediately with cached config, then refresh from server
-  let cfg = getWebhookConfig();
-  openPanel();
-  cfg = await loadWebhookConfig();
-  document.getElementById('panelTitle').textContent = '🔔 WEBHOOK SETTINGS';
-  document.getElementById('panelId').textContent = 'NOTIFICATIONS';
-  document.getElementById('panelFooter').innerHTML = `
-    <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-v" onclick="saveWebhookSettings()">💾 Save Settings</button>`;
-  document.getElementById('panelBody').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:18px">
-      <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:4px">🟢 GOOGLE CHAT WEBHOOKS</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">
-          Set one URL per pod/team. Bug notifications + EOD reports will go to the matching pod's GChat space.<br>
-          Get URL: open GChat Space → Apps & Integrations → Manage Webhooks → Add
-        </div>
-        <div class="fg"><label class="fl">Global / All-team GChat URL <span style="color:var(--dim);font-weight:400">(fallback if no pod URL set)</span></label>
-          <input class="fi2" id="wh-gchat" value="${esc(cfg.gchat_url||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…/messages?key=…">
-        </div>
-        <div style="margin-top:14px;border-top:1px solid rgba(6,182,212,.15);padding-top:12px">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">PER-POD GCHAT URLS</div>
-          ${buildPodGChatFields(cfg)}
-        </div>
-      </div>
-
-      <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#4a90e2;margin-bottom:12px">💬 SLACK WEBHOOK</div>
-        <div class="fg"><label class="fl">Slack Incoming Webhook URL</label>
-          <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/…">
-        </div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.8">Slack → Apps → Incoming Webhooks → Add to Slack → copy Webhook URL</div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-g" onclick="testSlackWebhook()" style="font-size:11px">🧪 Test Slack</button>
-        </div>
-      </div>
-
-      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f59e0b;margin-bottom:4px">🏗️ JENKINS INBOUND WEBHOOKS</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">
-          One URL per team. Jenkins POST: <span style="color:var(--g2)">{&quot;version&quot;:&quot;1.4.2&quot;,&quot;platform&quot;:&quot;Android&quot;,&quot;link&quot;:&quot;…&quot;,&quot;notes&quot;:&quot;…&quot;}</span>
-        </div>
-        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#06b6d4">Openers</span>
-            ${cfg.jenkins_openers_token ? `
-              <div style="position:relative;display:inline-block">
-                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('openers',this)">⋯</button>
-                <div id="jk-menu-openers" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
-                  <div class="jk-mi" onclick="jkCopyUrl('openers')">📋 Copy Webhook URL</div>
-                  <div class="jk-mi" onclick="jkReveal('openers')">👁 Reveal Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('openers','Openers')">🔄 Regenerate Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('openers','Openers')">🗑 Delete Webhook</div>
-                </div>
-              </div>` : ''}
-          </div>
-          <div class="fg" style="margin-bottom:8px">
-            <label class="fl">GChat Webhook URL</label>
-            <input class="fi2" id="wh-jk-gchat-openers" value="${esc(cfg.jenkins_openers_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
-          </div>
-          <div class="fg" style="margin-bottom:10px">
-            <label class="fl">Team Emails (comma-separated)</label>
-            <input class="fi2" id="wh-jk-emails-openers" value="${esc(cfg.jenkins_openers_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
-          </div>
-          ${cfg.jenkins_openers_token ? `
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
-              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-openers">${cfg.jenkins_openers_token && cfg.jenkins_openers_token!=='••set••' ? WORKER+'/webhook/jenkins?team=openers&token='+cfg.jenkins_openers_token : WORKER+'/webhook/jenkins?team=openers&token='+'•'.repeat(16)}</span>
-            </div>` : `
-            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('openers')">＋ Generate Webhook URL</button>`}
-          <input type="hidden" id="wh-jk-token-openers" value="${esc(cfg.jenkins_openers_token||'')}">
-        </div>
-        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#a78bfa">Middle Order</span>
-            ${cfg.jenkins_middle_order_token ? `
-              <div style="position:relative;display:inline-block">
-                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('middle_order',this)">⋯</button>
-                <div id="jk-menu-middle_order" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
-                  <div class="jk-mi" onclick="jkCopyUrl('middle_order')">📋 Copy Webhook URL</div>
-                  <div class="jk-mi" onclick="jkReveal('middle_order')">👁 Reveal Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('middle_order','Middle Order')">🔄 Regenerate Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('middle_order','Middle Order')">🗑 Delete Webhook</div>
-                </div>
-              </div>` : ''}
-          </div>
-          <div class="fg" style="margin-bottom:8px">
-            <label class="fl">GChat Webhook URL</label>
-            <input class="fi2" id="wh-jk-gchat-middle_order" value="${esc(cfg.jenkins_middle_order_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
-          </div>
-          <div class="fg" style="margin-bottom:10px">
-            <label class="fl">Team Emails (comma-separated)</label>
-            <input class="fi2" id="wh-jk-emails-middle_order" value="${esc(cfg.jenkins_middle_order_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
-          </div>
-          ${cfg.jenkins_middle_order_token ? `
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
-              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-middle_order">${cfg.jenkins_middle_order_token && cfg.jenkins_middle_order_token!=='••set••' ? WORKER+'/webhook/jenkins?team=middle_order&token='+cfg.jenkins_middle_order_token : WORKER+'/webhook/jenkins?team=middle_order&token='+'•'.repeat(16)}</span>
-            </div>` : `
-            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('middle_order')">＋ Generate Webhook URL</button>`}
-          <input type="hidden" id="wh-jk-token-middle_order" value="${esc(cfg.jenkins_middle_order_token||'')}">
-        </div>
-        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#34d399">Tech Infra</span>
-            ${cfg.jenkins_tech_infra_token ? `
-              <div style="position:relative;display:inline-block">
-                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('tech_infra',this)">⋯</button>
-                <div id="jk-menu-tech_infra" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
-                  <div class="jk-mi" onclick="jkCopyUrl('tech_infra')">📋 Copy Webhook URL</div>
-                  <div class="jk-mi" onclick="jkReveal('tech_infra')">👁 Reveal Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('tech_infra','Tech Infra')">🔄 Regenerate Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('tech_infra','Tech Infra')">🗑 Delete Webhook</div>
-                </div>
-              </div>` : ''}
-          </div>
-          <div class="fg" style="margin-bottom:8px">
-            <label class="fl">GChat Webhook URL</label>
-            <input class="fi2" id="wh-jk-gchat-tech_infra" value="${esc(cfg.jenkins_tech_infra_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
-          </div>
-          <div class="fg" style="margin-bottom:10px">
-            <label class="fl">Team Emails (comma-separated)</label>
-            <input class="fi2" id="wh-jk-emails-tech_infra" value="${esc(cfg.jenkins_tech_infra_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
-          </div>
-          ${cfg.jenkins_tech_infra_token ? `
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
-              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-tech_infra">${cfg.jenkins_tech_infra_token && cfg.jenkins_tech_infra_token!=='••set••' ? WORKER+'/webhook/jenkins?team=tech_infra&token='+cfg.jenkins_tech_infra_token : WORKER+'/webhook/jenkins?team=tech_infra&token='+'•'.repeat(16)}</span>
-            </div>` : `
-            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('tech_infra')">＋ Generate Webhook URL</button>`}
-          <input type="hidden" id="wh-jk-token-tech_infra" value="${esc(cfg.jenkins_tech_infra_token||'')}">
-        </div>
-        <div style="border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171">LiveOps</span>
-            ${cfg.jenkins_liveops_token ? `
-              <div style="position:relative;display:inline-block">
-                <button class="btn btn-g" style="font-size:13px;padding:4px 10px;line-height:1" onclick="jkMenu('liveops',this)">⋯</button>
-                <div id="jk-menu-liveops" style="display:none;position:absolute;right:0;top:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4)">
-                  <div class="jk-mi" onclick="jkCopyUrl('liveops')">📋 Copy Webhook URL</div>
-                  <div class="jk-mi" onclick="jkReveal('liveops')">👁 Reveal Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkRegenerate('liveops','LiveOps')">🔄 Regenerate Token</div>
-                  <div class="jk-mi jk-mi-danger" onclick="jkDelete('liveops','LiveOps')">🗑 Delete Webhook</div>
-                </div>
-              </div>` : ''}
-          </div>
-          <div class="fg" style="margin-bottom:8px">
-            <label class="fl">GChat Webhook URL</label>
-            <input class="fi2" id="wh-jk-gchat-liveops" value="${esc(cfg.jenkins_liveops_gchat||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…">
-          </div>
-          <div class="fg" style="margin-bottom:10px">
-            <label class="fl">Team Emails (comma-separated)</label>
-            <input class="fi2" id="wh-jk-emails-liveops" value="${esc(cfg.jenkins_liveops_emails||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
-          </div>
-          ${cfg.jenkins_liveops_token ? `
-            <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:8px 12px">
-              <span style="font-family:monospace;font-size:10px;color:var(--g2);flex:1;word-break:break-all" id="jk-url-display-liveops">${cfg.jenkins_liveops_token && cfg.jenkins_liveops_token!=='••set••' ? WORKER+'/webhook/jenkins?team=liveops&token='+cfg.jenkins_liveops_token : WORKER+'/webhook/jenkins?team=liveops&token='+'•'.repeat(16)}</span>
-            </div>` : `
-            <button class="btn btn-v" style="width:100%;font-size:11px" onclick="jkGenerate('liveops')">＋ Generate Webhook URL</button>`}
-          <input type="hidden" id="wh-jk-token-liveops" value="${esc(cfg.jenkins_liveops_token||'')}">
-        </div>
-      </div>
-
-      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">🔔 NOTIFY ON EVENTS</div>
-        ${['new_bug','build_available','day_end_report'].map(ev => {
-          const labels = {new_bug:'New Bug Filed (GChat + Slack)', build_available:'New Build Available (GChat + Slack)', day_end_report:'Day-End Report (GChat)'};
-          return `<div class="notif-toggle-row" style="margin-bottom:10px">
-            <button class="notif-toggle${cfg['notif_'+ev]!==false?' on':''}" id="wh-ev-${ev}" onclick="this.classList.toggle('on')"></button>
-            <span class="notif-toggle-label">${labels[ev]}</span>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">📧 BUILD EMAIL RECIPIENTS</div>
-        <div class="fg"><label class="fl">Team Emails (comma-separated, for build notifications)</label>
-          <textarea class="fi2" id="wh-emails" rows="2" placeholder="dev@hitwicket.com, qa@hitwicket.com">${esc(cfg.team_emails||'')}</textarea>
-        </div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.8">Note: Email is via mailto: link (opens your mail client). Webhook is fully automated.</div>
-      </div>
-
-      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">⏰ EOD REPORT SCHEDULE</div>
-        <div class="fg" style="margin-bottom:10px">
-          <label class="fl">Auto-send EOD report time (Mon–Fri only)</label>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <input type="time" class="fi2" id="wh-eod-time" value="${cfg.eod_time||'21:00'}" style="width:130px">
-            <div class="notif-toggle-row" style="margin:0">
-              <button class="notif-toggle${cfg.eod_schedule_on?' on':''}" id="wh-eod-on" onclick="this.classList.toggle('on')"></button>
-              <span class="notif-toggle-label">Enable auto EOD report</span>
-            </div>
-          </div>
-        </div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);line-height:1.8">Sends EOD report to GChat webhook at specified time, Mon–Fri. Requires GChat webhook to be set.</div>
-      </div>
-
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-g" onclick="testWebhook()">🧪 Test Webhook</button>
-      </div>
-
-      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:8px">DESKTOP PUSH NOTIFICATIONS</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">
-          Notifies team of new bugs, status changes and builds — even when browser is closed.<br>
-          Requires VAPID keys set as Cloudflare Worker env vars.
-        </div>
-        <div id="vapid-setup-section">
-          <button class="btn btn-g btn-sm" onclick="showVapidSetup()">Generate VAPID Keys</button>
-        </div>
-        <div id="vapid-generated" style="display:none;margin-top:10px">
-          <div class="fg" style="margin-bottom:8px">
-            <label class="fl">VAPID_PUBLIC_KEY (add to Cloudflare Worker env vars)</label>
-            <div style="display:flex;gap:8px">
-              <input class="fi2" id="vapid-pub" readonly style="font-family:var(--mono);font-size:10px;flex:1">
-              <button class="btn btn-g btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('vapid-pub').value).then(()=>toast('Copied','ok'))">Copy</button>
-            </div>
-          </div>
-          <div class="fg" style="margin-bottom:10px">
-            <label class="fl">VAPID_PRIVATE_KEY (add to Cloudflare Worker env vars — keep secret!)</label>
-            <div style="display:flex;gap:8px">
-              <input class="fi2" id="vapid-priv" readonly style="font-family:var(--mono);font-size:10px;flex:1">
-              <button class="btn btn-g btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('vapid-priv').value).then(()=>toast('Copied','ok'))">Copy</button>
-            </div>
-          </div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--g3);line-height:1.8;margin-bottom:10px">
-            Also set: VAPID_SUBJECT = mailto:kunal@hitwicket.com in Cloudflare env vars.<br>
-            Then redeploy the worker. Then click Enable below.
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <button class="btn btn-v btn-sm" onclick="closePanel();requestPushPermission()">Enable Push Notifs</button>
-          <button class="btn btn-g btn-sm" onclick="closePanel();disablePushNotifications()">Disable</button>
-        </div>
-      </div>
-    </div>`;
-  openPanel();
-  // Re-init scheduler after panel opens (so toggle state is fresh)
-  setTimeout(initEODScheduler, 100);
-}
-
-// ── Jenkins webhook token management ──────────────────────────────────────
-function jkMenu(team, btn) {
-  // Close all other menus first
-  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => {
-    if (m.id !== 'jk-menu-' + team) m.style.display = 'none';
-  });
-  const menu = document.getElementById('jk-menu-' + team);
-  if (!menu) return;
-  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-  // Close on outside click
-  setTimeout(() => {
-    const close = (e) => { if (!menu.contains(e.target) && e.target !== btn) { menu.style.display='none'; document.removeEventListener('click', close); } };
-    document.addEventListener('click', close);
-  }, 10);
-}
-
-function jkGetToken(team) {
-  return document.getElementById('wh-jk-token-' + team)?.value || '';
-}
-
-function jkCopyUrl(team) {
-  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
-  const token = jkGetToken(team);
-  if (!token) return;
-  const url = WORKER + '/webhook/jenkins?team=' + team + '&token=' + token;
-  navigator.clipboard.writeText(url).then(() => toast('Webhook URL copied ✓', 'ok'));
-}
-
-function jkReveal(team) {
-  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
-  const token = jkGetToken(team);
-  if (!token) return;
-  const url = WORKER + '/webhook/jenkins?team=' + team + '&token=' + token;
-  const disp = document.getElementById('jk-url-display-' + team);
-  if (!disp) return;
-  if (disp.dataset.revealed === '1') {
-    disp.textContent = WORKER + '/webhook/jenkins?team=' + team + '&token=' + '•'.repeat(16);
-    disp.dataset.revealed = '0';
-  } else {
-    disp.textContent = url;
-    disp.dataset.revealed = '1';
-  }
-}
-
-function jkRegenerate(team, label) {
-  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
-  const existing = jkGetToken(team);
-  const warn = existing ? '\n\n⚠️ This will break your Jenkins pipeline until you update the URL + Cloudflare env var.' : '';
-  if (!confirm('Regenerate webhook token for ' + label + '?' + warn)) return;
-  const t = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-  document.getElementById('wh-jk-token-' + team).value = t;
-  const disp = document.getElementById('jk-url-display-' + team);
-  if (disp) { disp.textContent = WORKER + '/webhook/jenkins?team=' + team + '&token=' + t; disp.dataset.revealed = '1'; }
-  toast('Token regenerated — copy URL and update Jenkins + Cloudflare env var', 'warn');
-}
-
-async function jkDelete(team, label) {
-  document.querySelectorAll('[id^="jk-menu-"]').forEach(m => m.style.display='none');
-  if (!confirm('Delete webhook for ' + label + '?\n\nJenkins calls will stop working immediately.')) return;
-  document.getElementById('wh-jk-token-' + team).value = '';
-  document.getElementById('wh-jk-gchat-' + team).value = '';
-  document.getElementById('wh-jk-emails-' + team).value = '';
-  // Save immediately so it persists
-  await saveWebhookSettings();
-  // Re-open panel to refresh UI
-  await openWebhookSettings();
-  toast(label + ' webhook deleted', 'ok');
-}
-
-async function jkGenerate(team) {
-  const t = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-  document.getElementById('wh-jk-token-' + team).value = t;
-  // Save and re-open to show locked state
-  await saveWebhookSettings();
-  await openWebhookSettings();
-  toast('Webhook created — set JENKINS_TOKEN_' + team.toUpperCase() + ' in Cloudflare env vars', 'ok');
-}
-
-async function saveWebhookSettings() {
-  // Collect per-pod GChat URLs
-  const _podGChatUrls = {};
-  (DD_FIELDS.find(f=>f.key==='pod')?.options || []).forEach(pod => {
-    const elId = 'wh-pod-gchat-' + pod.replace(/[^a-z0-9]/gi,'_');
-    const key  = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    const val  = document.getElementById(elId)?.value?.trim()||'';
-    _podGChatUrls[key] = val;
-  });
-
-  const cfg = {
-    gchat_url: document.getElementById('wh-gchat')?.value?.trim()||'',
-    ..._podGChatUrls,
-    sheet_webhook_url: document.getElementById('wh-sheet-webhook')?.value?.trim()||'',
-    slack_url: document.getElementById('wh-slack')?.value?.trim()||'',
-    team_emails: document.getElementById('wh-emails')?.value?.trim()||'',
-    notif_new_bug: document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
-    notif_build_available: document.getElementById('wh-ev-build_available')?.classList.contains('on'),
-    notif_day_end_report: document.getElementById('wh-ev-day_end_report')?.classList.contains('on'),
-    eod_time: document.getElementById('wh-eod-time')?.value||'21:00',
-    eod_schedule_on: document.getElementById('wh-eod-on')?.classList.contains('on'),
-    jenkins_openers_token:  document.getElementById('wh-jk-token-openers')?.value?.trim()||'',
-    jenkins_openers_gchat:  document.getElementById('wh-jk-gchat-openers')?.value?.trim()||'',
-    jenkins_openers_emails: document.getElementById('wh-jk-emails-openers')?.value?.trim()||'',
-    jenkins_middle_order_token:  document.getElementById('wh-jk-token-middle_order')?.value?.trim()||'',
-    jenkins_middle_order_gchat:  document.getElementById('wh-jk-gchat-middle_order')?.value?.trim()||'',
-    jenkins_middle_order_emails: document.getElementById('wh-jk-emails-middle_order')?.value?.trim()||'',
-    jenkins_tech_infra_token:  document.getElementById('wh-jk-token-tech_infra')?.value?.trim()||'',
-    jenkins_tech_infra_gchat:  document.getElementById('wh-jk-gchat-tech_infra')?.value?.trim()||'',
-    jenkins_tech_infra_emails: document.getElementById('wh-jk-emails-tech_infra')?.value?.trim()||'',
-    jenkins_liveops_token:  document.getElementById('wh-jk-token-liveops')?.value?.trim()||'',
-    jenkins_liveops_gchat:  document.getElementById('wh-jk-gchat-liveops')?.value?.trim()||'',
-    jenkins_liveops_emails: document.getElementById('wh-jk-emails-liveops')?.value?.trim()||'',
-  };
-  await saveWebhookConfig(cfg);
-  initEODScheduler();
-  toast('Webhook settings saved ✓','ok');
-  closePanel();
-}
-
-// ── EOD scheduler ──────────────────────────────────────────────────────
-let _eodSchedulerTimer = null;
-function initEODScheduler() {
-  if (_eodSchedulerTimer) clearInterval(_eodSchedulerTimer);
-  const cfg = getWebhookConfig();
-  if (!cfg.eod_schedule_on || !cfg.gchat_url) return;
-  // Check every minute
-  _eodSchedulerTimer = setInterval(() => {
-    const now = new Date();
-    const day = now.getDay(); // 0=Sun, 6=Sat
-    if (day === 0 || day === 6) return; // skip weekends
-    const hhmm = now.toLocaleTimeString('en-GB', {timeZone:'Asia/Kolkata', hour:'2-digit', minute:'2-digit'}).slice(0,5);
-    const cfg2 = getWebhookConfig();
-    if (!cfg2.eod_schedule_on) return;
-    const target = cfg2.eod_time || '21:00';
-    if (hhmm === target) {
-      // Fire only once per minute — use a flag stored in sessionStorage
-      const flagKey = 'eod_sent_' + new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Kolkata'});
-      if (sessionStorage.getItem(flagKey)) return;
-      sessionStorage.setItem(flagKey, '1');
-      sendAutoEODReport();
-    }
-  }, 60000);
-}
-async function sendAutoEODReport() {
-  const todayBugs = getTodayBugs();
-  const closedToday = getClosedTodayBugs();
-  const updatedBugs = getUpdatedTodayBugs();
-  const resolvedToday = updatedBugs.filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
-  const critOpen = S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status));
-  const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const text = generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday);
-  const sent = await sendGChatWebhook(text);
-  if (sent) {
-    toast('📊 EOD report auto-sent to GChat ✓','ok');
-    sendDesktopNotification('📊 EOD Report Sent', `${todayBugs.length} filed · ${resolvedToday.length} resolved · ${critOpen.length} critical open`);
-  }
-}
-
-async function sendGChatWebhook(text, pod) {
-  const cfg = getWebhookConfig();
-  // Use pod-specific URL if available
-  let url = cfg.gchat_url;
-  if(pod) {
-    const podKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    if(cfg[podKey]) url = cfg[podKey];
-  }
-  if(!url) return false;
-  try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({text: text.slice(0, 3800)})
-    });
-    if(!r.ok) { const t = await r.text(); console.error('[gchat]', r.status, t); return false; }
-    return true;
-  } catch(e) {
-    console.warn('[gchat webhook]', e.message);
-    return false;
-  }
-}
-
-async function sendGChatCard(card, pod) {
-  const cfg = getWebhookConfig();
-  let url = cfg.gchat_url;
-  if(pod) {
-    const podKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    if(cfg[podKey]) url = cfg[podKey];
-  }
-  if(!url) return false;
-  try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(card)
-    });
-    if(!r.ok) { const t = await r.text(); console.error('[gchat card]', r.status, t); return false; }
-    return true;
-  } catch(e) { console.warn('[gchat card]', e); return false; }
-}
-
-async function sendSlackWebhook(text, blocks) {
-  const cfg = getWebhookConfig();
-  if(!cfg.slack_url) return false;
-  try {
-    const payload = blocks ? { blocks } : { text };
-    await fetch(cfg.slack_url, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    return true;
-  } catch(e) { console.warn('[slack webhook]', e.message); return false; }
-}
-
-async function testSlackWebhook() {
-  const url = document.getElementById('wh-slack')?.value?.trim();
-  if(!url) { toast('Enter a Slack webhook URL first','err'); return; }
-  try {
-    await fetch(url, {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text:`🧪 BugPulse test from ${S.user?.name||'team'} — Slack webhook working! ✅`})
-    });
-    toast('Test sent to Slack ✓','ok');
-  } catch(e) { toast('Slack webhook failed: '+e.message,'err'); }
-}
-
-// ── Bug recurrence detection ──────────────────────────────────────────────────
-function checkRecurrence(title, featureKey) {
-  if(!title || !S.bugs.length) return null;
-  const t = title.toLowerCase().trim();
-  const feat = (featureKey||'').toLowerCase();
-  const DONE_STATUSES = ['Done','QA Pass','Closed'];
-  const prev = S.bugs.filter(b =>
-    DONE_STATUSES.includes(b.status) &&
-    ( b.title?.toLowerCase().includes(t.slice(0,30)) ||
-      (feat && (b.feature||'').toLowerCase() === feat && b.title?.toLowerCase().slice(0,20) === t.slice(0,20)) )
-  );
-  return prev.length ? prev[0] : null;
-}
-
-async function testWebhook() {
-  const url = document.getElementById('wh-gchat')?.value?.trim();
-  if(!url) { toast('Enter a webhook URL first','err'); return; }
-  try {
-    await fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({text:`🧪 BugPulse test notification from ${S.user?.name||'team'} — webhooks are working! ✅`})
-    });
-    toast('Test sent to GChat ✓','ok');
-  } catch(e) {
-    toast('Webhook failed: '+e.message,'err');
-  }
-}
-
-async function sendBugNotification(bug, customMsg) {
-  const cfg = getWebhookConfig();
-  const assignees = bug.assignees || [];
-  const msg = customMsg || `New bug reported: "${(bug.title||'').slice(0,60)}"`;
-  const bugUrl = `${APP_URL}?bug=${bug.id||''}`;
-
-  // In-app notifications
-  assignees.forEach(a => {
-    if(a.email && a.email !== S.user?.email) addNotif(`🐛 Bug assigned: ${bug.id||''}`, msg, bug.id);
-  });
-  addNotif(`📢 Bug filed: ${bug.id||''}`, `${msg} · Build: ${bug.build||'—'}`, bug.id);
-
-  // GChat webhook — send to pod-specific URL if set, else global
-  if(cfg.notif_new_bug !== false) {
-    const assigneeNames = assignees.map(a=>a.name).join(', ')||'Unassigned';
-    // Build GChat card with image if attachment is a Drive/image URL
-    const hasImage = isImageUrl(bug.attachment);
-    const imgUrl = hasImage ? (isDriveUrl(bug.attachment) ? getDriveThumbnailUrl(bug.attachment) : bug.attachment) : null;
-
-    if(hasImage && imgUrl) {
-      // Send as GChat Card v2 with image
-      const card = {
-        cardsV2: [{
-          cardId: bug.id,
-          card: {
-            header: {
-              title: '🐛 ' + (bug.id||'') + ' — ' + (bug.priority||'Medium'),
-              subtitle: (bug.title||'').slice(0,80),
-              imageUrl: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
-              imageType: 'CIRCLE'
-            },
-            sections: [{
-              widgets: [
-                { textParagraph: { text: '<b>Status:</b> '+(bug.status||'Open')+' | <b>Pod:</b> '+(bug.pod||'—')+' | <b>Build:</b> '+(bug.build||'—') } },
-                { textParagraph: { text: '<b>Assignee:</b> '+assigneeNames } },
-                { image: { imageUrl: imgUrl, altText: 'Bug attachment', onClick: { openLink: { url: bug.attachment } } } },
-                { buttonList: { buttons: [{ text: 'View Bug', onClick: { openLink: { url: bugUrl } } }] } }
-              ]
-            }]
-          }
-        }]
-      };
-      await sendGChatCard(card, bug.pod||'');
-    } else {
-      const gchatText = '🐛 *New Bug Filed — '+(bug.id||'')+'*\n*'+(bug.title||'')+'*\nPriority: '+(bug.priority||'Medium')+' | Status: '+(bug.status||'Open')+'\nPod: '+(bug.pod||'—')+' | Build: '+(bug.build||'—')+' | Assignee: '+assigneeNames+'\n🔗 View: '+bugUrl;
-      await sendGChatWebhook(gchatText, bug.pod||'');
-    }
-  }
-
-  // Slack notification
-  const slackCfg = getWebhookConfig();
-  if(slackCfg.slack_url && slackCfg.notif_new_bug !== false) {
-    const aNames = (bug.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
-    const bUrl = `${APP_URL}?bug=${bug.id||''}`;
-    const slackBlocks = [
-      { type:'section', text:{ type:'mrkdwn', text:`🐛 *New Bug: <${bUrl}|${bug.id}>*\n${bug.title||''}` } },
-      { type:'section', fields:[
-        { type:'mrkdwn', text:`*Priority:* ${bug.priority||'Medium'}` },
-        { type:'mrkdwn', text:`*Status:* ${bug.status||'Open'}` },
-        { type:'mrkdwn', text:`*Build:* ${bug.build||'—'}` },
-        { type:'mrkdwn', text:`*Assignee:* ${aNames}` },
-      ]},
-    ];
-    await sendSlackWebhook(`🐛 New Bug: ${bug.id} — ${bug.title}`, slackBlocks);
-  }
-
-  // Server-side Web Push to all subscribers
-  try {
-    await api('/push/notify', 'POST', {
-      title: 'Bug ' + (bug.priority||'Medium') + ': ' + (bug.id||''),
-      body: (bug.title||'').slice(0,80) + (customMsg ? ' — ' + customMsg.slice(0,60) : ''),
-      icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
-      tag: bug.id || 'bugpulse',
-      bugId: bug.id || '',
-      url: APP_URL + '?bug=' + (bug.id||''),
-    });
-  } catch(e) { console.warn('[push]', e); }
-
-  toast('Team notified ✓','ok');
-}
-
-// ══════════════════════════════════════════
-// ATTACHMENT DRAG-DROP + INLINE STORAGE
-// ══════════════════════════════════════════
-let _attachedFiles = []; // [{name, size, dataUrl, type}]
-
-function attZoneDragOver(e) {
-  e.preventDefault();
-  document.getElementById('attZone')?.classList.add('drag-over');
-}
-function attZoneDragLeave() {
-  document.getElementById('attZone')?.classList.remove('drag-over');
-}
-function attZoneDrop(e) {
-  e.preventDefault();
-  document.getElementById('attZone')?.classList.remove('drag-over');
-  const files = [...(e.dataTransfer?.files||[])];
-  files.forEach(f => attachFile(f));
-}
-function attZoneClick() {
-  document.getElementById('attFileInput')?.click();
-}
-function attFileInputChange(input) {
-  [...(input.files||[])].forEach(f => attachFile(f));
-  input.value = '';
-}
-function attachFile(file) {
-  if(file.size > 5*1024*1024) { toast(`${file.name} too large (max 5MB)`,'err'); return; }
-  const reader = new FileReader();
-  reader.onload = ev => {
-    _attachedFiles.push({ name:file.name, size:file.size, dataUrl:ev.target.result, type:file.type });
-    renderAttList();
-  };
-  reader.readAsDataURL(file);
-}
-function removeAttFile(idx) {
-  _attachedFiles.splice(idx,1);
-  renderAttList();
-}
-function renderAttList() {
-  const list = document.getElementById('attFileList');
-  if(!list) return;
-  if(!_attachedFiles.length) { list.innerHTML=''; return; }
-  list.innerHTML = _attachedFiles.map((f,i) => `
-    <div class="att-file-item">
-      <span class="att-file-name" title="${esc(f.name)}">${f.type.startsWith('image/')?'🖼️ ':'📎 '}${esc(f.name)}</span>
-      <span class="att-file-size">${(f.size/1024).toFixed(0)}KB</span>
-      <button class="att-file-remove" onclick="removeAttFile(${i})" title="Remove">✕</button>
-    </div>`).join('');
-}
-function getAttachmentValue() {
-  // Combine Drive link + inline file names
-  const driveLink = document.getElementById('f-att')?.value?.trim()||'';
-  const inlineNames = _attachedFiles.map(f=>f.name).join(', ');
-  if(driveLink && inlineNames) return driveLink + ' | ' + inlineNames;
-  return driveLink || inlineNames || '';
-}
-function buildAttachmentSection(existingVal='') {
-  _attachedFiles = []; // reset for fresh form
-  return `
-    <div class="att-zone" id="attZone"
-      ondragover="attZoneDragOver(event)"
-      ondragleave="attZoneDragLeave()"
-      ondrop="attZoneDrop(event)"
-      onclick="attZoneClick()">
-      <div class="att-zone-inner">
-        <span class="att-zone-icon">📎</span>
-        <span>Drag &amp; drop files here, or <b style="color:var(--g2)">click to browse</b><br><span style="font-size:9px;opacity:.7">Screenshots, videos, logs — max 5MB each. Stored inline.</span></span>
-      </div>
-      <div class="att-file-list" id="attFileList"></div>
-    </div>
-    <input type="file" id="attFileInput" multiple accept="image/*,video/*,.txt,.log,.zip,.json,.csv" style="display:none" onchange="attFileInputChange(this)">
-    <div class="att-or-sep">or paste a Drive / Firebase link</div>
-    <input class="fi2" id="f-att" value="${esc(existingVal)}" placeholder="https://drive.google.com/… or Firebase App Distribution link">`;
-}
-
-// ══════════════════════════════════════════
-// PATCH 2 — DAY-END REPORT
-// ══════════════════════════════════════════
-const DAY_END_REPORT_KEY = 'hwt_dayend_v1';
-function getTodayIST() {
-  return new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', day:'2-digit', month:'2-digit', year:'numeric'});
-}
-// ── Robust "is this date string from today IST?" helper ──────────────────
-// Handles every format the backend may produce:
-//   en-IN locale   : "02/04/2026, 9:30:00 pm"  or  "2/4/2026, 9:30:00 pm"
-//   ISO string     : "2026-04-02T16:00:00.000Z"
-//   numeric epoch  : 1743600000000
-//   short en-IN    : "02/04/2026"  or  "2/4/2026"
-function _isTodayIST(raw) {
-  if(!raw) return false;
-  const IST_OFFSET = 5.5 * 60 * 60000; // +05:30 in ms
-  // Today's midnight boundaries in IST
-  const nowUTC = Date.now();
-  const nowIST = nowUTC + IST_OFFSET;
-  const todayMidnightIST = nowIST - (nowIST % 86400000);
-  const startUTC = todayMidnightIST - IST_OFFSET;
-  const endUTC   = startUTC + 86400000;
-
-  let ms = NaN;
-  if(typeof raw === 'number') {
-    ms = raw;
-  } else {
-    const s = String(raw).trim();
-    // Try direct parse first (ISO strings, RFC dates)
-    ms = Date.parse(s);
-    if(isNaN(ms)) {
-      // en-IN: "02/04/2026, 9:30:00 pm" or "2/4/2026" — rewrite to parseable
-      // Format: DD/MM/YYYY[, HH:MM:SS am/pm]
-      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[,\s]+(.*))?$/);
-      if(m) {
-        const reconstructed = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}${m[4]?' '+m[4]:''}`;
-        ms = Date.parse(reconstructed);
-        // If time part caused failure, try date-only
-        if(isNaN(ms)) ms = Date.parse(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`);
-      }
-    }
-  }
-  if(isNaN(ms)) return false;
-  return ms >= startUTC && ms < endUTC;
-}
-
-function getTodayBugs() {
-  return S.bugs.filter(b => _isTodayIST(b.created_at) || _isTodayIST(b.created_ts));
-}
-function getClosedTodayBugs() {
-  const closedStatuses = ['Dev Fixed','Done','QA Pass','Closed','Non-Recreatable','Not a bug'];
-  return S.bugs.filter(b =>
-    closedStatuses.includes(b.status) &&
-    (_isTodayIST(b.updated_at) || _isTodayIST(b.updated_ts))
-  );
-}
-function getUpdatedTodayBugs() {
-  return S.bugs.filter(b => _isTodayIST(b.updated_at) || _isTodayIST(b.updated_ts));
-}
-function openDayEndReport() {
-  const todayBugs = getTodayBugs();
-  const closedToday = getClosedTodayBugs();
-  const updatedBugs = getUpdatedTodayBugs();
-  const resolvedToday = updatedBugs.filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
-  const critOpen = S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status));
-  const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const qaPassToday = resolvedToday.filter(b => b.status === 'QA Pass');
-  document.getElementById('panelTitle').textContent = '📊 DAY-END REPORT';
-  document.getElementById('panelId').textContent = getTodayIST();
-  document.getElementById('panelFooter').innerHTML = `
-    <button class="btn btn-g" onclick="closePanel()">Close</button>
-    <button class="btn btn-v" onclick="copyDayEndReport()">📋 Copy Report</button>
-    ${S.user?.role==='admin'?'<button class="btn btn-v" onclick="sendEODToGChat()" style="background:linear-gradient(135deg,var(--g4),var(--g2))">📢 Send to GChat</button>':''}`;
-  document.getElementById('panelBody').innerHTML = `
-    <div style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:12px;padding:16px 18px;margin-bottom:18px">
-      <div style="font-family:var(--disp);font-size:11px;font-weight:800;letter-spacing:2px;color:var(--g2);margin-bottom:4px">DAILY BUG REPORT</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-bottom:10px">${dateStr}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <label style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:1px">FILTER BY TEAM:</label>
-        <select class="fi" id="eod-team-filter" style="width:auto;padding:4px 10px;font-size:11px" onchange="refreshEODReport()">
-          <option value="">All Teams</option>
-          ${DD_FIELDS.find(f=>f.key==='pod')?.options?.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')||''}
-        </select>
-      </div>
-    </div>
-    <div class="dash-grid" id="eodStatsCards" style="margin-bottom:18px;margin-top:0;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))"></div>
-    ${todayBugs.length ? `<div class="dsec"><div class="dsec-title">🐛 BUGS ADDED TODAY (${todayBugs.length})</div>
-      <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
-        ${todayBugs.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer" onclick="closePanel();openDetail('${b.id}')">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--g1);flex-shrink:0;width:100px">${esc(b.id)}</span>
-          <span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(b.title||'')}</span>
-          ${pChip(b.priority)}${stChip(b.status)}</div>`).join('')}
-      </div></div>` : `<div class="dsec"><div class="dsec-title" style="color:var(--mute)">🐛 BUGS ADDED TODAY — None</div></div>`}
-    ${qaPassToday.length ? `<div class="dsec"><div class="dsec-title" style="color:#34d399">✅ QA PASS TODAY (${qaPassToday.length})</div>
-      <div style="background:rgba(52,211,153,.04);border:1px solid rgba(52,211,153,.2);border-radius:8px;overflow:hidden">
-        ${qaPassToday.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(52,211,153,.06);cursor:pointer" onclick="closePanel();openDetail('${b.id}')">
-          <span style="font-family:var(--mono);font-size:10px;color:#34d399;flex-shrink:0;width:100px">${esc(b.id)}</span>
-          <span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(b.title||'')}</span>
-          ${pChip(b.priority)}${stChip(b.status)}</div>`).join('')}
-      </div></div>` : `<div class="dsec"><div class="dsec-title" style="color:var(--mute)">✅ QA PASS TODAY — None</div></div>`}
-    ${resolvedToday.filter(b=>b.status!=='QA Pass').length ? `<div class="dsec"><div class="dsec-title">🛠 OTHER RESOLVED TODAY (${resolvedToday.filter(b=>b.status!=='QA Pass').length})</div>
-      <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
-        ${resolvedToday.filter(b=>b.status!=='QA Pass').map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03)">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--g1);flex-shrink:0;width:100px">${esc(b.id)}</span>
-          <span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(b.title||'')}</span>
-          ${stChip(b.status)}</div>`).join('')}
-      </div></div>` : ''}
-    ${closedToday.length ? `<div class="dsec"><div class="dsec-title">🔒 CLOSED TODAY — ALL STATUSES (${closedToday.length})</div>
-      <div style="background:var(--bg3);border:1px solid rgba(6,182,212,.15);border-radius:8px;overflow:hidden">
-        ${closedToday.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer" onclick="closePanel();openDetail('${b.id}')">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--g1);flex-shrink:0;width:100px">${esc(b.id)}</span>
-          <span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(b.title||'')}</span>
-          ${pChip(b.priority)}${stChip(b.status)}</div>`).join('')}
-      </div></div>` : ''}
-    ${critOpen.length ? `<div class="dsec"><div class="dsec-title" style="color:var(--g5)">🚨 CRITICAL / URGENT STILL OPEN (${critOpen.length})</div>
-      <div style="background:rgba(239,68,68,.04);border:1px solid rgba(239,68,68,.2);border-radius:8px;overflow:hidden">
-        ${critOpen.slice(0,10).map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(239,68,68,.08);cursor:pointer" onclick="closePanel();openDetail('${b.id}')">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--g5);flex-shrink:0;width:100px">${esc(b.id)}</span>
-          <span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(b.title||'')}</span>
-          ${pChip(b.priority)}${avStack(b.assignees||[],18)}</div>`).join('')}
-      </div></div>` : ''}
-    <details style="margin-top:14px;margin-bottom:8px">
-      <summary style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);cursor:pointer;user-select:none;padding:6px 0">🔍 DEBUG — RAW DATE VALUES (click to expand)</summary>
-      <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-top:6px;font-family:var(--mono);font-size:9px;color:var(--fog);line-height:1.8;max-height:220px;overflow-y:auto">
-        <div style="color:var(--g3);margin-bottom:4px">TODAY IST window: ${new Date(Date.now() - ((Date.now()+19800000) % 86400000) + 19800000 - 19800000).toISOString()} → next midnight</div>
-        <div style="color:var(--mute);margin-bottom:6px">Showing most recent 5 bugs — created_at / updated_at raw values:</div>
-        ${S.bugs.slice(0,5).map(b=>`<div style="border-bottom:1px solid rgba(255,255,255,.04);padding:4px 0">
-          <span style="color:var(--g1)">${esc(b.id)}</span>
-          <span style="color:var(--mist)"> created_at: </span><span style="color:var(--g2)">"${esc(String(b.created_at||'null'))}"</span>
-          <span style="color:var(--mist)"> | updated_at: </span><span style="color:var(--g3)">"${esc(String(b.updated_at||'null'))}"</span>
-          <span style="color:var(--mist)"> | created_ts: </span><span style="color:var(--fog)">${b.created_ts||'null'}</span>
-          <span style="color:var(--mute)"> | isTodayCreated: </span><span style="color:${_isTodayIST(b.created_at)||_isTodayIST(b.created_ts)?'#34d399':'#f87171'}">${_isTodayIST(b.created_at)||_isTodayIST(b.created_ts)}</span>
-          <span style="color:var(--mute)"> | isTodayUpdated: </span><span style="color:${_isTodayIST(b.updated_at)||_isTodayIST(b.updated_ts)?'#34d399':'#f87171'}">${_isTodayIST(b.updated_at)||_isTodayIST(b.updated_ts)}</span>
-        </div>`).join('')}
-      </div>
-    </details>
-    <div style="margin-top:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--mute)">COPY-READY REPORT</span>
-        <button class="btn btn-g btn-xs" onclick="copyDayEndReport()" style="gap:4px">📋 Copy</button>
-      </div>
-      <textarea id="dayEndReportText" readonly
-        style="width:100%;min-height:200px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:14px;font-family:var(--mono);font-size:10px;color:var(--mist);white-space:pre;line-height:1.9;resize:vertical;outline:none;cursor:text;box-sizing:border-box"
-        onclick="this.select()"
-      >${generateReportText(todayBugs,resolvedToday,critOpen,dateStr,closedToday)}</textarea>
-    </div>`;
-  openPanel();
-  setTimeout(refreshEODReport, 50); // populate stats + textarea with current filter
-}
-function getEODTeamFilter() {
-  return document.getElementById('eod-team-filter')?.value || '';
-}
-
-function filterBugsByTeam(bugs, team) {
-  if(!team) return bugs;
-  // Filter by pod dropdown
-  return bugs.filter(b => (b.pod||'').toLowerCase() === team.toLowerCase());
-}
-
-function refreshEODReport() {
-  const team = getEODTeamFilter();
-  const allToday = getTodayBugs();
-  const allClosed = getClosedTodayBugs();
-  const allUpdated = getUpdatedTodayBugs();
-  const todayBugs    = filterBugsByTeam(allToday, team);
-  const closedToday  = filterBugsByTeam(allClosed, team);
-  const resolvedToday= filterBugsByTeam(allUpdated, team).filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
-  const qaPassToday  = resolvedToday.filter(b => b.status === 'QA Pass');
-  const critOpen     = filterBugsByTeam(S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)), team);
-  const totalFiltered= team ? filterBugsByTeam(S.bugs, team).length : S.bugs.length;
-
-  // Update stats cards
-  const cards = document.getElementById('eodStatsCards');
-  if(cards) cards.innerHTML = `
-    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g5);font-size:32px">${todayBugs.length}</div><div class="sc-l" style="margin-top:6px">FILED TODAY</div></div>
-    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#34d399;font-size:32px">${qaPassToday.length}</div><div class="sc-l" style="margin-top:6px">QA PASS</div></div>
-    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g4);font-size:32px">${resolvedToday.length}</div><div class="sc-l" style="margin-top:6px">RESOLVED</div></div>
-    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#06b6d4;font-size:32px">${closedToday.length}</div><div class="sc-l" style="margin-top:6px">CLOSED TODAY</div></div>
-    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g3);font-size:32px">${critOpen.length}</div><div class="sc-l" style="margin-top:6px">CRIT OPEN</div></div>
-    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--text);font-size:32px">${totalFiltered}</div><div class="sc-l" style="margin-top:6px">${team ? 'POD TOTAL' : 'TOTAL'}</div></div>`;
-
-  const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const teamLabel = team ? ' [' + team + ']' : '';
-  const txt = generateReportText(todayBugs, resolvedToday, critOpen, dateStr + teamLabel, closedToday);
-  const el = document.getElementById('dayEndReportText');
-  if(el) el.value = txt;
-}
-
-async function sendEODToGChat() {
-  const txt = document.getElementById('dayEndReportText')?.value;
-  if(!txt) return;
-  const cfg = getWebhookConfig();
-  const team = getEODTeamFilter();
-  // Pick team-specific GChat URL if available
-  let gchatUrl = cfg.gchat_url;
-  if(team) {
-    const teamKey = 'jenkins_' + team.toLowerCase().replace(/\s+/g,'_') + '_gchat';
-    if(cfg[teamKey]) gchatUrl = cfg[teamKey];
-  }
-  if(!gchatUrl) { toast('No GChat webhook configured', 'err'); return; }
-  // GChat has a 4096 char limit — chunk if needed
-  const MAX = 3800;
-  const chunks = [];
-  let remaining = txt;
-  while(remaining.length > MAX) {
-    const cut = remaining.lastIndexOf('\n', MAX);
-    chunks.push(remaining.slice(0, cut > 0 ? cut : MAX));
-    remaining = remaining.slice(cut > 0 ? cut + 1 : MAX);
-  }
-  if(remaining.trim()) chunks.push(remaining);
-
-  let allSent = true;
-  for(const chunk of chunks) {
-    const ok = await fetch(gchatUrl, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text: chunk })
-    }).then(r => {
-      if(!r.ok) r.text().then(t => console.error('[gchat]', r.status, t));
-      return r.ok;
-    }).catch(e => { console.error('[gchat]', e); return false; });
-    if(!ok) allSent = false;
-    if(chunks.length > 1) await new Promise(r => setTimeout(r, 500));
-  }
-  if(allSent) toast('EOD report sent to GChat ✓', 'ok');
-  else toast('GChat send failed — check console for details', 'err');
-}
-
-function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday) {
-  closedToday = closedToday || [];
-  const bugLink = id => `${APP_URL}?bug=${id}`;
-
-  // Build status breakdown bar chart
-  const statusCounts = {};
-  ALL_STATUSES.forEach(s => { statusCounts[s] = S.bugs.filter(b=>b.status===s).length; });
-  const maxCount = Math.max(...Object.values(statusCounts), 1);
-  const BAR_WIDTH = 12;
-  const statusBar = Object.entries(statusCounts)
-    .filter(([,n])=>n>0)
-    .map(([s,n])=>{
-      const filled = Math.round((n/maxCount)*BAR_WIDTH);
-      const bar = '█'.repeat(filled) + '░'.repeat(BAR_WIDTH-filled);
-      return `  ${s.padEnd(18)} ${bar} ${n}`;
-    }).join('\n');
-
-  // Priority breakdown
-  const prios = ['Critical','Urgent','High','Medium','Low'];
-  const prioCounts = prios.map(p=>({p, n:S.bugs.filter(b=>b.priority===p&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).length}));
-  const maxP = Math.max(...prioCounts.map(x=>x.n),1);
-  const prioBar = prioCounts.filter(x=>x.n>0).map(({p,n})=>{
-    const filled = Math.round((n/maxP)*BAR_WIDTH);
-    const bar = '█'.repeat(filled) + '░'.repeat(BAR_WIDTH-filled);
-    return `  ${p.padEnd(10)} ${bar} ${n}`;
-  }).join('\n');
-
-  return `📊 BUG REPORT — ${dateStr}
-━━━━━━━━━━━━━━━━━━━━━━━━
-🐛 Filed today  : ${todayBugs.length}
-✅ QA Pass today: ${resolvedToday.filter(b=>b.status==='QA Pass').length}
-✅ Resolved     : ${resolvedToday.length}
-🔒 Closed today : ${closedToday.length}
-🚨 Critical open: ${critOpen.length}
-📋 Total active : ${S.bugs.length}
-
-📊 STATUS BREAKDOWN
-${statusBar}
-
-🎯 OPEN BY PRIORITY
-${prioBar}
-${todayBugs.length ? '\n🐛 BUGS ADDED TODAY ('+todayBugs.length+'):\n'+todayBugs.map(b=>`  • [${b.id}] ${b.title}\n    Priority: ${b.priority||'—'} | Status: ${b.status||'—'} | Feature: ${b.feature||'—'}\n    Assigned: ${(b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned'}\n    🔗 ${bugLink(b.id)}`).join('\n') : '\n🐛 BUGS ADDED TODAY: None'}
-${resolvedToday.filter(b=>b.status==='QA Pass').length ? '\n✅ QA PASS TODAY ('+resolvedToday.filter(b=>b.status==='QA Pass').length+'):\n'+resolvedToday.filter(b=>b.status==='QA Pass').map(b=>`  • [${b.id}] ${b.title}\n    Priority: ${b.priority||'—'} | Feature: ${b.feature||'—'}\n    🔗 ${bugLink(b.id)}`).join('\n') : '\n✅ QA PASS TODAY: None'}
-${resolvedToday.filter(b=>b.status!=='QA Pass').length ? '\n🛠 OTHER RESOLVED TODAY ('+resolvedToday.filter(b=>b.status!=='QA Pass').length+'):\n'+resolvedToday.filter(b=>b.status!=='QA Pass').map(b=>`  • [${b.id}] ${b.title} → ${b.status}\n    🔗 ${bugLink(b.id)}`).join('\n') : ''}
-${closedToday.length ? '\n🔒 CLOSED TODAY:\n'+closedToday.map(b=>`  • [${b.id}] ${b.title} → ${b.status}\n    🔗 ${bugLink(b.id)}`).join('\n') : ''}
-${critOpen.length ? '\n🚨 STILL CRITICAL:\n'+critOpen.slice(0,8).map(b=>`  • [${b.id}] ${b.title} — ${(b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned'}\n    🔗 ${bugLink(b.id)}`).join('\n') : ''}
-
-Generated by BugPulse · ${new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})}`;
-}
-async function copyDayEndReport() {
-  const txt = document.getElementById('dayEndReportText')?.value;
-  if(!txt) return;
-  navigator.clipboard.writeText(txt).then(()=>toast('Report copied to clipboard ✓','ok')).catch(()=>toast('Copy failed','err'));
-  // Send to GChat if configured
-  const cfg = getWebhookConfig();
-  if(cfg.gchat_url && cfg.notif_day_end_report !== false) {
-    await sendGChatWebhook(txt);
-    toast('Report copied & sent to GChat ✓','ok');
-  }
-}
-// Day-end schedule functions removed — manual trigger only via profile menu
-
-// ══════════════════════════════════════════
-// PATCH 3 — FEATURE INPUT DROPDOWN
-// ══════════════════════════════════════════
-function featureInputFilter(q) {
-  const dd = document.getElementById('featDropdown');
-  if(!dd) return;
-  const allFeats = [...new Set(S.bugs.map(b=>b.feature).filter(Boolean))];
-  // Also include sub-features from title patterns like "Feature > Sub"
-  const allSubFeats = [...new Set(S.bugs.map(b=>b.sub_feature).filter(Boolean))];
-  const filtered = q
-    ? [...allFeats, ...allSubFeats].filter(f=>f.toLowerCase().includes(q.toLowerCase()))
-    : allFeats;
-  if(!filtered.length) { dd.style.display='none'; return; }
-  // Group: features first, then sub-features
-  const feats = filtered.filter(f => allFeats.includes(f));
-  const subs  = filtered.filter(f => !allFeats.includes(f));
-  let html = '';
-  if(feats.length) {
-    html += `<div style="padding:5px 10px 2px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase">Features</div>`;
-    html += feats.slice(0,8).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.1)'" onmouseleave="this.style.background=''"><span style="font-size:14px">🎮</span><span>${esc(f)}</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>b.feature===f).length} bugs</span></div>`).join('');
-  }
-  if(subs.length && !q) {
-    html += `<div style="padding:5px 10px 2px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:4px">Recent Sub-features</div>`;
-    html += subs.slice(0,5).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:7px 13px 7px 26px;cursor:pointer;font-size:12px;color:var(--mist);border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.08)'" onmouseleave="this.style.background=''">↳ ${esc(f)}</div>`).join('');
-  }
-  dd.innerHTML = html || '<div style="padding:14px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">No features found</div>';
-  dd.style.display = 'block';
-  document.addEventListener('click', e => {
-    if(!e.target.closest('#f-feat') && !e.target.closest('#featDropdown')) dd.style.display='none';
-  }, {once:true});
-}
-function selectFeature(name) {
-  const inp = document.getElementById('f-feat');
-  if(inp) inp.value = name;
-  const dd = document.getElementById('featDropdown');
-  if(dd) dd.style.display='none';
-}
-
-// ══════════════════════════════════════════
-// PATCH 4 — DASHBOARD CHARTS (Chart.js)
-// ══════════════════════════════════════════
-let _chartInstances = {};
-function destroyChart(id) {
-  if(_chartInstances[id]) { _chartInstances[id].destroy(); delete _chartInstances[id]; }
-}
-function renderDashboardGraphs() {
-  const el = document.getElementById('dashGraphs');
-  if(!el || typeof Chart === 'undefined') return;
-
-  // Build month options for selectors
-  const months = {};
-  S.bugs.forEach(b => {
-    const d = b.created_ts ? new Date(b.created_ts) : b.created_at ? new Date(b.created_at) : null;
-    if(!d) return;
-    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    const label = d.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-    months[key] = label;
-  });
-  const monthOpts = Object.entries(months).sort((a,b)=>b[0].localeCompare(a[0]))
-    .map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
-  const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
-  const podOpts = pods.map(p=>`<option value="${p}">${p}</option>`).join('');
-
-  el.innerHTML = `
-    <div class="chart-card">
-      <div class="chart-card-title">BUGS BY STATUS</div>
-      <canvas id="chartStatus"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-card-title">PRIORITY BREAKDOWN</div>
-      <canvas id="chartPriority"></canvas>
-    </div>
-    <div class="chart-card" style="grid-column:1/-1">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-        <div class="chart-card-title" style="margin:0">BUGS OVER TIME</div>
-        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-          <select id="tlMode" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderTimelineChart()">
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="month">By Month (12mo)</option>
-          </select>
-          <select id="tlPod" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderTimelineChart()">
-            <option value="">All Pods</option>
-            ${podOpts}
-          </select>
-        </div>
-      </div>
-      <canvas id="chartTimeline" style="max-height:200px"></canvas>
-    </div>
-    <div class="chart-card" style="grid-column:1/-1">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <div class="chart-card-title" style="margin:0">MONTH / DATE STATS</div>
-        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center">
-          <select id="mwViewMode" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
-            <option value="month">By Month</option>
-            <option value="daterange">Date Range</option>
-          </select>
-          <select id="mwMonth" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
-            ${monthOpts}
-          </select>
-          <span id="mwDateRangeWrap" style="display:none;gap:4px;align-items:center;display:none">
-            <input type="date" id="mwDateFrom" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
-            <span style="color:var(--dim);font-size:10px">to</span>
-            <input type="date" id="mwDateTo" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
-          </span>
-          <select id="mwPerson" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
-            <option value="">All Team</option>
-            <option value="__qa__">QA (Reporters)</option>
-            <option value="__dev__">Dev (Assignees)</option>
-            ${[...new Set(S.teamMembers.map(m=>m.name).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')}
-          </select>
-          <select id="mwIssueType" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
-            <option value="">All Types</option>
-            ${['Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration'].map(t=>`<option value="${t}">${t}</option>`).join('')}
-          </select>
-          <button class="btn btn-g btn-sm" onclick="copyMonthReport()">Copy Report</button>
-        </div>
-      </div>
-      <div id="monthwiseStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px"></div>
-      <div id="issueTypeTrend" style="margin-bottom:12px"></div>
-      <canvas id="chartMonthwise" style="max-height:180px"></canvas>
-    </div>
-    <div class="chart-card" style="grid-column:1/-1">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-        <div class="chart-card-title" style="margin:0">POD COMPARISON</div>
-        <div style="display:flex;gap:6px;margin-left:auto">
-          <select id="podCmpM1" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderPodComparison()">
-            ${monthOpts}
-          </select>
-          <span style="color:var(--dim);font-size:11px;align-self:center">vs</span>
-          <select id="podCmpM2" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderPodComparison()">
-            ${monthOpts}
-          </select>
-          <button class="btn btn-g btn-sm" onclick="copyPodReport()">Copy for Presentation</button>
-        </div>
-      </div>
-      <canvas id="chartPodComp" style="max-height:200px"></canvas>
-    </div>`;
-
-  setTimeout(() => {
-    renderStatusChart();
-    renderPriorityChart();
-    renderTimelineChart();
-    renderMonthwiseChart();
-    renderPodComparison();
-  }, 50);
-}
 
 // ══════════════════════════════════════════
 // ENHANCED CHARTS — month/date/pod analytics
