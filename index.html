@@ -946,6 +946,19 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
 .mf-actions{display:flex;gap:6px;padding:6px;border-top:1px solid var(--bd);margin-top:4px}
 .mf-act-btn{flex:1;padding:5px;border-radius:6px;font-size:10px;font-family:var(--mono);cursor:pointer;border:1px solid var(--bd);background:var(--bg3);color:var(--mist)}
 .mf-act-btn:hover{background:rgba(124,58,237,.15);border-color:var(--g1);color:var(--g1)}
+
+/* ── FEATURE TOUR / FTUE ─────────────────────────────────────────────────── */
+.tour-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.7);backdrop-filter:blur(2px)}
+.tour-spotlight{position:fixed;z-index:99999;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.7),0 0 0 3px var(--g1),0 0 20px var(--g1);pointer-events:none;transition:all .35s cubic-bezier(.4,0,.2,1)}
+.tour-card{position:fixed;z-index:100000;background:var(--bg2);border:1px solid var(--g1);border-radius:16px;padding:20px 22px;max-width:320px;box-shadow:0 12px 40px rgba(0,0,0,.6);animation:tourIn .3s ease}
+@keyframes tourIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.tour-step-num{font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--g1);text-transform:uppercase;margin-bottom:6px}
+.tour-title{font-family:var(--disp);font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px}
+.tour-desc{font-size:13px;color:var(--mist);line-height:1.7;margin-bottom:16px}
+.tour-dots{display:flex;gap:5px;margin-bottom:14px}
+.tour-dot{width:6px;height:6px;border-radius:50%;background:var(--bd2);transition:all .2s}
+.tour-dot.on{background:var(--g1);width:18px;border-radius:3px}
+.tour-btns{display:flex;gap:8px;justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -1095,6 +1108,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="pm-item" onclick="toggleCursorPref()" title="Toggle cricket bat / system cursor"><span class="pm-icon" id="cursorPrefIcon">🖱</span> <span id="cursorPrefLabel">Default Cursor</span></div>
           <div class="pm-divider"></div>
           <div class="pm-item" onclick="refreshAll();closeProfileMenu()"><span class="pm-icon">↻</span> Refresh Data</div>
+          <div class="pm-item" onclick="startTour(true);closeProfileMenu()"><span class="pm-icon">🎓</span> Feature Tour</div>
           <div class="pm-item" onclick="showNatasha();closeProfileMenu()"><span class="pm-icon">🏏</span> Say Hi to Natasha</div>
           <div class="pm-item" onclick="toggleNatashaPref();closeProfileMenu()"><span class="pm-icon" id="natashaPrefIcon">🔕</span> <span id="natashaPrefLabel">Disable Natasha</span></div>
           <div class="pm-item" id="pmPushToggle" onclick="togglePushFromMenu();closeProfileMenu()"><span class="pm-icon">🔔</span> <span id="pmPushLabel">Enable Notifications</span></div>
@@ -2260,6 +2274,7 @@ function onLogin(){
   loadCursorPref();
   loadNatashaPref();
   updatePushMenuLabel();
+  setTimeout(() => startTour(false), 1500); // show tour on first login only
   const _bdb = document.getElementById('bulkDeleteBtn');
   if(_bdb && S.user?.role==='admin') _bdb.style.display='';
   // Show rollback button if previous import exists
@@ -7469,6 +7484,173 @@ function isImageUrl(url) {
   if(!url) return false;
   if(isDriveUrl(url)) return true; // assume drive links might be images
   return /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(url.split('?')[0]);
+}
+
+
+// ══════════════════════════════════════════
+// FEATURE TOUR / FTUE
+// ══════════════════════════════════════════
+const TOUR_KEY = 'hwt_tour_done_v1';
+
+const TOUR_STEPS = [
+  {
+    title: 'Welcome to BugPulse',
+    desc: 'Your QA hub for tracking bugs, builds, sprints and team performance — all in one place. Let\'s take a quick tour!',
+    target: null,
+    pos: 'center',
+  },
+  {
+    title: 'Log a Bug',
+    desc: 'Click "+ NEW BUG" to log an issue. Add title, priority, steps to reproduce, assignee and attach screenshots from Google Drive.',
+    target: '.btn-v',
+    pos: 'bottom',
+  },
+  {
+    title: 'Filter & Search',
+    desc: 'Use the filter bar to find bugs by status, priority, assignee, pod, date range and more. Multi-select checkboxes for powerful filtering.',
+    target: '#fq',
+    pos: 'bottom',
+  },
+  {
+    title: 'Board View',
+    desc: 'Switch to BOARD for a Kanban view. Drag and drop cards between status columns to update bugs instantly.',
+    target: '#tt-board',
+    pos: 'bottom',
+  },
+  {
+    title: 'Sprints & Features',
+    desc: 'Organize bugs into Sprints and Features. Track progress, see completion rates and group issues by sub-feature.',
+    target: '#tt-sprints',
+    pos: 'bottom',
+  },
+  {
+    title: 'Dashboard & Analytics',
+    desc: 'See pie charts, trend lines, month-wise stats and pod comparisons. Copy reports for QA presentations.',
+    target: '#tt-dashboard',
+    pos: 'bottom',
+  },
+  {
+    title: 'Builds & Test Runs',
+    desc: 'Log build releases, upload test cases and track test execution with pass/fail/blocked status per test case.',
+    target: '#tt-builds',
+    pos: 'bottom',
+  },
+  {
+    title: 'Google Sheets Sync',
+    desc: 'Anyone can log bugs directly in a Google Sheet — they sync to BugPulse automatically. Download the template from the Import tab.',
+    target: '#tt-import',
+    pos: 'bottom',
+  },
+  {
+    title: 'Team Notifications',
+    desc: 'Enable desktop push notifications to get alerted on new bugs and builds — even when the browser is closed.',
+    target: '#tt-notifs',
+    pos: 'bottom',
+  },
+  {
+    title: 'Webhook Settings',
+    desc: 'Configure GChat webhooks per pod, Slack, Jenkins CI/CD integration, and EOD auto-reports from your profile menu.',
+    target: null,
+    pos: 'center',
+  },
+];
+
+let _tourStep = 0;
+let _tourActive = false;
+
+function startTour(force) {
+  try {
+    if (!force && localStorage.getItem(TOUR_KEY)) return;
+  } catch(e) {}
+  _tourStep = 0;
+  _tourActive = true;
+  showTourStep();
+}
+
+function showTourStep() {
+  closeTourUI();
+  if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  const step = TOUR_STEPS[_tourStep];
+
+  // Overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'tour-overlay';
+  overlay.id = 'tourOverlay';
+  overlay.onclick = () => advanceTour();
+  document.body.appendChild(overlay);
+
+  // Spotlight on target
+  if (step.target) {
+    const el = document.querySelector(step.target);
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const spot = document.createElement('div');
+      spot.className = 'tour-spotlight';
+      spot.id = 'tourSpotlight';
+      spot.style.cssText = `top:${r.top-6}px;left:${r.left-6}px;width:${r.width+12}px;height:${r.height+12}px`;
+      document.body.appendChild(spot);
+    }
+  }
+
+  // Card
+  const card = document.createElement('div');
+  card.className = 'tour-card';
+  card.id = 'tourCard';
+
+  const dots = TOUR_STEPS.map((_, i) =>
+    `<div class="tour-dot${i===_tourStep?' on':''}"></div>`
+  ).join('');
+
+  card.innerHTML = `
+    <div class="tour-step-num">Step ${_tourStep+1} of ${TOUR_STEPS.length}</div>
+    <div class="tour-title">${step.title}</div>
+    <div class="tour-desc">${step.desc}</div>
+    <div class="tour-dots">${dots}</div>
+    <div class="tour-btns">
+      ${_tourStep > 0 ? '<button class="btn btn-g btn-sm" onclick="prevTour()">← Back</button>' : ''}
+      <button class="btn btn-g btn-sm" onclick="endTour()">Skip</button>
+      <button class="btn btn-v btn-sm" onclick="advanceTour()">${_tourStep === TOUR_STEPS.length-1 ? 'Done!' : 'Next →'}</button>
+    </div>`;
+
+  // Position card
+  if (step.pos === 'center' || !step.target) {
+    card.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+  } else {
+    const el = step.target ? document.querySelector(step.target) : null;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      const cardTop = r.bottom + 14;
+      const cardLeft = Math.min(Math.max(r.left, 10), window.innerWidth - 340);
+      card.style.cssText = `top:${cardTop}px;left:${cardLeft}px`;
+    } else {
+      card.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+    }
+  }
+
+  document.body.appendChild(card);
+}
+
+function advanceTour() {
+  _tourStep++;
+  showTourStep();
+}
+
+function prevTour() {
+  _tourStep = Math.max(0, _tourStep - 1);
+  showTourStep();
+}
+
+function endTour() {
+  closeTourUI();
+  _tourActive = false;
+  try { localStorage.setItem(TOUR_KEY, '1'); } catch(e) {}
+  toast('Tour complete! Access it anytime from your profile menu.', 'ok');
+}
+
+function closeTourUI() {
+  ['tourOverlay','tourSpotlight','tourCard'].forEach(id => {
+    document.getElementById(id)?.remove();
+  });
 }
 
 const WEBHOOK_KEY = 'hwt_webhooks_v2';
