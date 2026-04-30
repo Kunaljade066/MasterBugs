@@ -7675,20 +7675,18 @@ async function jkGenerate(team) {
 }
 
 async function saveWebhookSettings() {
+  // Collect per-pod GChat URLs
+  const _podGChatUrls = {};
+  (DD_FIELDS.find(f=>f.key==='pod')?.options || []).forEach(pod => {
+    const elId = 'wh-pod-gchat-' + pod.replace(/[^a-z0-9]/gi,'_');
+    const key  = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const val  = document.getElementById(elId)?.value?.trim()||'';
+    _podGChatUrls[key] = val;
+  });
+
   const cfg = {
     gchat_url: document.getElementById('wh-gchat')?.value?.trim()||'',
-    // Per-pod GChat URLs
-    ...(()=>{
-      const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
-      const podUrls = {};
-      pods.forEach(pod => {
-        const elId = 'wh-pod-gchat-' + pod.replace(/[^a-z0-9]/gi,'_');
-        const key  = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-        const val  = document.getElementById(elId)?.value?.trim()||'';
-        if(val) podUrls[key] = val;
-      });
-      return podUrls;
-    })(),
+    ..._podGChatUrls,
     slack_url: document.getElementById('wh-slack')?.value?.trim()||'',
     team_emails: document.getElementById('wh-emails')?.value?.trim()||'',
     notif_new_bug: document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
