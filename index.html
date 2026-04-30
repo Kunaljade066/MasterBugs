@@ -1142,6 +1142,21 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           </div>
           <div class="home-quick" id="homeQuick"></div>
           <div id="homeBuildsStrip"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0" id="homePieRow">
+            <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+              <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">BY STATUS</div>
+              <canvas id="homePieStatus" style="max-height:180px"></canvas>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+              <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:12px">BY PRIORITY</div>
+              <canvas id="homePiePriority" style="max-height:180px"></canvas>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+              <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">BY POD / TEAM</div>
+              <canvas id="homePiePod" style="max-height:180px"></canvas>
+            </div>
+          </div>
+          <div id="personalStatsRow" style="margin:0 0 14px"></div>
           <div class="home-grids">
             <div class="home-section"><div class="home-sec-hd">🔴 Critical &amp; Urgent</div><div id="homeCritical"></div></div>
             <div class="home-section"><div class="home-sec-hd">👤 Assigned to Me</div><div id="homeMine"></div></div>
@@ -1167,6 +1182,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
             <select class="fi" id="fa" onchange="applyF()"><option value="">All Assignees</option></select>
             <select class="fi" id="ff" onchange="applyF()"><option value="">All Features</option></select>
             <select class="fi" id="fsp" onchange="applyF()"><option value="">All Sprints</option></select>
+            <select class="fi" id="f-issue-type-filter" onchange="applyF()"><option value="">All Types</option></select>
           </div>
           <div class="tw">
             <div class="tw-hd"><span class="tw-hd-t" id="tTitle">Issues</span><span style="font-family:var(--mono);font-size:10px;color:var(--dim)" id="tMeta"></span></div>
@@ -2491,6 +2507,13 @@ function populateDropdowns(){
     if(cur) faEl.value = cur;
   }
   fill('ff',uniq('feature'),'All Features');
+  // Populate issue type filter if exists
+  const itEl = document.getElementById('f-issue-type-filter');
+  if(itEl) {
+    const cur = itEl.value;
+    const types = [...new Set(S.bugs.map(b=>b.issue_type).filter(Boolean))].sort();
+    itEl.innerHTML = '<option value="">All Types</option>' + types.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
+  }
   fill('fsp',S.sprints.map(s=>s.name),'All Sprints');
 }
 
@@ -2512,6 +2535,8 @@ function applyF(){
     if(fa==='__unassigned__'&&(b.assignees||[]).length>0)return false;
     if(fa&&fa!=='__unassigned__'&&!(b.assignees||[]).some(a=>a.name===fa))return false;
     if(ff&&b.feature!==ff)return false;
+    const fit = document.getElementById('f-issue-type-filter')?.value||'';
+    if(fit&&b.issue_type!==fit)return false;
     if(fsp&&b.sprint!==fsp)return false;
     if(q){const hay=[b.id,b.title,(b.assignees||[]).map(a=>a.name).join(' '),b.feature,b.steps,b.actual,b.build||''].join(' ').toLowerCase();if(!hay.includes(q))return false;}
     return true;
@@ -2615,6 +2640,7 @@ function renderTable(){
   if(S.view!=='backlog')return;
   renderStats('statsRow');
   renderPersonalStats();
+  renderHomePieCharts();
   const total=S.filtered.length,ps=S.ps;
   const tp=Math.max(1,Math.ceil(total/ps));
   S.page=Math.min(Math.max(1,S.page),tp);
@@ -2662,6 +2688,95 @@ function renderTable(){
   document.getElementById('tBody').innerHTML=h;
 }
 
+
+
+// ══════════════════════════════════════════
+// HOME PAGE PIE CHARTS
+// ══════════════════════════════════════════
+let _homePieCharts = {};
+
+function renderHomePieCharts() {
+  if(typeof Chart === 'undefined') return;
+
+  // Destroy old
+  Object.values(_homePieCharts).forEach(c => { try { c.destroy(); } catch(e) {} });
+  _homePieCharts = {};
+
+  const chartOpts = (legendPos) => ({
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: legendPos || 'bottom',
+        labels: { color:'#9090c0', font:{size:9}, boxWidth:10, padding:6 }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => ' ' + ctx.label + ': ' + ctx.raw + ' (' + Math.round(ctx.raw/ctx.dataset.data.reduce((a,b)=>a+b,0)*100) + '%)'
+        }
+      }
+    }
+  });
+
+  // ── Status pie ────────────────────────────────────────────────────────────
+  const statusColors = {
+    'Open':'#a78bfa','In Progress':'#06b6d4','In Review':'#f59e0b',
+    'Dev Fixed':'#6ee7b7','Done':'#10b981','Bugged':'#ef4444',
+    'QA Pass':'#34d399','Closed':'#4b5563','Non-Recreatable':'#9ca3af','Not a bug':'#6b7280'
+  };
+  const sLabels = Object.keys(statusColors).filter(s => S.bugs.filter(b=>b.status===s).length > 0);
+  const sData   = sLabels.map(s => S.bugs.filter(b=>b.status===s).length);
+  const sColors = sLabels.map(s => statusColors[s]);
+  const ctxS = document.getElementById('homePieStatus');
+  if(ctxS) {
+    _homePieCharts['status'] = new Chart(ctxS, {
+      type: 'doughnut',
+      data: { labels:sLabels, datasets:[{ data:sData, backgroundColor:sColors, borderWidth:0, hoverOffset:6 }] },
+      options: chartOpts('bottom'),
+    });
+  }
+
+  // ── Priority pie ──────────────────────────────────────────────────────────
+  const prios = ['Critical','Urgent','High','Medium','Low'];
+  const pColors = ['#ef4444','#f97316','#f59e0b','#10b981','#06b6d4'];
+  const pData = prios.map(p => S.bugs.filter(b=>b.priority===p).length).filter((_,i) => {
+    return S.bugs.filter(b=>b.priority===prios[i]).length > 0;
+  });
+  const pLabels = prios.filter(p => S.bugs.filter(b=>b.priority===p).length > 0);
+  const pColorsFiltered = prios.map((p,i)=>pColors[i]).filter((_,i)=>S.bugs.filter(b=>b.priority===prios[i]).length>0);
+  const ctxP = document.getElementById('homePiePriority');
+  if(ctxP) {
+    _homePieCharts['priority'] = new Chart(ctxP, {
+      type: 'doughnut',
+      data: { labels:pLabels, datasets:[{ data:pData, backgroundColor:pColorsFiltered, borderWidth:0, hoverOffset:6 }] },
+      options: chartOpts('bottom'),
+    });
+  }
+
+  // ── Pod pie ───────────────────────────────────────────────────────────────
+  const podMap = {};
+  S.bugs.forEach(b => { if(b.pod) podMap[b.pod] = (podMap[b.pod]||0)+1; });
+  const podEntries = Object.entries(podMap).sort((a,b)=>b[1]-a[1]);
+  const podColors = ['#7c3aed','#06b6d4','#f59e0b','#10b981','#ef4444','#db2777','#0d9488','#a78bfa'];
+  const ctxPod = document.getElementById('homePiePod');
+  if(ctxPod && podEntries.length) {
+    _homePieCharts['pod'] = new Chart(ctxPod, {
+      type: 'doughnut',
+      data: {
+        labels: podEntries.map(([k])=>k),
+        datasets:[{ data:podEntries.map(([,v])=>v), backgroundColor:podColors.slice(0,podEntries.length), borderWidth:0, hoverOffset:6 }]
+      },
+      options: chartOpts('bottom'),
+    });
+  } else if(ctxPod) {
+    // No pod data — show message
+    const ctx2d = ctxPod.getContext('2d');
+    ctx2d.fillStyle = '#6060a0';
+    ctx2d.font = '11px monospace';
+    ctx2d.textAlign = 'center';
+    ctx2d.fillText('No pod data — tag bugs with Pod', ctxPod.width/2, ctxPod.height/2);
+  }
+}
 
 function renderPersonalStats() {
   const el = document.getElementById('personalStatsRow');
@@ -4058,6 +4173,11 @@ function buildBugForm(bug,full){
       <div class="fg"><label class="fl">Severity (QA)</label>
         <select class="fi2" id="f-sv">${['','S1 - Blocker','S2 - Critical','S3 - Major','S4 - Minor'].map(v=>`<option value="${v}"${(bug?.severity||'')===v?' selected':''}>${v||'— None —'}</option>`).join('')}</select>
       </div>
+      <div class="fg"><label class="fl">Issue Type <span style="color:var(--g1);font-weight:400;font-size:9px;letter-spacing:0;text-transform:none">— for trend analysis</span></label>
+        <select class="fi2" id="f-issue-type">
+          ${['','Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration'].map(v=>`<option value="${v}"${(bug?.issue_type||'')===v?' selected':''}>${v||'— Select type —'}</option>`).join('')}
+        </select>
+      </div>
       <div class="fg"><label class="fl">Status</label><select class="fi2" id="f-st">${stOpts}</select></div>
       ${DD_FIELDS.map(f=>{const opts=getDropOpts(f.key);return`<div class="fg"><label class="fl">${esc(f.label)}</label><select class="fi2" id="f-dd-${f.key}"><option value="">— None —</option>${opts.map(o=>`<option value="${esc(o)}"${(bug?.[f.key]||"")===o?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;}).join("")}
       <div class="fg fc2"><label class="fl">Assignees</label>${buildMultiAssigneePicker(bug)}</div>
@@ -4367,6 +4487,7 @@ async function saveBug(){
       const data={
         title,priority:document.getElementById('f-p')?.value||'Medium',
         severity:document.getElementById('f-sv')?.value||'',
+        issue_type:document.getElementById('f-issue-type')?.value||'',
         status:document.getElementById('f-st')?.value||'Open',
         assignees,assignee:assignees[0]?.name||'',assignee_email:assignees[0]?.email||'',assignee_picture:assignees[0]?.picture||'',
         reporter:document.getElementById('f-rep')?.value||S.user?.name||'',
@@ -4393,7 +4514,7 @@ async function saveBug(){
         }
         toast('Bug updated ✓','ok');
         if(S.view==='dashboard') setTimeout(renderDashboard, 100);
-        if(S.view==='home') setTimeout(renderHome, 100);
+        if(S.view==='home') { setTimeout(renderHome, 100); setTimeout(renderHomePieCharts, 200); }
         btn.disabled=false;btn.innerHTML='💾 SAVE';
         closePanel();
         const uidx=S.bugs.findIndex(b=>b.id===S.editing);
@@ -7802,16 +7923,36 @@ function renderDashboardGraphs() {
       <canvas id="chartTimeline" style="max-height:200px"></canvas>
     </div>
     <div class="chart-card" style="grid-column:1/-1">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-        <div class="chart-card-title" style="margin:0">MONTH-WISE STATS</div>
-        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="chart-card-title" style="margin:0">MONTH / DATE STATS</div>
+        <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;align-items:center">
+          <select id="mwViewMode" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
+            <option value="month">By Month</option>
+            <option value="daterange">Date Range</option>
+          </select>
           <select id="mwMonth" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
             ${monthOpts}
+          </select>
+          <span id="mwDateRangeWrap" style="display:none;gap:4px;align-items:center;display:none">
+            <input type="date" id="mwDateFrom" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
+            <span style="color:var(--dim);font-size:10px">to</span>
+            <input type="date" id="mwDateTo" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
+          </span>
+          <select id="mwPerson" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
+            <option value="">All Team</option>
+            <option value="__qa__">QA (Reporters)</option>
+            <option value="__dev__">Dev (Assignees)</option>
+            ${[...new Set(S.teamMembers.map(m=>m.name).filter(Boolean))].sort().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')}
+          </select>
+          <select id="mwIssueType" class="fi" style="width:auto;padding:3px 8px;font-size:10px" onchange="renderMonthwiseChart()">
+            <option value="">All Types</option>
+            ${['Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration'].map(t=>`<option value="${t}">${t}</option>`).join('')}
           </select>
           <button class="btn btn-g btn-sm" onclick="copyMonthReport()">Copy Report</button>
         </div>
       </div>
-      <div id="monthwiseStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px"></div>
+      <div id="monthwiseStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px"></div>
+      <div id="issueTypeTrend" style="margin-bottom:12px"></div>
       <canvas id="chartMonthwise" style="max-height:180px"></canvas>
     </div>
     <div class="chart-card" style="grid-column:1/-1">
@@ -7907,48 +8048,145 @@ function renderTimelineChart() {
   });
 }
 
+function getBugsForPeriod() {
+  const viewMode   = document.getElementById('mwViewMode')?.value || 'month';
+  const monthKey   = document.getElementById('mwMonth')?.value || '';
+  const dateFrom   = document.getElementById('mwDateFrom')?.value || '';
+  const dateTo     = document.getElementById('mwDateTo')?.value || '';
+  const person     = document.getElementById('mwPerson')?.value || '';
+  const issueType  = document.getElementById('mwIssueType')?.value || '';
+
+  // Show/hide date range inputs
+  const drWrap = document.getElementById('mwDateRangeWrap');
+  const mwSel  = document.getElementById('mwMonth');
+  if(drWrap && mwSel) {
+    const isRange = viewMode === 'daterange';
+    drWrap.style.display = isRange ? 'flex' : 'none';
+    mwSel.style.display  = isRange ? 'none'  : '';
+  }
+
+  let bugs = S.bugs.filter(b => {
+    const d = b.created_ts ? new Date(b.created_ts) : b.created_at ? new Date(b.created_at) : null;
+    if(!d) return false;
+
+    if(viewMode === 'daterange') {
+      if(dateFrom) { const f = new Date(dateFrom); if(d < f) return false; }
+      if(dateTo)   { const t = new Date(dateTo); t.setHours(23,59,59); if(d > t) return false; }
+    } else {
+      if(monthKey) {
+        const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        if(k !== monthKey) return false;
+      }
+    }
+    return true;
+  });
+
+  // Person/role filter
+  if(person === '__qa__') {
+    // QA = reporter filter — bugs reported by QA members
+    bugs = bugs.filter(b => b.reporter && !b.reporter_email?.includes('dev'));
+  } else if(person === '__dev__') {
+    bugs = bugs.filter(b => (b.assignees||[]).length > 0);
+  } else if(person) {
+    bugs = bugs.filter(b =>
+      b.reporter === person ||
+      (b.assignees||[]).some(a=>a.name===person)
+    );
+  }
+
+  // Issue type filter
+  if(issueType) bugs = bugs.filter(b => b.issue_type === issueType);
+
+  return bugs;
+}
+
 function renderMonthwiseChart() {
   destroyChart('monthwise');
+  const bugs = getBugsForPeriod();
+  const viewMode = document.getElementById('mwViewMode')?.value || 'month';
   const monthKey = document.getElementById('mwMonth')?.value || '';
-  if(!monthKey) return;
-  const bugs = bugsForMonth(monthKey, '');
+
+  // Stats row
   const statsEl = document.getElementById('monthwiseStats');
   if(statsEl) {
     const open   = bugs.filter(b=>b.status==='Open').length;
     const active = bugs.filter(b=>['In Progress','Bugged'].includes(b.status)).length;
     const qaPass = bugs.filter(b=>b.status==='QA Pass').length;
     const crit   = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length;
-    const color = (c,v) => `<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:12px 16px;text-align:center"><div style="font-size:24px;font-weight:800;color:${c};font-family:var(--disp)">${v}</div><div style="font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:4px">${arguments[2]}</div></div>`;
+    const happy  = bugs.filter(b=>b.issue_type==='Happy Flow').length;
+    const edge   = bugs.filter(b=>b.issue_type==='Edge Case').length;
+    const statCard = (c,v,l) => '<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;text-align:center;border-top:2px solid '+c+'"><div style="font-size:22px;font-weight:800;color:'+c+';font-family:var(--disp)">'+v+'</div><div style="font-size:9px;color:var(--dim);font-family:var(--mono);margin-top:3px">'+l+'</div></div>';
     statsEl.innerHTML =
-      color('#a78bfa', bugs.length, 'TOTAL FILED') +
-      color('#ef4444', crit, 'CRITICAL') +
-      color('#06b6d4', active, 'ACTIVE') +
-      color('#10b981', qaPass, 'QA PASS') +
-      color('#f59e0b', open, 'OPEN');
+      statCard('#a78bfa', bugs.length, 'TOTAL FILED') +
+      statCard('#ef4444', crit,   'CRITICAL') +
+      statCard('#06b6d4', active, 'ACTIVE') +
+      statCard('#10b981', qaPass, 'QA PASS') +
+      statCard('#f59e0b', open,   'OPEN') +
+      statCard('#7c3aed', happy,  'HAPPY FLOW') +
+      statCard('#0d9488', edge,   'EDGE CASE');
   }
 
-  // Day-wise breakdown for the month
-  const [yr, mo] = monthKey.split('-').map(Number);
-  const daysInMonth = new Date(yr, mo, 0).getDate();
-  const dayLabels = [], dayData = [];
-  for(let d = 1; d <= daysInMonth; d++) {
-    const dateStr = yr + '-' + String(mo).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    dayLabels.push(String(d));
-    dayData.push(bugs.filter(b => {
-      const bd = b.created_ts ? new Date(b.created_ts).toISOString().slice(0,10) :
-                 b.created_at ? b.created_at.slice(0,10) : '';
-      return bd === dateStr;
-    }).length);
+  // Issue type trend bar
+  const trendEl = document.getElementById('issueTypeTrend');
+  if(trendEl && bugs.length) {
+    const types = ['Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration'];
+    const typeCounts = types.map(t=>({ t, n:bugs.filter(b=>b.issue_type===t).length })).filter(x=>x.n>0);
+    const maxT = Math.max(...typeCounts.map(x=>x.n), 1);
+    const colors = {'Happy Flow':'#10b981','Edge Case':'#f59e0b','Regression':'#ef4444','UI/Visual':'#06b6d4','Performance':'#7c3aed','Crash':'#dc2626','Data Issue':'#0d9488','Integration':'#a78bfa'};
+    if(typeCounts.length) {
+      trendEl.innerHTML = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:8px">ISSUE TYPE BREAKDOWN</div>' +
+        typeCounts.map(({t,n})=>{
+          const pct = Math.round(n/maxT*100);
+          const c = colors[t]||'#666';
+          return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">' +
+            '<div style="width:100px;font-family:var(--mono);font-size:9px;color:var(--mist);flex-shrink:0">'+t+'</div>' +
+            '<div style="flex:1;height:6px;background:var(--bg3);border-radius:3px"><div style="width:'+pct+'%;height:100%;background:'+c+';border-radius:3px;transition:width .3s"></div></div>' +
+            '<div style="width:24px;font-family:var(--mono);font-size:9px;color:'+c+';text-align:right">'+n+'</div>' +
+          '</div>';
+        }).join('');
+    } else {
+      trendEl.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--dim)">No issue type data — tag bugs with Issue Type when logging.</div>';
+    }
   }
 
+  // Day-wise chart
   const ctx = document.getElementById('chartMonthwise');
   if(!ctx) return;
+
+  let dayLabels = [], dayData = [], resolvedData = [];
+
+  if(viewMode === 'daterange') {
+    const from = document.getElementById('mwDateFrom')?.value;
+    const to   = document.getElementById('mwDateTo')?.value;
+    if(!from || !to) return;
+    const start = new Date(from), end = new Date(to);
+    for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+      const ds = d.toISOString().slice(0,10);
+      dayLabels.push(String(d.getDate()) + '/' + String(d.getMonth()+1));
+      dayData.push(bugs.filter(b=>(b.created_ts?new Date(b.created_ts).toISOString().slice(0,10):b.created_at?.slice(0,10)||'')=== ds).length);
+      resolvedData.push(bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)&&(b.updated_ts?new Date(b.updated_ts).toISOString().slice(0,10):'')=== ds).length);
+    }
+  } else if(monthKey) {
+    const [yr, mo] = monthKey.split('-').map(Number);
+    const daysInMonth = new Date(yr, mo, 0).getDate();
+    for(let d = 1; d <= daysInMonth; d++) {
+      const ds = yr+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      dayLabels.push(String(d));
+      dayData.push(bugs.filter(b=>(b.created_ts?new Date(b.created_ts).toISOString().slice(0,10):b.created_at?.slice(0,10)||'')=== ds).length);
+      resolvedData.push(bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)&&(b.updated_ts?new Date(b.updated_ts).toISOString().slice(0,10):'')=== ds).length);
+    }
+  }
+
+  if(!dayLabels.length) return;
+
   _chartInstances['monthwise'] = new Chart(ctx, {
     type: 'bar',
-    data: { labels:dayLabels, datasets:[{ label:'Bugs Filed', data:dayData,
-      backgroundColor:'rgba(124,58,237,.5)', borderColor:'#7c3aed', borderWidth:1, borderRadius:4 }] },
+    data: { labels:dayLabels, datasets:[
+      { label:'Filed', data:dayData, backgroundColor:'rgba(124,58,237,.5)', borderColor:'#7c3aed', borderWidth:1, borderRadius:4 },
+      { label:'Resolved', data:resolvedData, backgroundColor:'rgba(16,185,129,.4)', borderColor:'#10b981', borderWidth:1, borderRadius:4 },
+    ]},
     options: { responsive:true, maintainAspectRatio:true,
-      plugins:{ legend:{display:false} },
+      plugins:{ legend:{ labels:{color:'#9090c0',font:{size:10},boxWidth:10} } },
       scales:{
         x:{ticks:{color:'#6868a0',font:{size:9}},grid:{color:'rgba(255,255,255,.04)'}},
         y:{ticks:{color:'#6868a0',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},beginAtZero:true}
@@ -7989,32 +8227,73 @@ function renderPodComparison() {
 }
 
 function copyMonthReport() {
+  const bugs = getBugsForPeriod();
+  const viewMode = document.getElementById('mwViewMode')?.value || 'month';
   const monthKey = document.getElementById('mwMonth')?.value || '';
-  if(!monthKey) { toast('Select a month first','err'); return; }
-  const [yr,mo] = monthKey.split('-').map(Number);
-  const monthLabel = new Date(yr,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
-  const bugs = bugsForMonth(monthKey, '');
+  const dateFrom = document.getElementById('mwDateFrom')?.value || '';
+  const dateTo   = document.getElementById('mwDateTo')?.value || '';
+  const person   = document.getElementById('mwPerson')?.value || '';
+  const issueType= document.getElementById('mwIssueType')?.value || '';
+
+  let periodLabel = '';
+  if(viewMode === 'daterange') {
+    periodLabel = (dateFrom||'?') + ' to ' + (dateTo||'?');
+  } else if(monthKey) {
+    const [yr,mo] = monthKey.split('-').map(Number);
+    periodLabel = new Date(yr,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  }
+
+  const personLabel = person === '__qa__' ? 'QA' : person === '__dev__' ? 'Dev' : person || 'All Team';
   const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+  const types = ['Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration'];
 
-  let text = '=== BUG REPORT: ' + monthLabel + ' ===\n\n';
-  text += 'Total Filed : ' + bugs.length + '\n';
-  text += 'Critical    : ' + bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length + '\n';
-  text += 'QA Pass     : ' + bugs.filter(b=>b.status==='QA Pass').length + '\n';
-  text += 'Active      : ' + bugs.filter(b=>['In Progress','Bugged'].includes(b.status)).length + '\n\n';
+  let text = '=== BUG REPORT: ' + periodLabel;
+  if(personLabel !== 'All Team') text += ' [' + personLabel + ']';
+  if(issueType) text += ' [' + issueType + ']';
+  text += ' ===\n\n';
 
-  text += '--- BY POD ---\n';
-  pods.forEach(p => {
-    const pb = bugsForMonth(monthKey, p);
-    text += p.padEnd(18) + ': ' + pb.length + ' filed, ' + pb.filter(b=>b.status==='QA Pass').length + ' QA pass\n';
-  });
+  text += 'Total Filed  : ' + bugs.length + '\n';
+  text += 'Critical     : ' + bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length + '\n';
+  text += 'QA Pass      : ' + bugs.filter(b=>b.status==='QA Pass').length + '\n';
+  text += 'Active       : ' + bugs.filter(b=>['In Progress','Bugged'].includes(b.status)).length + '\n';
+  text += 'Happy Flow   : ' + bugs.filter(b=>b.issue_type==='Happy Flow').length + '\n';
+  text += 'Edge Case    : ' + bugs.filter(b=>b.issue_type==='Edge Case').length + '\n\n';
 
-  text += '\n--- BY PRIORITY ---\n';
+  if(pods.length) {
+    text += '--- BY POD ---\n';
+    pods.forEach(p => {
+      const pb = bugs.filter(b=>b.pod===p);
+      if(pb.length) text += (p+'                  ').slice(0,18) + ': ' + pb.length + ' filed, ' + pb.filter(b=>b.status==='QA Pass').length + ' QA pass\n';
+    });
+    text += '\n';
+  }
+
+  text += '--- BY PRIORITY ---\n';
   ['Critical','Urgent','High','Medium','Low'].forEach(p => {
     const n = bugs.filter(b=>b.priority===p).length;
-    if(n) text += p.padEnd(12) + ': ' + n + '\n';
+    if(n) text += (p+'            ').slice(0,12) + ': ' + n + '\n';
   });
 
-  navigator.clipboard.writeText(text).then(()=>toast('Month report copied ✓','ok'));
+  const typeBugs = types.map(t=>({t,n:bugs.filter(b=>b.issue_type===t).length})).filter(x=>x.n>0);
+  if(typeBugs.length) {
+    text += '\n--- BY ISSUE TYPE ---\n';
+    typeBugs.forEach(({t,n}) => { text += (t+'                  ').slice(0,18) + ': ' + n + '\n'; });
+  }
+
+  // Bug list
+  if(bugs.length && bugs.length <= 50) {
+    text += '\n--- BUGS (' + bugs.length + ') ---\n';
+    bugs.forEach(b => {
+      const assignees = (b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
+      text += '[' + b.id + '] ' + (b.title||'').slice(0,80) + '\n';
+      text += '  ' + (b.priority||'—') + ' | ' + (b.status||'—') + (b.issue_type?' | '+b.issue_type:'') + ' | ' + assignees + '\n';
+      text += '  ' + APP_URL + '?bug=' + b.id + '\n';
+    });
+  } else if(bugs.length > 50) {
+    text += '\n('+bugs.length+' bugs total — narrow filter to see bug list)\n';
+  }
+
+  navigator.clipboard.writeText(text).then(()=>toast('Report copied with ' + bugs.length + ' bugs','ok'));
 }
 
 function copyPodReport() {
