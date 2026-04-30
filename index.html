@@ -7841,11 +7841,11 @@ async function sendBugNotification(bug, customMsg) {
   });
   addNotif(`📢 Bug filed: ${bug.id||''}`, `${msg} · Build: ${bug.build||'—'}`, bug.id);
 
-  // GChat webhook
-  if(cfg.gchat_url && cfg.notif_new_bug !== false) {
+  // GChat webhook — send to pod-specific URL if set, else global
+  if(cfg.notif_new_bug !== false) {
     const assigneeNames = assignees.map(a=>a.name).join(', ')||'Unassigned';
-    const gchatText = `🐛 *New Bug Filed — ${bug.id||''}*\n*${bug.title||''}*\nPriority: ${bug.priority||'Medium'} | Status: ${bug.status||'Open'}\nBuild: ${bug.build||'—'} | Assignee: ${assigneeNames}\n🔗 View: ${bugUrl}`;
-    await sendGChatWebhook(gchatText);
+    const gchatText = `🐛 *New Bug Filed — ${bug.id||''}*\n*${bug.title||''}*\nPriority: ${bug.priority||'Medium'} | Status: ${bug.status||'Open'}\nPod: ${bug.pod||'—'} | Build: ${bug.build||'—'} | Assignee: ${assigneeNames}\n🔗 View: ${bugUrl}`;
+    await sendGChatWebhook(gchatText, bug.pod||'');
   }
 
   // Slack notification
@@ -8040,14 +8040,7 @@ function openDayEndReport() {
         </select>
       </div>
     </div>
-    <div class="dash-grid" style="margin-bottom:18px;margin-top:0;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))">
-      <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g5);font-size:32px">${todayBugs.length}</div><div class="sc-l" style="margin-top:6px">FILED TODAY</div></div>
-      <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#34d399;font-size:32px">${qaPassToday.length}</div><div class="sc-l" style="margin-top:6px">QA PASS</div></div>
-      <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g4);font-size:32px">${resolvedToday.length}</div><div class="sc-l" style="margin-top:6px">RESOLVED</div></div>
-      <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#06b6d4;font-size:32px">${closedToday.length}</div><div class="sc-l" style="margin-top:6px">CLOSED TODAY</div></div>
-      <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g3);font-size:32px">${critOpen.length}</div><div class="sc-l" style="margin-top:6px">CRIT OPEN</div></div>
-      <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--text);font-size:32px">${S.bugs.length}</div><div class="sc-l" style="margin-top:6px">TOTAL</div></div>
-    </div>
+    <div class="dash-grid" id="eodStatsCards" style="margin-bottom:18px;margin-top:0;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))"></div>
     ${todayBugs.length ? `<div class="dsec"><div class="dsec-title">🐛 BUGS ADDED TODAY (${todayBugs.length})</div>
       <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
         ${todayBugs.map(b=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer" onclick="closePanel();openDetail('${b.id}')">
@@ -8109,6 +8102,7 @@ function openDayEndReport() {
       >${generateReportText(todayBugs,resolvedToday,critOpen,dateStr,closedToday)}</textarea>
     </div>`;
   openPanel();
+  setTimeout(refreshEODReport, 50); // populate stats + textarea with current filter
 }
 function getEODTeamFilter() {
   return document.getElementById('eod-team-filter')?.value || '';
@@ -8125,12 +8119,25 @@ function refreshEODReport() {
   const allToday = getTodayBugs();
   const allClosed = getClosedTodayBugs();
   const allUpdated = getUpdatedTodayBugs();
-  const todayBugs = filterBugsByTeam(allToday, team);
-  const closedToday = filterBugsByTeam(allClosed, team);
-  const resolvedToday = filterBugsByTeam(allUpdated, team).filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
-  const critOpen = filterBugsByTeam(S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)), team);
+  const todayBugs    = filterBugsByTeam(allToday, team);
+  const closedToday  = filterBugsByTeam(allClosed, team);
+  const resolvedToday= filterBugsByTeam(allUpdated, team).filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
+  const qaPassToday  = resolvedToday.filter(b => b.status === 'QA Pass');
+  const critOpen     = filterBugsByTeam(S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)), team);
+  const totalFiltered= team ? filterBugsByTeam(S.bugs, team).length : S.bugs.length;
+
+  // Update stats cards
+  const cards = document.getElementById('eodStatsCards');
+  if(cards) cards.innerHTML = `
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g5);font-size:32px">${todayBugs.length}</div><div class="sc-l" style="margin-top:6px">FILED TODAY</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#34d399;font-size:32px">${qaPassToday.length}</div><div class="sc-l" style="margin-top:6px">QA PASS</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g4);font-size:32px">${resolvedToday.length}</div><div class="sc-l" style="margin-top:6px">RESOLVED</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#06b6d4;font-size:32px">${closedToday.length}</div><div class="sc-l" style="margin-top:6px">CLOSED TODAY</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g3);font-size:32px">${critOpen.length}</div><div class="sc-l" style="margin-top:6px">CRIT OPEN</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--text);font-size:32px">${totalFiltered}</div><div class="sc-l" style="margin-top:6px">${team ? 'POD TOTAL' : 'TOTAL'}</div></div>`;
+
   const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const teamLabel = team ? ` [${team}]` : '';
+  const teamLabel = team ? ' [' + team + ']' : '';
   const txt = generateReportText(todayBugs, resolvedToday, critOpen, dateStr + teamLabel, closedToday);
   const el = document.getElementById('dayEndReportText');
   if(el) el.value = txt;
