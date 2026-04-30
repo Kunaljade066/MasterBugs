@@ -2310,7 +2310,6 @@ function onLogin(){
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
   initPushNotifications();
-  initEODScheduler();
   refreshAll().then(()=>{
     startFastSync();
     updateOfflineBanner();
@@ -2499,8 +2498,7 @@ async function refreshAll(){
     updateSbBadges();populateDropdowns();applyF();populateBoardSprint();
     setCloud('ok',`☁ ${S.bugs.length}`);
     renderSlaWarnings();
-    initEODScheduler();
-    if(S.view==='home')renderHome();
+      if(S.view==='home')renderHome();
     else if(S.view==='board')renderBoard();
     else if(S.view==='sprints')renderSprints();
     else if(S.view==='features')renderFeatures();
