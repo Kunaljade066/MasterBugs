@@ -2418,7 +2418,14 @@ function populateDropdowns(){
   };
   fill('fs',ALL_STATUSES,'All Status');
   fill('fp',uniq('priority'),'All Priority');
-  fill('fa',allA,'All Assignees');fill('ff',uniq('feature'),'All Features');
+  const faEl = document.getElementById('fa');
+  if(faEl) {
+    const cur = faEl.value;
+    faEl.innerHTML = '<option value="">All Assignees</option><option value="__unassigned__">— No Assignee —</option>'
+      + allA.map(v=>`<option value="${v}"${v===cur?'selected':''}>${v}</option>`).join('');
+    if(cur) faEl.value = cur;
+  }
+  fill('ff',uniq('feature'),'All Features');
   fill('fsp',S.sprints.map(s=>s.name),'All Sprints');
 }
 
@@ -2437,7 +2444,8 @@ function applyF(){
     if(S.sbMode==='reporter'&&S.sbVal==='reporter'&&b.reporter_email!==S.user?.email)return false;
     if(fs&&b.status!==fs)return false;
     if(fp&&b.priority!==fp)return false;
-    if(fa&&!(b.assignees||[]).some(a=>a.name===fa))return false;
+    if(fa==='__unassigned__'&&(b.assignees||[]).length>0)return false;
+    if(fa&&fa!=='__unassigned__'&&!(b.assignees||[]).some(a=>a.name===fa))return false;
     if(ff&&b.feature!==ff)return false;
     if(fsp&&b.sprint!==fsp)return false;
     if(q){const hay=[b.id,b.title,(b.assignees||[]).map(a=>a.name).join(' '),b.feature,b.steps,b.actual,b.build||''].join(' ').toLowerCase();if(!hay.includes(q))return false;}
