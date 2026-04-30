@@ -276,14 +276,14 @@ select.fi option{background:var(--bg2)}
 .tw-hd-t{font-family:var(--mono);font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mist)}
 .tscroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{background:var(--bg3);padding:9px 11px;text-align:left;font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--bd);white-space:nowrap;cursor:pointer;}
+thead th{cursor:pointer;background:var(--bg3);padding:9px 11px;text-align:left;font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--bd);white-space:nowrap;cursor:pointer;}
 thead th:hover{color:var(--mist)}
 tbody tr{border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;transition:background .1s}
 tbody tr:hover{background:rgba(124,58,237,.06)}
 tbody tr:last-child{border-bottom:none}
 .tc-title{max-width:300px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tc-id{max-width:120px!important}
-tbody td{padding:9px 11px;vertical-align:middle;color:var(--mist);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tbody tr{cursor:pointer}tbody td{padding:9px 11px;vertical-align:middle;color:var(--mist);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tc-id{font-family:var(--mono);font-size:10px;color:var(--g1);white-space:nowrap;font-weight:700;letter-spacing:.5px}
 .tc-title{font-weight:700;color:var(--text);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.2px}
 
@@ -2438,7 +2438,7 @@ function setCloud(s,l){
 // REFRESH
 // ══════════════════════════════════════════
 function showTableShimmer() {
-  const el = document.getElementById('bugTableBody');
+  const el = document.getElementById('tBody');
   if (!el) return;
   const cols = 6;
   const widths = [30, 110, 220, 75, 60, 90];
@@ -3048,8 +3048,6 @@ function homeBugRow(bug){
 function renderTable(){
   if(S.view!=='backlog')return;
   renderStats('statsRow');
-  renderPersonalStats();
-  renderHomePieCharts();
   const total=S.filtered.length,ps=S.ps;
   const tp=Math.max(1,Math.ceil(total/ps));
   S.page=Math.min(Math.max(1,S.page),tp);
@@ -3071,7 +3069,7 @@ function renderTable(){
     const _slaCfg=getSLAConfig();const _pKey=(bug.priority||'Medium').toLowerCase().replace(/\s+/g,'_');
     const _slaBreach=_slaCfg['p_'+_pKey+'_breach']??_slaCfg.breach??7;
     const _slaRow=_days!==null&&_days>=_slaBreach&&['Open','In Progress','Bugged','In Review'].includes(bug.status);
-    h+=`<tr onclick="openDetail('${bug.id}')" style="${_slaRow?'background:rgba(239,68,68,.04)':''}${_isSel?';background:rgba(124,58,237,.1)':''}">
+    h+=`<tr onclick="openDetail('${bug.id}')" style="cursor:pointer;${_slaRow?'background:rgba(239,68,68,.04)':''}${_isSel?';background:rgba(124,58,237,.1)':''}">
       <td onclick="event.stopPropagation()" style="width:30px"><div class="cb-wrap"><input type="checkbox" ${_isSel?'checked':''} onclick="toggleBulkSelect('${bug.id}',event)"></div></td>
       <td class="tc-id mob-hide-id" style="white-space:nowrap">
         ${esc(bug.id||'—')}
