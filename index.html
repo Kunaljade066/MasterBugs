@@ -7666,9 +7666,9 @@ const TOUR_STEPS = [
       {icon:'📋',text:'Release notes grouped by feature — copy or send to GChat'},
     ]},
 
-  { tab:'builds', target:'#tt-builds',
+  { tab:null, target:null, action:'goTestRuns',
     title:'Test Runs',
-    speech:'Create test runs for a build — upload test cases and execute them one by one, marking Pass/Fail/Blocked!',
+    speech:'Click the Test Runs button in Builds to manage test execution. Upload cases, mark Pass/Fail and log bugs inline!',
     features:[
       {icon:'🧪',text:'Create run from bugs, sprint, feature or upload CSV'},
       {icon:'📄',text:'Download test case template — fill in Excel and upload back'},
@@ -7807,6 +7807,11 @@ function showTourStep() {
   closeTourUI();
   if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
   const step = TOUR_STEPS[_tourStep];
+  if (step.action === 'goTestRuns') {
+    goTab('builds');
+    setTimeout(() => { try { goTestRuns(); } catch(e) {} _showTourCard(); }, 400);
+    return;
+  }
   if (step.tab) {
     goTab(step.tab);
     setTimeout(_showTourCard, 200);
