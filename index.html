@@ -7634,6 +7634,22 @@ function isImageUrl(url) {
 // ══════════════════════════════════════════
 // FEATURE TOUR / FTUE
 // ══════════════════════════════════════════
+
+// ── Webhook config cache ──────────────────────────────────────────────────────
+const WEBHOOK_KEY = 'hwt_webhooks_v2';
+let _webhookCfgCache = null;
+
+function getWebhookConfig() {
+  if(_webhookCfgCache) return _webhookCfgCache;
+  try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
+}
+
+async function saveWebhookConfig(cfg) {
+  _webhookCfgCache = cfg;
+  try { localStorage.setItem(WEBHOOK_KEY, JSON.stringify(cfg)); } catch(e) {}
+  try { await api('/settings', 'POST', cfg); } catch(e) { console.error('[settings] save failed', e.message); }
+}
+
 const TOUR_KEY = 'hwt_tour_done_v1';
 
 const TOUR_STEPS = [
@@ -7917,6 +7933,10 @@ function _showTourCard() {
   const overlay = document.createElement('div');
   overlay.className = 'tour-overlay';
   overlay.id = 'tourOverlay';
+  overlay.addEventListener('click', function(e) {
+    // Click on overlay (not card) advances tour
+    if(e.target === overlay) advanceTour();
+  });
   document.body.appendChild(overlay);
 
   // Spotlight + scroll target into view
@@ -7998,13 +8018,23 @@ function endTour() {
 }
 
 function closeTourUI() {
-  ['tourOverlay','tourSpotlight','tourCard'].forEach(id => document.getElementById(id)?.remove());
+  ['tourOverlay','tourSpotlight','tourCard'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.parentNode?.removeChild(el);
+  });
 }
 
 // Close tour on Escape key
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape' && _tourActive) endTour();
 });
+
+// Safety: if tour overlay exists but _tourActive is false, remove it
+setInterval(() => {
+  if(!_tourActive && document.getElementById('tourOverlay')) {
+    closeTourUI();
+  }
+}, 2000);
 
 
 // ══════════════════════════════════════════
