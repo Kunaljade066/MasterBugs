@@ -7540,7 +7540,18 @@ async function openWebhookSettings() {
         </div>
       </div>
 
-      <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.25);border-radius:10px;padding:14px 16px">
+      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#34d399;margin-bottom:8px">📊 GOOGLE SHEETS WEBHOOK</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:10px;line-height:1.8">
+          When a bug is deleted in BugPulse, the row in your sheet gets strikethrough automatically.<br>
+          Get URL: Google Sheet → Extensions → Apps Script → Deploy → New deployment → Web App → copy URL
+        </div>
+        <div class="fg"><label class="fl">Sheet Web App URL</label>
+          <input class="fi2" id="wh-sheet-webhook" value="${esc(cfg.sheet_webhook_url||'')}" placeholder="https://script.google.com/macros/s/…/exec">
+        </div>
+      </div>
+
+      <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:14px 16px">
         <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#4a90e2;margin-bottom:12px">💬 SLACK WEBHOOK</div>
         <div class="fg"><label class="fl">Slack Incoming Webhook URL</label>
           <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/…">
