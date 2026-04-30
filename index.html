@@ -948,7 +948,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
 .mf-act-btn:hover{background:rgba(124,58,237,.15);border-color:var(--g1);color:var(--g1)}
 
 /* ── FEATURE TOUR / FTUE with Natasha ───────────────────────────────────── */
-.tour-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.75);backdrop-filter:blur(3px)}
+.tour-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.75);backdrop-filter:blur(3px);cursor:pointer}
 .tour-spotlight{position:fixed;z-index:99999;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.75),0 0 0 3px var(--g1),0 0 24px var(--g1);pointer-events:none;transition:all .4s cubic-bezier(.4,0,.2,1)}
 .tour-card{position:fixed;z-index:100000;background:linear-gradient(145deg,var(--bg2),var(--bg3));border:1px solid var(--g1);border-radius:20px;padding:0;max-width:420px;width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(124,58,237,.3);animation:tourIn .35s cubic-bezier(.2,.8,.2,1);overflow:hidden}
 @keyframes tourIn{from{opacity:0;transform:scale(.92) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
@@ -2287,7 +2287,14 @@ function onLogin(){
   loadCursorPref();
   loadNatashaPref();
   updatePushMenuLabel();
-  setTimeout(() => startTour(false), 1500); // show tour on first login only
+  // Show tour only after data has loaded, not during loading
+  setTimeout(() => {
+    if(S.bugs.length > 0 || document.getElementById('cloudStatus')?.textContent?.includes('OK')) {
+      startTour(false);
+    } else {
+      setTimeout(() => startTour(false), 3000); // extra wait if still loading
+    }
+  }, 2500);
   const _bdb = document.getElementById('bulkDeleteBtn');
   if(_bdb && S.user?.role==='admin') _bdb.style.display='';
   // Show rollback button if previous import exists
@@ -7812,6 +7819,11 @@ function endTour() {
 function closeTourUI() {
   ['tourOverlay','tourSpotlight','tourCard'].forEach(id => document.getElementById(id)?.remove());
 }
+
+// Close tour on Escape key
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && _tourActive) endTour();
+});
 
 
 // ══════════════════════════════════════════
