@@ -277,7 +277,9 @@ thead th:hover{color:var(--mist)}
 tbody tr{border-bottom:1px solid rgba(255,255,255,.03);cursor:none;transition:background .1s}
 tbody tr:hover{background:rgba(124,58,237,.06)}
 tbody tr:last-child{border-bottom:none}
-tbody td{padding:9px 11px;vertical-align:middle;color:var(--mist)}
+.tc-title{max-width:300px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc-id{max-width:120px!important}
+tbody td{padding:9px 11px;vertical-align:middle;color:var(--mist);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tc-id{font-family:var(--mono);font-size:10px;color:var(--g1);white-space:nowrap;font-weight:700;letter-spacing:.5px}
 .tc-title{font-weight:700;color:var(--text);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;letter-spacing:.2px}
 
@@ -976,6 +978,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
   <button class="btn btn-v btn-sm" onclick="applyBulk()">✓ Apply</button>
   <button class="btn btn-g btn-sm" onclick="copyBulkLink()">🔗 Copy Link</button>
   <button class="btn btn-g btn-sm" onclick="copyBulkReport()">📋 Copy Report</button>
+  ${S.user?.role==='admin'?'<button class="btn btn-r btn-sm" onclick="deleteBulkSelected()">🗑 Delete</button>':''}
   <button class="btn btn-g btn-sm" onclick="clearBulk()">✕ Clear</button>
 </div>
 
@@ -1287,7 +1290,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
                 <div style="font-family:var(--disp);font-size:13px;font-weight:700;color:var(--mist);letter-spacing:1px">DROP CSV HERE</div>
                 <div style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:6px">or click to browse</div>
               </div>
-              <input type="file" id="importFileInput" accept=".csv" style="display:none" onchange="importHandleFile(this.files[0])">
+              <input type="file" id="importFileInput" accept=".csv,.xlsx,.xls" style="display:none" onchange="importHandleFile(this.files[0])">
               <div id="importPreview" style="margin-top:16px;display:none">
                 <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);margin-bottom:8px" id="importPreviewLabel"></div>
                 <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;overflow:hidden;max-height:280px;overflow-y:auto" id="importPreviewTable"></div>
@@ -4534,6 +4537,25 @@ function copyBulkReport() {
     .then(() => toast(`Report for ${bugs.length} bugs copied ✓`,'ok'));
 }
 
+async function deleteBulkSelected() {
+  if (!_bulkSelected.size) { toast('Select bugs first', 'err'); return; }
+  if (S.user?.role !== 'admin') { toast('Admin only', 'err'); return; }
+  if (!confirm(`Delete ${_bulkSelected.size} bug${_bulkSelected.size!==1?'s':''}? This cannot be undone.`)) return;
+  const ids = [..._bulkSelected];
+  let done = 0;
+  for (const id of ids) {
+    try {
+      await api('/bugs/' + id, 'DELETE');
+      S.bugs = S.bugs.filter(b => b.id !== id);
+      done++;
+    } catch(e) { console.error('[delete]', id, e); }
+  }
+  _bulkSelected.clear();
+  applyF();
+  renderBulkBar();
+  toast(`Deleted ${done} bug${done!==1?'s':''}`, 'ok');
+}
+
 function clearBulk() {
   _bulkSelected.clear();
   updateBulkBar();
@@ -5376,34 +5398,89 @@ function importHandleDrop(e) {
   if (file) importHandleFile(file);
 }
 
+// Proper RFC 4180 CSV parser — handles quoted fields with embedded newlines and commas
+function parseCSVFull(text) {
+  const rows = [];
+  let col = 0, row = [], cur = '', inQuote = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], next = text[i+1];
+    if (inQuote) {
+      if (ch === '"' && next === '"') { cur += '"'; i++; } // escaped quote
+      else if (ch === '"') { inQuote = false; }
+      else { cur += ch; }
+    } else {
+      if (ch === '"') { inQuote = true; }
+      else if (ch === ',') { row.push(cur); cur = ''; }
+      else if (ch === '\r' && next === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; i++; }
+      else if (ch === '\n' || ch === '\r') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else { cur += ch; }
+    }
+  }
+  if (cur || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
 function importHandleFile(file) {
-  if (!file || !file.name.endsWith('.csv')) { toast('Please select a .csv file', 'err'); return; }
+  if (!file) return;
+  const isCSV = file.name.endsWith('.csv');
+  const isXLSX = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+  if (!isCSV && !isXLSX) { toast('Please select a .csv or .xlsx file', 'err'); return; }
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { toast('CSV needs header + at least 1 data row', 'err'); return; }
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+      let rows;
+      if (isCSV) {
+        const text = ev.target.result;
+        rows = parseCSVFull(text);
+      } else {
+        // XLSX via SheetJS
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      }
+      if (!rows || rows.length < 2) { toast('File needs header + at least 1 data row', 'err'); return; }
+      const headers = rows[0].map(h => String(h||'').trim().toLowerCase().replace(/[^a-z0-9_\s]/g,'').replace(/\s+/g,'_'));
       _importRows = [];
-      for (let i = 1; i < lines.length; i++) {
-        const vals = lines[i].split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+      for (let i = 1; i < rows.length; i++) {
+        const vals = rows[i];
         const row = {};
-        headers.forEach((h, idx) => { row[h] = (vals[idx]||'').replace(/^"|"$/g,'').trim(); });
-        if (!row.title) continue;
-        _importRows.push(row);
+        headers.forEach((h, idx) => { row[h] = String(vals[idx]||'').trim(); });
+        // Map common column name variations
+        const title = row.title || row.bug_title || row.summary || row.name || row.issue || '';
+        if (!title) continue;
+        _importRows.push({
+          title,
+          priority:  row.priority  || row.p || 'Medium',
+          severity:  row.severity  || '',
+          status:    row.status    || 'Open',
+          feature:   row.feature   || row.module || '',
+          sub_feature: row.sub_feature || row.screen || '',
+          sprint:    row.sprint    || '',
+          build:     row.build     || row.build_version || '',
+          platform:  row.platform  || row.device || '',
+          pod:       row.pod       || row.team || '',
+          steps:     row.steps     || row.steps_to_reproduce || row.repro || '',
+          actual:    row.actual    || row.actual_result || '',
+          expected:  row.expected  || row.expected_result || '',
+          notes:     row.notes     || row.description || '',
+        });
       }
       if (!_importRows.length) { toast('No rows with a title found', 'err'); return; }
       importShowPreview();
-    } catch(err) { toast('CSV parse error: ' + err.message, 'err'); }
+    } catch(err) { toast('Parse error: ' + err.message, 'err'); console.error(err); }
   };
-  reader.readAsText(file);
+  if (file.name.endsWith('.csv')) reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
 }
 
 function importShowPreview() {
   document.getElementById('importPreviewLabel').textContent = `Preview — ${_importRows.length} bug${_importRows.length!==1?'s':''} ready to import`;
   let h = '<table><thead><tr><th>#</th><th>Title</th><th>Priority</th><th>Status</th><th>Feature</th><th>Sprint</th></tr></thead><tbody>';
   _importRows.slice(0,10).forEach((row,i) => {
-    h += `<tr><td class="tc-id">${i+1}</td><td class="tc-title">${esc(row.title||'')}</td><td>${pChip(row.priority||'Medium')}</td><td>${stChip(row.status||'Open')}</td><td>${esc(row.feature||'—')}</td><td>${esc(row.sprint||'—')}</td></tr>`;
+    const fullTitle = row.title||'';
+    const displayTitle = fullTitle.replace(/\n/g,' ').replace(/\r/g,'');
+    h += `<tr><td class="tc-id">${i+1}</td><td class="tc-title" title="${esc(fullTitle)}">${esc(displayTitle.slice(0,120))}${displayTitle.length>120?'…':''}</td><td>${pChip(row.priority||'Medium')}</td><td>${stChip(row.status||'Open')}</td><td>${esc(row.feature||'—')}</td><td>${esc(row.sprint||'—')}</td></tr>`;
   });
   if(_importRows.length>10) h+=`<tr><td colspan="6" style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding:10px">…and ${_importRows.length-10} more</td></tr>`;
   h += '</tbody></table>';
