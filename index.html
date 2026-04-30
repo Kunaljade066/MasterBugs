@@ -1236,8 +1236,19 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
         <div id="v-board" style="display:none">
           <div class="ph">
             <div><h1>BOARD</h1></div>
-            <div class="ph-r">
-              <select class="fi" id="board-sp" onchange="renderBoard()" style="width:auto"></select>
+            <div class="ph-r" style="flex-wrap:wrap;gap:6px">
+              <select class="fi" id="board-sp" onchange="renderBoard()" style="width:auto"><option value="">All Sprints</option></select>
+              <select class="fi" id="board-assignee" onchange="renderBoard()" style="width:auto"><option value="">All Assignees</option></select>
+              <select class="fi" id="board-priority" onchange="renderBoard()" style="width:auto">
+                <option value="">All Priority</option>
+                <option value="Critical">Critical</option>
+                <option value="Urgent">Urgent</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+              <select class="fi" id="board-pod" onchange="renderBoard()" style="width:auto"><option value="">All Pods</option></select>
+              <button class="btn btn-g btn-sm" onclick="clearBoardFilters()">✕ Clear</button>
               <button class="btn btn-v" onclick="openNew()">＋ NEW BUG</button>
             </div>
           </div>
@@ -3176,29 +3187,77 @@ function pgSzChg(){S.ps=parseInt(document.getElementById('pgSz').value);S.page=1
 // KANBAN
 // ══════════════════════════════════════════
 function populateBoardSprint(){
-  const s=document.getElementById('board-sp');if(!s)return;
-  s.innerHTML='<option value="">All Issues</option>'+S.sprints.map(sp=>`<option value="${esc(sp.name)}">${esc(sp.name)}</option>`).join('');
+  populateBoardFilters();
 }
+function populateBoardFilters() {
+  // Sprint
+  const spEl = document.getElementById('board-sp');
+  if(spEl) {
+    const cur = spEl.value;
+    spEl.innerHTML = '<option value="">All Sprints</option>' +
+      S.sprints.map(s=>`<option value="${esc(s.name)}"${s.name===cur?' selected':''}>${esc(s.name)}</option>`).join('');
+  }
+  // Assignee
+  const aEl = document.getElementById('board-assignee');
+  if(aEl) {
+    const cur = aEl.value;
+    const names = [...new Set(S.bugs.flatMap(b=>(b.assignees||[]).map(a=>a.name)).filter(Boolean))].sort();
+    aEl.innerHTML = '<option value="">All Assignees</option>' +
+      names.map(n=>`<option value="${esc(n)}"${n===cur?' selected':''}>${esc(n)}</option>`).join('');
+  }
+  // Pod
+  const podEl = document.getElementById('board-pod');
+  if(podEl) {
+    const cur = podEl.value;
+    const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
+    podEl.innerHTML = '<option value="">All Pods</option>' +
+      pods.map(p=>`<option value="${esc(p)}"${p===cur?' selected':''}>${esc(p)}</option>`).join('');
+  }
+}
+
+function clearBoardFilters() {
+  ['board-sp','board-assignee','board-priority','board-pod'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  renderBoard();
+}
+
 function renderBoard(){
-  const spf=document.getElementById('board-sp')?.value||'';
-  const src=spf?S.bugs.filter(b=>b.sprint===spf):S.bugs;
-  document.getElementById('kanbanBoard').innerHTML=KCOLS.map(col=>{
-    const cb=src.filter(b=>b.status===col.k);
-    return`<div class="kcol"
+  populateBoardFilters();
+  const spf  = document.getElementById('board-sp')?.value||'';
+  const af   = document.getElementById('board-assignee')?.value||'';
+  const pf   = document.getElementById('board-priority')?.value||'';
+  const podf = document.getElementById('board-pod')?.value||'';
+
+  let src = S.bugs;
+  if(spf)  src = src.filter(b => b.sprint === spf);
+  if(af)   src = src.filter(b => (b.assignees||[]).some(a => a.name === af));
+  if(pf)   src = src.filter(b => b.priority === pf);
+  if(podf) src = src.filter(b => b.pod === podf);
+
+  const total = src.length;
+  document.getElementById('kanbanBoard').innerHTML = KCOLS.map(col => {
+    const cb = src.filter(b => b.status === col.k);
+    return `<div class="kcol"
       ondragover="event.preventDefault();this.classList.add('kcol-dragover')"
       ondragleave="this.classList.remove('kcol-dragover')"
       ondrop="kDrop(event,'${col.k.replace(/'/g,"\'")}');this.classList.remove('kcol-dragover')">
-      <div class="kcol-hd"><span class="kcol-name" style="color:${col.c};text-shadow:0 0 8px ${col.c}44">${col.k}</span><span class="kcol-n">${cb.length}</span></div>
+      <div class="kcol-hd">
+        <span class="kcol-name" style="color:${col.c};text-shadow:0 0 8px ${col.c}44">${col.k}</span>
+        <span class="kcol-n">${cb.length}</span>
+      </div>
       <div class="kcol-cards">
-        ${cb.map(bug=>`<div class="kcard" draggable="true"
+        ${cb.map(bug => `<div class="kcard" draggable="true"
           onclick="openDetail('${bug.id}')"
           ondragstart="kDragStart(event,'${bug.id}')"
           ondragend="kDragEnd(event)">
           <div class="kcard-id">${esc(bug.id)}</div>
           <div class="kcard-title">${esc(bug.title||'')}</div>
           <div class="kcard-foot">${pChip(bug.priority)}${ageChip(bug)}${avStack(bug.assignees||[],18)}</div>
-        </div>`).join('')||`<div class="kcol-empty">— drop here —</div>`}
-      </div></div>`;
+        </div>`).join('') || `<div class="kcol-empty">— drop here —</div>`}
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -3900,7 +3959,19 @@ function openDetail(id){
     ${bug.repro?`<div class="dsec"><div class="dsec-title">Repro Rate</div><div class="dtext">${esc(bug.repro)}</div></div>`:''}
     ${dsec('Expected Result',bug.expected)}
     ${dsec('Actual Result',bug.actual)}
-    ${bug.attachment?`<div class="dsec"><div class="dsec-title">Attachment</div><div class="dtext">${bug.attachment.startsWith('http')?`<a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">🔗 ${esc(bug.attachment)}</a>`:'📎 '+esc(bug.attachment)}</div></div>`:''}
+    ${bug.attachment ? `<div class="dsec"><div class="dsec-title">Attachment</div>
+      ${isImageUrl(bug.attachment) ? `
+        <div style="margin-top:8px">
+          <img src="${isDriveUrl(bug.attachment) ? getDriveThumbnailUrl(bug.attachment) : esc(bug.attachment)}"
+            onerror="this.style.display='none';this.nextElementSibling.style.display=''"
+            style="max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--bd);cursor:pointer"
+            onclick="window.open('${esc(bug.attachment)}','_blank')"
+            title="Click to open full size">
+          <div style="display:none"><a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">🔗 ${esc(bug.attachment)}</a></div>
+        </div>` :
+        `<div class="dtext"><a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">🔗 ${esc(bug.attachment)}</a></div>`
+      }
+    </div>` : ''}
     ${renderLinks(bug)}
     <div class="dsec">
       <div class="dsec-title">Activity &amp; Comments (${(bug.comments||[]).length})</div>
@@ -7315,6 +7386,44 @@ function toggleNotif(btn) {
 // WEBHOOK SETTINGS — stored in D1 via worker /settings
 // localStorage used only as a fast cache; D1 is the source of truth
 // ══════════════════════════════════════════
+
+// ── Google Drive URL utilities ────────────────────────────────────────────────
+function getDriveFileId(url) {
+  if(!url) return null;
+  // Formats:
+  // https://drive.google.com/file/d/FILE_ID/view
+  // https://drive.google.com/open?id=FILE_ID
+  // https://docs.google.com/...d/FILE_ID/...
+  const m1 = url.match(/\/d\/([a-zA-Z0-9_-]{20,})/);
+  if(m1) return m1[1];
+  const m2 = url.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
+  if(m2) return m2[1];
+  return null;
+}
+
+function getDriveThumbnailUrl(url) {
+  const id = getDriveFileId(url);
+  if(!id) return null;
+  // Public thumbnail URL — works for publicly shared files
+  return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w400';
+}
+
+function getDriveDirectUrl(url) {
+  const id = getDriveFileId(url);
+  if(!id) return url;
+  return 'https://drive.google.com/uc?export=view&id=' + id;
+}
+
+function isDriveUrl(url) {
+  return url && (url.includes('drive.google.com') || url.includes('docs.google.com'));
+}
+
+function isImageUrl(url) {
+  if(!url) return false;
+  if(isDriveUrl(url)) return true; // assume drive links might be images
+  return /\.(png|jpg|jpeg|gif|webp|svg|bmp)$/i.test(url.split('?')[0]);
+}
+
 const WEBHOOK_KEY = 'hwt_webhooks_v2';
 let _webhookCfgCache = null;
 
@@ -7775,6 +7884,25 @@ async function sendGChatWebhook(text, pod) {
   }
 }
 
+async function sendGChatCard(card, pod) {
+  const cfg = getWebhookConfig();
+  let url = cfg.gchat_url;
+  if(pod) {
+    const podKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    if(cfg[podKey]) url = cfg[podKey];
+  }
+  if(!url) return false;
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(card)
+    });
+    if(!r.ok) { const t = await r.text(); console.error('[gchat card]', r.status, t); return false; }
+    return true;
+  } catch(e) { console.warn('[gchat card]', e); return false; }
+}
+
 async function sendSlackWebhook(text, blocks) {
   const cfg = getWebhookConfig();
   if(!cfg.slack_url) return false;
@@ -7844,8 +7972,38 @@ async function sendBugNotification(bug, customMsg) {
   // GChat webhook — send to pod-specific URL if set, else global
   if(cfg.notif_new_bug !== false) {
     const assigneeNames = assignees.map(a=>a.name).join(', ')||'Unassigned';
-    const gchatText = `🐛 *New Bug Filed — ${bug.id||''}*\n*${bug.title||''}*\nPriority: ${bug.priority||'Medium'} | Status: ${bug.status||'Open'}\nPod: ${bug.pod||'—'} | Build: ${bug.build||'—'} | Assignee: ${assigneeNames}\n🔗 View: ${bugUrl}`;
-    await sendGChatWebhook(gchatText, bug.pod||'');
+    // Build GChat card with image if attachment is a Drive/image URL
+    const hasImage = isImageUrl(bug.attachment);
+    const imgUrl = hasImage ? (isDriveUrl(bug.attachment) ? getDriveThumbnailUrl(bug.attachment) : bug.attachment) : null;
+
+    if(hasImage && imgUrl) {
+      // Send as GChat Card v2 with image
+      const card = {
+        cardsV2: [{
+          cardId: bug.id,
+          card: {
+            header: {
+              title: '🐛 ' + (bug.id||'') + ' — ' + (bug.priority||'Medium'),
+              subtitle: (bug.title||'').slice(0,80),
+              imageUrl: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
+              imageType: 'CIRCLE'
+            },
+            sections: [{
+              widgets: [
+                { textParagraph: { text: '<b>Status:</b> '+(bug.status||'Open')+' | <b>Pod:</b> '+(bug.pod||'—')+' | <b>Build:</b> '+(bug.build||'—') } },
+                { textParagraph: { text: '<b>Assignee:</b> '+assigneeNames } },
+                { image: { imageUrl: imgUrl, altText: 'Bug attachment', onClick: { openLink: { url: bug.attachment } } } },
+                { buttonList: { buttons: [{ text: 'View Bug', onClick: { openLink: { url: bugUrl } } }] } }
+              ]
+            }]
+          }
+        }]
+      };
+      await sendGChatCard(card, bug.pod||'');
+    } else {
+      const gchatText = '🐛 *New Bug Filed — '+(bug.id||'')+'*\n*'+(bug.title||'')+'*\nPriority: '+(bug.priority||'Medium')+' | Status: '+(bug.status||'Open')+'\nPod: '+(bug.pod||'—')+' | Build: '+(bug.build||'—')+' | Assignee: '+assigneeNames+'\n🔗 View: '+bugUrl;
+      await sendGChatWebhook(gchatText, bug.pod||'');
+    }
   }
 
   // Slack notification
