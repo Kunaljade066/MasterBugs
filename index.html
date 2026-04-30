@@ -895,6 +895,46 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
 .jk-mi-danger{color:#f87171}
 .jk-mi-danger:hover{background:rgba(239,68,68,.12)}
 @keyframes slideInRight{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* ── SHIMMER LOADING ─────────────────────────────────────────────────────── */
+@keyframes shimmer{0%{background-position:-1000px 0}100%{background-position:1000px 0}}
+.shimmer{
+  background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);
+  background-size:2000px 100%;
+  animation:shimmer 1.5s infinite linear;
+  border-radius:6px;
+}
+.shimmer-row{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd);align-items:center}
+.shimmer-cell{height:14px;border-radius:4px;background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:2000px 100%;animation:shimmer 1.5s infinite linear}
+
+/* ── ROUNDED POPUPS / PANELS ─────────────────────────────────────────────── */
+.panel{border-radius:20px 0 0 20px!important}
+.jk-menu{border-radius:14px!important}
+.profile-menu{border-radius:16px!important}
+.modal,.dialog{border-radius:20px!important}
+
+/* ── GLASS UI BUTTONS / TOGGLES ──────────────────────────────────────────── */
+.glass-btn{
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  transition:all .2s ease;
+}
+.glass-btn:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2);}
+
+/* ── SMOOTH SCROLL ALL CONTAINERS ───────────────────────────────────────── */
+.main,.panel-body,.board-col,.sprint-card,.modal-body{scroll-behavior:smooth}
+
+/* ── KANBAN DRAG SMOOTH ANIMATION ───────────────────────────────────────── */
+.kCard{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,opacity .18s ease!important}
+.kCard.dragging{opacity:.5;transform:scale(1.03) rotate(1deg)!important;box-shadow:0 20px 40px rgba(0,0,0,.5)!important}
+.kCard.drag-over{transform:translateY(-4px)!important}
+.board-col.drag-target{background:rgba(124,58,237,.08)!important;border-color:var(--g1)!important;transition:all .2s ease}
+
+/* ── STAT CARDS INSTANT UPDATE ───────────────────────────────────────────── */
+.stat-card{transition:all .3s cubic-bezier(.2,.8,.2,1)}
+.stat-val{transition:all .25s ease}
 </style>
 </head>
 <body>
@@ -2330,7 +2370,20 @@ function setCloud(s,l){
 // ══════════════════════════════════════════
 // REFRESH
 // ══════════════════════════════════════════
+function showTableShimmer() {
+  const el = document.getElementById('bugTableBody');
+  if (!el) return;
+  const cols = 6;
+  const widths = [30, 110, 220, 75, 60, 90];
+  el.innerHTML = Array(8).fill(0).map(() =>
+    '<tr>' + widths.map(w =>
+      '<td style="padding:10px 12px"><div style="height:13px;border-radius:4px;width:'+w+'px;background:linear-gradient(90deg,var(--bg2) 25%,var(--bg3) 50%,var(--bg2) 75%);background-size:2000px 100%;animation:shimmer 1.4s infinite linear"></div></td>'
+    ).join('') + '</tr>'
+  ).join('');
+}
+
 async function refreshAll(){
+  showTableShimmer();
   setCloud('busy','loading…');
   try{
     const [bugsD,sprintsD,teamD,settingsD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team'),api('/settings').catch(()=>({settings:null}))]);
@@ -2647,12 +2700,15 @@ function renderBoard(){
 
 let _kDragging = null;
 function kDragStart(e, bugId) {
+  e.target.closest('.kCard')?.classList.add('dragging');
   _kDragging = bugId;
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', bugId);
   e.currentTarget.style.opacity = '0.4';
 }
 function kDragEnd(e) {
+  document.querySelectorAll('.kCard.dragging').forEach(el=>el.classList.remove('dragging'));
+  document.querySelectorAll('.board-col.drag-target').forEach(el=>el.classList.remove('drag-target'));
   e.currentTarget.style.opacity = '';
   _kDragging = null;
   document.querySelectorAll('.kcol-dragover').forEach(el => el.classList.remove('kcol-dragover'));
@@ -4214,6 +4270,8 @@ async function saveBug(){
           setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,data.title);showNatasha(msg,mood);},800);
         }
         toast('Bug updated ✓','ok');
+        if(S.view==='dashboard') setTimeout(renderDashboard, 100);
+        if(S.view==='home') setTimeout(renderHome, 100);
         btn.disabled=false;btn.innerHTML='💾 SAVE';
         closePanel();
         const uidx=S.bugs.findIndex(b=>b.id===S.editing);
@@ -5547,8 +5605,26 @@ function importHandleFile(file) {
         // Map common column name variations
         const title = row.title || row.bug_title || row.summary || row.name || row.issue || '';
         if (!title) continue;
+        // Smart title extraction: if title is very long (>150 chars), it contains steps
+        // Split at first newline or numbered list marker — first part = title, rest = steps
+        let cleanTitle = title;
+        let extractedSteps = row.steps || row.steps_to_reproduce || row.repro || '';
+        if (title.length > 150 || title.includes('\n')) {
+          const lines = title.split('\n').map(l => l.trim()).filter(Boolean);
+          // First line that isn't a step (no leading number/bullet) = title
+          const firstDesc = lines.findIndex(l => /^\d+[.)\s]/.test(l) || /^[-•*]/.test(l));
+          if (firstDesc > 0) {
+            cleanTitle = lines.slice(0, firstDesc).join(' ').slice(0, 200);
+            if (!extractedSteps) extractedSteps = lines.slice(firstDesc).join('\n');
+          } else {
+            cleanTitle = lines[0].slice(0, 200);
+            if (!extractedSteps && lines.length > 1) extractedSteps = lines.slice(1).join('\n');
+          }
+        }
+        // Reporter: use sheet's reporter column, NOT the logged-in user
+        const sheetReporter = row.reporter || row.reported_by || row.tester || row.created_by || '';
         _importRows.push({
-          title,
+          title: cleanTitle,
           priority:  row.priority  || row.p || 'Medium',
           severity:  row.severity  || '',
           status:    row.status    || 'Open',
@@ -5556,12 +5632,14 @@ function importHandleFile(file) {
           sub_feature: row.sub_feature || row.screen || '',
           sprint:    row.sprint    || '',
           build:     row.build     || row.build_version || '',
-          platform:  row.platform  || row.device || '',
+          platform:  row.platform  || row.device_type || '',
+          device:    row.device    || '',
           pod:       row.pod       || row.team || '',
-          steps:     row.steps     || row.steps_to_reproduce || row.repro || '',
+          steps:     extractedSteps,
           actual:    row.actual    || row.actual_result || '',
           expected:  row.expected  || row.expected_result || '',
           notes:     row.notes     || row.description || '',
+          reporter:  sheetReporter,
         });
       }
       if (!_importRows.length) { toast('No rows with a title found', 'err'); return; }
@@ -5616,9 +5694,9 @@ async function importSubmit() {
       steps:    row.steps     || row['steps to reproduce'] || '',
       actual:   row.actual    || row['actual result']      || '',
       expected: row.expected  || row['expected result']    || '',
-      reporter: row.reporter  || S.user?.name || '',
-      reporter_email:   S.user?.email   || '',
-      reporter_picture: S.user?.picture || '',
+      reporter: row.reporter || '',
+      reporter_email:   row.reporter ? '' : (S.user?.email || ''),
+      reporter_picture: row.reporter ? '' : (S.user?.picture || ''),
       attachment: row.attachment || '',
       assignees: [], app_url: APP_URL,
     };
@@ -7699,4 +7777,4 @@ async function saveEditComment(bugId, idx) {
   </div>
 </div>
 </body>
-</html>
+</html>html,body{scroll-behavior:smooth}
