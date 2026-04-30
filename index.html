@@ -1359,10 +1359,15 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <!-- Filters -->
           <div class="fbar" id="cuFilters" style="display:none">
             <input type="text" class="fi fi-q" id="cu-search" placeholder="🔍 Search tasks…" oninput="cuApplyFilters()">
+            <select class="fi" id="cu-space-sel" onchange="cuApplyFilters()" style="min-width:150px"><option value="">All Spaces/Pods</option></select>
             <select class="fi" id="cu-list-sel" onchange="cuApplyFilters()" style="min-width:160px"><option value="">All Lists</option></select>
             <select class="fi" id="cu-status-sel" onchange="cuApplyFilters()" style="min-width:140px"><option value="">All Statuses</option></select>
             <select class="fi" id="cu-priority-sel" onchange="cuApplyFilters()" style="min-width:130px"><option value="">All Priorities</option></select>
             <select class="fi" id="cu-assignee-sel" onchange="cuApplyFilters()" style="min-width:150px"><option value="">All Assignees</option></select>
+            <select class="fi" id="cu-tag-sel" onchange="cuApplyFilters()" style="min-width:130px"><option value="">All Tags</option></select>
+            <input type="date" class="fi" id="cu-date-from" onchange="cuApplyFilters()" title="Due date from" style="width:140px">
+            <input type="date" class="fi" id="cu-date-to" onchange="cuApplyFilters()" title="Due date to" style="width:140px">
+            <button class="btn btn-g btn-sm" onclick="clearCuFilters()">✕ Clear</button>
           </div>
           <div id="cuBody">
             <div class="empty"><div class="empty-icon">🟣</div><h3>CLICK SYNC</h3><p>Press ↻ Sync to load your ClickUp tasks.</p></div>
@@ -5835,20 +5840,60 @@ function cuBuildFilters() {
   _cuTasks.forEach(t=>(t.assignees||[]).forEach(a=>{if(a.id)aMap[String(a.id)]=a.username||a.email||String(a.id);}));
   const aSel=document.getElementById('cu-assignee-sel');
   if(aSel) aSel.innerHTML='<option value="">All Assignees</option>'+Object.entries(aMap).map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('');
+
+  // Spaces/Pods
+  const spaces=[...new Set(_cuTasks.map(t=>t._spaceName).filter(Boolean))].sort();
+  const spSel=document.getElementById('cu-space-sel');
+  if(spSel) spSel.innerHTML='<option value="">All Spaces/Pods</option>'+spaces.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+
+  // Tags
+  const tags=[...new Set(_cuTasks.flatMap(t=>(t.tags||[]).map(tag=>tag.name)).filter(Boolean))].sort();
+  const tgSel=document.getElementById('cu-tag-sel');
+  if(tgSel) tgSel.innerHTML='<option value="">All Tags</option>'+tags.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+}
+
+function clearCuFilters() {
+  ['cu-search','cu-space-sel','cu-list-sel','cu-status-sel','cu-priority-sel','cu-assignee-sel','cu-tag-sel','cu-date-from','cu-date-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  cuApplyFilters();
 }
 
 function cuApplyFilters() {
-  const q  =(document.getElementById('cu-search')?.value||'').toLowerCase();
-  const lv =document.getElementById('cu-list-sel')?.value||'';
-  const sv =document.getElementById('cu-status-sel')?.value||'';
-  const pv =document.getElementById('cu-priority-sel')?.value||'';
-  const av =document.getElementById('cu-assignee-sel')?.value||'';
-  _cuFiltered=_cuTasks.filter(t=>{
-    if(lv&&t._listId!==lv) return false;
-    if(sv&&(t.status?.status||'')!==sv) return false;
-    if(pv&&(t.priority?.priority||'')!==pv) return false;
-    if(av&&!(t.assignees||[]).some(a=>String(a.id)===String(av))) return false;
-    if(q){const hay=[t.name,t.custom_id,t.id,t.status?.status,(t.assignees||[]).map(a=>a.username||a.email).join(' '),t._listName,t._spaceName,t.description||''].join(' ').toLowerCase();if(!hay.includes(q))return false;}
+  const q   = (document.getElementById('cu-search')?.value||'').toLowerCase();
+  const spv = document.getElementById('cu-space-sel')?.value||'';
+  const lv  = document.getElementById('cu-list-sel')?.value||'';
+  const sv  = document.getElementById('cu-status-sel')?.value||'';
+  const pv  = document.getElementById('cu-priority-sel')?.value||'';
+  const av  = document.getElementById('cu-assignee-sel')?.value||'';
+  const tv  = document.getElementById('cu-tag-sel')?.value||'';
+  const df  = document.getElementById('cu-date-from')?.value||'';
+  const dt  = document.getElementById('cu-date-to')?.value||'';
+  const fromTs = df ? new Date(df).getTime() : 0;
+  const toTs   = dt ? new Date(dt).getTime() + 86399999 : Infinity;
+
+  _cuFiltered = _cuTasks.filter(t => {
+    if(spv && (t._spaceName||t._spaceId||'') !== spv) return false;
+    if(lv  && t._listId !== lv) return false;
+    if(sv  && (t.status?.status||'') !== sv) return false;
+    if(pv  && (t.priority?.priority||'') !== pv) return false;
+    if(av  && !(t.assignees||[]).some(a => String(a.id) === String(av))) return false;
+    if(tv  && !(t.tags||[]).some(tag => tag.name === tv)) return false;
+    // Date filter on due date
+    if(fromTs || toTs < Infinity) {
+      const due = t.due_date ? parseInt(t.due_date) : 0;
+      if(!due || due < fromTs || due > toTs) return false;
+    }
+    if(q) {
+      const hay = [t.name, t.custom_id, t.id, t.status?.status,
+        (t.assignees||[]).map(a => a.username||a.email).join(' '),
+        t._listName, t._spaceName,
+        (t.tags||[]).map(tag => tag.name).join(' '),
+        t.description||''
+      ].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
     return true;
   });
   cuRender();
@@ -7495,63 +7540,73 @@ const TOUR_KEY = 'hwt_tour_done_v1';
 const TOUR_STEPS = [
   {
     title: 'Welcome to BugPulse',
-    desc: 'Your QA hub for tracking bugs, builds, sprints and team performance — all in one place. Let\'s take a quick tour!',
-    target: null,
-    pos: 'center',
+    desc: 'Your complete QA hub — built for Hitwicket. Track bugs, manage sprints, log builds, run test cases and get team reports. Let\'s explore everything!',
+    target: null, tab: null, pos: 'center',
   },
   {
-    title: 'Log a Bug',
-    desc: 'Click "+ NEW BUG" to log an issue. Add title, priority, steps to reproduce, assignee and attach screenshots from Google Drive.',
-    target: '.btn-v',
-    pos: 'bottom',
+    title: '🐛 Bugs — Backlog',
+    desc: 'The main bug list. Log issues with title, priority, severity, steps to reproduce, assignee, build version, pod and screenshots. Filter by any field. Multi-select checkboxes for advanced filtering.',
+    target: '#tt-backlog', tab: 'backlog', pos: 'bottom',
   },
   {
-    title: 'Filter & Search',
-    desc: 'Use the filter bar to find bugs by status, priority, assignee, pod, date range and more. Multi-select checkboxes for powerful filtering.',
-    target: '#fq',
-    pos: 'bottom',
+    title: '➕ Log a Bug',
+    desc: 'Click "+ NEW BUG" to open the bug form. Choose from templates (Crash, IAP, UI etc), fill steps, attach Google Drive screenshots and toggle Notify Teammates to alert the team on GChat instantly.',
+    target: null, tab: 'backlog', pos: 'center',
   },
   {
-    title: 'Board View',
-    desc: 'Switch to BOARD for a Kanban view. Drag and drop cards between status columns to update bugs instantly.',
-    target: '#tt-board',
-    pos: 'bottom',
+    title: '🔍 Smart Filters',
+    desc: 'Filter by Status, Priority, Assignee, Feature, Sprint, Issue Type (Happy Flow / Edge Case), Reporter, Pod and Date Range — all with multi-select checkboxes. Use Copy Stats to get a full report for QA presentations.',
+    target: '#fq', tab: 'backlog', pos: 'bottom',
   },
   {
-    title: 'Sprints & Features',
-    desc: 'Organize bugs into Sprints and Features. Track progress, see completion rates and group issues by sub-feature.',
-    target: '#tt-sprints',
-    pos: 'bottom',
+    title: '📋 Board View',
+    desc: 'Kanban board — drag and drop bugs between status columns. Filter by Sprint, Assignee, Priority and Pod. Changes sync to D1 instantly and fire GChat notifications.',
+    target: '#tt-board', tab: 'board', pos: 'bottom',
   },
   {
-    title: 'Dashboard & Analytics',
-    desc: 'See pie charts, trend lines, month-wise stats and pod comparisons. Copy reports for QA presentations.',
-    target: '#tt-dashboard',
-    pos: 'bottom',
+    title: '🏃 Sprints',
+    desc: 'Create sprints with start/end dates. Track progress bars, see bugs grouped by sprint, view velocity and completion rates. Manage sprint goals.',
+    target: '#tt-sprints', tab: 'sprints', pos: 'bottom',
   },
   {
-    title: 'Builds & Test Runs',
-    desc: 'Log build releases, upload test cases and track test execution with pass/fail/blocked status per test case.',
-    target: '#tt-builds',
-    pos: 'bottom',
+    title: '🎮 Features',
+    desc: 'Bugs grouped by feature and sub-feature (e.g. Dashboard → Stats, PvP Road → Icon Issue). See open/done counts per feature with progress bars. Click any bug to open detail.',
+    target: '#tt-features', tab: 'features', pos: 'bottom',
   },
   {
-    title: 'Google Sheets Sync',
-    desc: 'Anyone can log bugs directly in a Google Sheet — they sync to BugPulse automatically. Download the template from the Import tab.',
-    target: '#tt-import',
-    pos: 'bottom',
+    title: '📦 Builds & Test Runs',
+    desc: 'Log build releases with version, platform, APK link and release notes. Create test runs from bug lists or upload TestRail CSV. Mark each test case Pass/Fail/Blocked and log bugs inline.',
+    target: '#tt-builds', tab: 'builds', pos: 'bottom',
   },
   {
-    title: 'Team Notifications',
-    desc: 'Enable desktop push notifications to get alerted on new bugs and builds — even when the browser is closed.',
-    target: '#tt-notifs',
-    pos: 'bottom',
+    title: '📊 Dashboard',
+    desc: 'Pie charts (by Status, Priority, Pod) on home screen. Dashboard shows trend lines, month-wise day-by-day bars, pod comparison across months with IMPROVING/REGRESSING/STABLE indicators. Copy for QA presentations.',
+    target: '#tt-dashboard', tab: 'dashboard', pos: 'bottom',
   },
   {
-    title: 'Webhook Settings',
-    desc: 'Configure GChat webhooks per pod, Slack, Jenkins CI/CD integration, and EOD auto-reports from your profile menu.',
-    target: null,
-    pos: 'center',
+    title: '🔔 Alerts & Push Notifications',
+    desc: 'Enable desktop push notifications to get alerted on new bugs, status changes and EOD reports — even when the browser is fully closed. Works on phone too.',
+    target: '#tt-notifs', tab: 'notifs', pos: 'bottom',
+  },
+  {
+    title: '🟣 ClickUp Integration',
+    desc: 'Sync your ClickUp tasks. Filter by Space/Pod, Status, Assignee, Tags and Due Date. See linked BugPulse bugs alongside ClickUp tasks. 2-way status sync.',
+    target: '#tt-clickup', tab: 'clickup', pos: 'bottom',
+  },
+  {
+    title: '📥 Import & Google Sheets',
+    desc: 'Import bugs from CSV. Download the template, fill in Excel/Sheets, upload — all bugs created instantly. Google Sheets sync: anyone adds a row → appears in BugPulse in seconds. Bug ID auto-written back to sheet.',
+    target: '#tt-import', tab: 'import', pos: 'bottom',
+  },
+  {
+    title: '🔔 GChat & Webhooks',
+    desc: 'Per-pod GChat webhooks — each team gets notifications in their own space. EOD reports auto-sent server-side at your configured time (no browser needed). Jenkins CI/CD webhook for build notifications.',
+    target: null, tab: null, pos: 'center',
+  },
+  {
+    title: '📊 All Features Summary',
+    desc: '✓ Bug logging with templates  ✓ Kanban board  ✓ Sprints & features  ✓ Build tracking  ✓ Test runs  ✓ Dashboard charts  ✓ Pod comparisons  ✓ Desktop push  ✓ GChat/Slack/Email  ✓ ClickUp sync  ✓ Sheet sync  ✓ CSV import/export  ✓ EOD auto-reports  ✓ SLA breach alerts  ✓ Release notes  ✓ Bug templates  ✓ Watchlist  ✓ Bulk actions',
+    target: null, tab: null, pos: 'center',
   },
 ];
 
@@ -7568,6 +7623,21 @@ function startTour(force) {
 }
 
 function showTourStep() {
+  closeTourUI();
+  if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
+  const step = TOUR_STEPS[_tourStep];
+
+  // Navigate to the tab this step is about
+  if (step.tab) {
+    goTab(step.tab);
+    // Small delay to let tab render before spotlighting
+    setTimeout(_showTourCard, 150);
+    return;
+  }
+  _showTourCard();
+}
+
+function _showTourCard() {
   closeTourUI();
   if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
   const step = TOUR_STEPS[_tourStep];
@@ -7719,17 +7789,6 @@ async function openWebhookSettings() {
         <div style="margin-top:14px;border-top:1px solid rgba(6,182,212,.15);padding-top:12px">
           <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">PER-POD GCHAT URLS</div>
           ${buildPodGChatFields(cfg)}
-        </div>
-      </div>
-
-      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#34d399;margin-bottom:8px">📊 GOOGLE SHEETS WEBHOOK</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:10px;line-height:1.8">
-          When a bug is deleted in BugPulse, the row in your sheet gets strikethrough automatically.<br>
-          Get URL: Google Sheet → Extensions → Apps Script → Deploy → New deployment → Web App → copy URL
-        </div>
-        <div class="fg"><label class="fl">Sheet Web App URL</label>
-          <input class="fi2" id="wh-sheet-webhook" value="${esc(cfg.sheet_webhook_url||'')}" placeholder="https://script.google.com/macros/s/…/exec">
         </div>
       </div>
 
