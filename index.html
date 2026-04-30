@@ -2510,52 +2510,8 @@ function updateSbBadges(){
 }
 
 function populateDropdowns(){
-  const uniq=f=>[...new Set(S.bugs.map(b=>b[f]).filter(Boolean))].sort();
-  const allA=[...new Set(S.bugs.flatMap(b=>(b.assignees||[]).map(a=>a.name)).filter(Boolean))].sort();
-  const fill=(id,vals,def)=>{
-    const el=document.getElementById(id);if(!el)return;
-    const cur=el.value;
-    el.innerHTML=`<option value="">${def}</option>`+vals.map(v=>`<option value="${v}"${v===cur?'selected':''}>${v}</option>`).join('');
-  };
-  fill('fs',ALL_STATUSES,'All Status');
-  fill('fp',uniq('priority'),'All Priority');
-  const faEl = document.getElementById('fa');
-  if(faEl) {
-    const cur = faEl.value;
-    faEl.innerHTML = '<option value="">All Assignees</option><option value="__unassigned__">— No Assignee —</option>'
-      + allA.map(v=>`<option value="${v}"${v===cur?'selected':''}>${v}</option>`).join('');
-    if(cur) faEl.value = cur;
-  }
-  fill('ff',uniq('feature'),'All Features');
-  // Populate issue type filter if exists
-  const itEl = document.getElementById('f-issue-type-filter');
-  if(itEl) {
-    const cur = itEl.value;
-    const types = [...new Set(S.bugs.map(b=>b.issue_type).filter(Boolean))].sort();
-    itEl.innerHTML = '<option value="">All Types</option>' + types.map(t=>`<option value="${t}"${t===cur?' selected':''}>${t}</option>`).join('');
-  }
-  fill('fsp',S.sprints.map(s=>s.name),'All Sprints');
   populateMFDropdowns();
-
-  // Reporter filter
-  const repEl = document.getElementById('f-reporter-filter');
-  if(repEl) {
-    const cur = repEl.value;
-    const reporters = [...new Set(S.bugs.map(b=>b.reporter).filter(Boolean))].sort();
-    repEl.innerHTML = '<option value="">All Reporters</option>' +
-      reporters.map(r=>`<option value="${r}"${r===cur?' selected':''}>${r}</option>`).join('');
-  }
-
-  // Pod filter
-  const podEl = document.getElementById('f-pod-filter');
-  if(podEl) {
-    const cur = podEl.value;
-    const pods = [...new Set(S.bugs.map(b=>b.pod).filter(Boolean))].sort();
-    podEl.innerHTML = '<option value="">All Pods</option>' +
-      pods.map(p=>`<option value="${p}"${p===cur?' selected':''}>${p}</option>`).join('');
-  }
 }
-
 
 
 // ══════════════════════════════════════════
@@ -2772,17 +2728,11 @@ function copyFilteredStats() {
 
   const dateFrom = document.getElementById('fDateFrom')?.value||'';
   const dateTo   = document.getElementById('fDateTo')?.value||'';
-  const fs  = document.getElementById('fs')?.value||'';
-  const fp  = document.getElementById('fp')?.value||'';
-  const fa  = document.getElementById('fa')?.value||'';
-  const fit = document.getElementById('f-issue-type-filter')?.value||'';
-  const frep= document.getElementById('f-reporter-filter')?.value||'';
-  const fpod= document.getElementById('f-pod-filter')?.value||'';
 
-  const filters = [
-    dateFrom&&dateTo ? dateFrom+' to '+dateTo : dateFrom||dateTo,
-    fs, fp, fa, fit, frep&&'Reporter: '+frep, fpod&&'Pod: '+fpod,
-  ].filter(Boolean).join(' | ');
+  const filterParts = [];
+  if(dateFrom||dateTo) filterParts.push((dateFrom||'start')+' to '+(dateTo||'now'));
+  Object.entries(MF_STATE).forEach(([k,s]) => { if(s.size) filterParts.push(k+': '+[...s].join('/')); });
+  const filters = filterParts.join(' | ');
 
   // Stats summary
   const happy  = bugs.filter(b=>b.issue_type==='Happy Flow').length;
@@ -3403,11 +3353,11 @@ function goToBacklogFiltered(){
   const ids = window._drawerIds;
   closeInlineDrawer();
   document.getElementById('fq').value='';
-  document.getElementById('fs').value='';
-  document.getElementById('fp').value='';
-  document.getElementById('fa').value='';
-  document.getElementById('ff').value='';
-  document.getElementById('fsp').value='';
+  
+  
+  
+  
+  
   S.sbMode='status'; S.sbVal='all';
   document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('on'));
   document.querySelector('.sb-item')?.classList.add('on');
@@ -3440,12 +3390,12 @@ function applyFWithIdFilter(){
 
 function goToBugsClean(){
   closeInlineDrawer();
-  document.getElementById('fq').value='';
-  document.getElementById('fs').value='';
-  document.getElementById('fp').value='';
-  document.getElementById('fa').value='';
-  document.getElementById('ff').value='';
-  document.getElementById('fsp').value='';
+  const fq = document.getElementById('fq'); if(fq) fq.value='';
+  // Clear multi-select filters
+  Object.keys(MF_STATE).forEach(k => { MF_STATE[k].clear(); updateMFBadge(k); });
+  // Clear date filters
+  const df = document.getElementById('fDateFrom'); if(df) df.value='';
+  const dt = document.getElementById('fDateTo');   if(dt) dt.value='';
   S.sbMode='status'; S.sbVal='all';
   document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('on'));
   document.querySelector('.sb-item')?.classList.add('on');
@@ -7774,11 +7724,12 @@ async function sendGChatWebhook(text) {
   const cfg = getWebhookConfig();
   if(!cfg.gchat_url) return false;
   try {
-    await fetch(cfg.gchat_url, {
+    const r = await fetch(cfg.gchat_url, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({text})
+      body: JSON.stringify({text: text.slice(0, 3800)}) // GChat 4096 char limit
     });
+    if(!r.ok) { const t = await r.text(); console.error('[gchat]', r.status, t); return false; }
     return true;
   } catch(e) {
     console.warn('[gchat webhook]', e.message);
@@ -8159,9 +8110,32 @@ async function sendEODToGChat() {
     if(cfg[teamKey]) gchatUrl = cfg[teamKey];
   }
   if(!gchatUrl) { toast('No GChat webhook configured', 'err'); return; }
-  const sent = await fetch(gchatUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:txt}) }).then(r=>r.ok).catch(()=>false);
-  if(sent) toast('EOD report sent to GChat ✓', 'ok');
-  else toast('GChat send failed', 'err');
+  // GChat has a 4096 char limit — chunk if needed
+  const MAX = 3800;
+  const chunks = [];
+  let remaining = txt;
+  while(remaining.length > MAX) {
+    const cut = remaining.lastIndexOf('\n', MAX);
+    chunks.push(remaining.slice(0, cut > 0 ? cut : MAX));
+    remaining = remaining.slice(cut > 0 ? cut + 1 : MAX);
+  }
+  if(remaining.trim()) chunks.push(remaining);
+
+  let allSent = true;
+  for(const chunk of chunks) {
+    const ok = await fetch(gchatUrl, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: chunk })
+    }).then(r => {
+      if(!r.ok) r.text().then(t => console.error('[gchat]', r.status, t));
+      return r.ok;
+    }).catch(e => { console.error('[gchat]', e); return false; });
+    if(!ok) allSent = false;
+    if(chunks.length > 1) await new Promise(r => setTimeout(r, 500));
+  }
+  if(allSent) toast('EOD report sent to GChat ✓', 'ok');
+  else toast('GChat send failed — check console for details', 'err');
 }
 
 function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday) {
