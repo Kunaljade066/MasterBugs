@@ -9,6 +9,7 @@
 <link rel="preload" href="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" as="image">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════
@@ -1023,7 +1024,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
         <div style="width:5px;height:5px;border-radius:50%;background:var(--g4);box-shadow:0 0 5px var(--g4);animation:blink 2.5s ease-in-out infinite;flex-shrink:0"></div>
         <span id="liveCount" style="font-family:var(--mono);font-size:10px;color:var(--g4);font-weight:700;white-space:nowrap"></span>
       </div>
-      <div style="position:relative;display:inline-block" id="exportDropWrap"><button class="btn btn-g btn-sm" onclick="toggleExportDrop()" title="Export CSV">📥 ▾</button><div id="exportDrop" style="display:none;position:absolute;right:0;top:30px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.4)"><div class="jk-mi" onclick="exportCSV('filtered');toggleExportDrop()">📋 Export filtered</div><div class="jk-mi" onclick="exportCSV('all');toggleExportDrop()">📦 Export all bugs</div><div class="jk-mi" onclick="exportCSV('selection');toggleExportDrop()">✅ Export selected</div></div></div>
+      <div style="position:relative;display:inline-block" id="exportDropWrap"><button class="btn btn-g btn-sm" onclick="toggleExportDrop()" title="Export CSV">📥 ▾</button><div id="exportDrop" style="display:none;position:absolute;right:0;top:30px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:4px;z-index:999;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,.4)"><div class="jk-mi" onclick="exportCSV('filtered');toggleExportDrop()">📋 Export filtered (XLSX)</div><div class="jk-mi" onclick="exportCSV('all');toggleExportDrop()">📦 Export all bugs (XLSX)</div><div class="jk-mi" onclick="exportCSV('selection');toggleExportDrop()">✅ Export selected (XLSX)</div></div></div>
       <button class="btn btn-g btn-sm" onclick="refreshAll()">↻</button>
       <button class="btn btn-g btn-sm" onclick="document.getElementById('shortcutsModal').classList.add('on')" title="Keyboard shortcuts (?)">⌨</button>
       <button class="btn btn-v btn-sm" onclick="openNew()">＋ BUG</button>
@@ -4281,25 +4282,112 @@ async function delBug(id){
 function exportCSV(scope) {
   let src;
   if(scope === 'all') src = S.bugs;
-  else if(scope === 'selection') src = S.bugs.filter(b => S.selected?.has(b.id));
+  else if(scope === 'selection') src = S.bugs.filter(b => _bulkSelected.has(b.id));
   else src = S.filtered.length ? S.filtered : S.bugs;
   if(!src.length){toast('No data to export','err');return;}
 
-  const nowLabel = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'short',timeStyle:'short'}).replace(/[,:\/\s]+/g,'-');
-  const scopeLabel = scope==='all'?'all':scope==='selection'?'selected':'filtered';
-  const filename = `bugpulse_${scopeLabel}_${nowLabel}.csv`;
-
   const COLS = [
-    {k:'id',l:'Bug ID'},{k:'title',l:'Title'},{k:'priority',l:'Priority'},
-    {k:'severity',l:'Severity'},{k:'status',l:'Status'},{k:'feature',l:'Feature'},
-    {k:'sprint',l:'Sprint'},{k:'build',l:'Build'},{k:'platform',l:'Platform'},
-    {k:'device',l:'Device'},{k:'pod',l:'Pod'},{k:'assignees',l:'Assignees'},
-    {k:'reporter',l:'Reporter'},{k:'steps',l:'Steps to Reproduce'},
-    {k:'actual',l:'Actual'},{k:'expected',l:'Expected'},
-    {k:'attachment',l:'Attachment'},{k:'created_at',l:'Created'},
-    {k:'updated_at',l:'Updated'},{k:'age_days',l:'Age (days)'},
+    {k:'id',       l:'Bug ID',            w:18},
+    {k:'title',    l:'Title',             w:40},
+    {k:'priority', l:'Priority',          w:12},
+    {k:'severity', l:'Severity',          w:14},
+    {k:'status',   l:'Status',            w:16},
+    {k:'feature',  l:'Feature',           w:20},
+    {k:'sprint',   l:'Sprint',            w:16},
+    {k:'build',    l:'Build',             w:14},
+    {k:'platform', l:'Platform',          w:12},
+    {k:'device',   l:'Device',            w:14},
+    {k:'pod',      l:'Pod',               w:14},
+    {k:'assignees',l:'Assignees',         w:22},
+    {k:'reporter', l:'Reporter',          w:20},
+    {k:'steps',    l:'Steps to Reproduce',w:45},
+    {k:'actual',   l:'Actual Result',     w:35},
+    {k:'expected', l:'Expected Result',   w:35},
+    {k:'attachment',l:'Attachment',       w:30},
+    {k:'created_at',l:'Created',          w:18},
+    {k:'updated_at',l:'Updated',          w:18},
+    {k:'age_days', l:'Age (days)',        w:12},
   ];
-  const cell = v => `"${String(v||'').replace(/"/g,'""')}"`;
+
+  // If SheetJS available use XLSX, else fall back to CSV
+  if(typeof XLSX !== 'undefined') {
+    const headers = COLS.map(c => c.l);
+    const dataRows = src.map(b => COLS.map(c => {
+      if(c.k==='assignees') return (b.assignees||[]).map(a=>a.name).join('; ');
+      if(c.k==='age_days')  return b.created_ts ? Math.floor((Date.now()-b.created_ts)/86400000) : '';
+      return b[c.k] || '';
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const wsData = [headers, ...dataRows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths
+    ws['!cols'] = COLS.map(c => ({ wch: c.w }));
+
+    // Freeze top row
+    ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+
+    // Header row styling — bold + background
+    const headerStyle = {
+      font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+      fill: { fgColor: { rgb: '7C3AED' }, patternType: 'solid' },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: false },
+      border: {
+        bottom: { style: 'thin', color: { rgb: 'FFFFFF' } },
+      }
+    };
+
+    // Row styles — alternate shading, no wrap for steps
+    const dataStyle = {
+      alignment: { vertical: 'top', wrapText: false },
+      font: { sz: 10 }
+    };
+    const stepsStyle = {
+      alignment: { vertical: 'top', wrapText: true },
+      font: { sz: 10 }
+    };
+
+    // Apply header styles
+    for(let c = 0; c < COLS.length; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+      if(!ws[cellRef]) continue;
+      ws[cellRef].s = headerStyle;
+    }
+
+    // Apply data row styles
+    for(let r = 1; r <= dataRows.length; r++) {
+      const isAlt = r % 2 === 0;
+      const fillColor = isAlt ? 'F3F0FF' : 'FFFFFF';
+      for(let c = 0; c < COLS.length; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r, c });
+        if(!ws[cellRef]) continue;
+        const isStepsCol = COLS[c].k === 'steps' || COLS[c].k === 'actual' || COLS[c].k === 'expected';
+        ws[cellRef].s = {
+          ...(isStepsCol ? stepsStyle : dataStyle),
+          fill: { fgColor: { rgb: fillColor }, patternType: 'solid' },
+        };
+      }
+    }
+
+    // Auto row height — cap steps rows at 80pt
+    ws['!rows'] = [{ hpt: 24 }]; // header row height
+    for(let r = 1; r <= dataRows.length; r++) {
+      ws['!rows'].push({ hpt: 15 }); // data rows — fixed height, no auto expand
+    }
+
+    const nowLabel = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'short',timeStyle:'short'}).replace(/[,:/\s]+/g,'-');
+    const scopeLabel = scope==='all'?'all':scope==='selection'?'selected':'filtered';
+    XLSX.utils.book_append_sheet(wb, ws, 'Bugs');
+    XLSX.writeFile(wb, `bugpulse_${scopeLabel}_${nowLabel}.xlsx`);
+    toast(`Exported ${src.length} bugs as Excel ✓`, 'ok');
+    return;
+  }
+
+  // CSV fallback
+  const nowLabel = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'short',timeStyle:'short'}).replace(/[,:/\s]+/g,'-');
+  const scopeLabel = scope==='all'?'all':scope==='selection'?'selected':'filtered';
+  const cell = v => '"' + String(v||'').replace(/"/g,'""') + '"';
   const rows = [COLS.map(c=>c.l).join(',')];
   for(const b of src) {
     rows.push(COLS.map(c => {
@@ -4310,8 +4398,8 @@ function exportCSV(scope) {
   }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'}));
-  a.download = filename; a.style.display='none';
-  document.body.appendChild(a); a.click(); a.remove();
+  a.download = `bugpulse_${scopeLabel}_${nowLabel}.csv`;
+  a.style.display='none'; document.body.appendChild(a); a.click(); a.remove();
   toast(`Exported ${src.length} bugs ✓`,'ok');
 }
 
