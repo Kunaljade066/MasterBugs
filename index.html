@@ -6972,13 +6972,19 @@ function openNewTestRun() {
         </div>
       </div>
       <div id="tr-source-csv-panel" style="display:none">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:8px;line-height:1.8">
-          CSV columns: <b>id</b>, <b>title</b> (required) + optional: steps, expected, section<br>
-          Compatible with TestRail CSV export format.
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);line-height:1.8">
+            CSV columns: <b>id</b>, <b>title</b> (required)<br>
+            Optional: <b>steps</b>, <b>expected</b>, <b>section</b>, <b>priority</b>, <b>notes</b>
+          </div>
+          <button class="btn btn-g btn-sm" onclick="downloadTestCaseTemplate()" style="flex-shrink:0">
+            📥 Download Template
+          </button>
         </div>
         <div style="border:2px dashed var(--bd2);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:rgba(124,58,237,.03)" onclick="document.getElementById('tr-csv-input').click()" id="tr-csv-drop" ondragover="event.preventDefault();this.style.borderColor='var(--g1)'" ondragleave="this.style.borderColor='var(--bd2)'" ondrop="trHandleCsvDrop(event)">
           <div style="font-size:24px;margin-bottom:6px">📄</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">Drop TestRail/CSV here or click to browse</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">Drop CSV here or click to browse</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:4px">Supports BugPulse template + TestRail CSV export</div>
           <div id="tr-csv-preview" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--g4)"></div>
         </div>
         <input type="file" id="tr-csv-input" accept=".csv" style="display:none" onchange="trHandleCsvFile(this.files[0])">
@@ -6989,6 +6995,47 @@ function openNewTestRun() {
 
 let _trCsvCases = []; // parsed from CSV
 let _trSource = 'bugs'; // 'bugs' or 'csv'
+
+
+function downloadTestCaseTemplate() {
+  const headers = ['id', 'title', 'section', 'priority', 'steps', 'expected', 'notes'];
+  const examples = [
+    ['TC-001', 'Verify user can login with valid credentials', 'Authentication', 'High',
+     '1. Open app\n2. Enter valid email\n3. Enter valid password\n4. Tap Login',
+     'User is logged in and redirected to home screen', 'Test on Android and iOS'],
+    ['TC-002', 'Verify error message for invalid password', 'Authentication', 'High',
+     '1. Open app\n2. Enter valid email\n3. Enter wrong password\n4. Tap Login',
+     'Error message shown: "Invalid credentials"', ''],
+    ['TC-003', 'Verify match starts correctly in PVP mode', 'PVP', 'Critical',
+     '1. Go to PVP\n2. Select opponent\n3. Tap Play\n4. Complete toss',
+     'Match starts and toss screen appears', 'Check on slow network'],
+    ['TC-004', 'Verify player card claim from PvP Road', 'Player Road - PVP', 'Medium',
+     '1. Complete milestone 3\n2. Tap claim\n3. Confirm selection',
+     'Player card added to squad', ''],
+    ['TC-005', 'Verify build upload notification', 'Builds', 'Low',
+     '1. Upload new build\n2. Check GChat',
+     'GChat receives build notification', 'Edge case — test with no internet then reconnect'],
+  ];
+
+  const escape = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+  const rows = [
+    headers.join(','),
+    ...examples.map(row => row.map(escape).join(','))
+  ];
+
+  const csv = rows.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bugpulse_test_cases_template.csv';
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Template downloaded — fill it in and upload!', 'ok');
+}
 
 function trSetSource(src) {
   _trSource = src;
