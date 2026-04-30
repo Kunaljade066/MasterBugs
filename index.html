@@ -7551,173 +7551,194 @@ function isImageUrl(url) {
 const TOUR_KEY = 'hwt_tour_done_v1';
 
 const TOUR_STEPS = [
-  {
-    tab: null,
-    title: 'Hey! I am Natasha',
-    speech: 'Welcome to BugPulse — your complete QA command centre! I am going to show you everything this tool can do. Ready? Let us go!',
-    features: [],
-  },
-  {
-    tab: 'backlog',
-    title: 'Bug Backlog',
-    speech: 'This is your main bug list. Every issue logged by the team lives here. You can sort, filter, bulk-select and export.',
-    features: [
-      { icon: '➕', text: 'Log bugs with title, priority, severity, steps, assignee, build, pod, platform' },
-      { icon: '🎯', text: 'Issue Type: Happy Flow, Edge Case, Regression, Crash, UI/Visual, Performance' },
-      { icon: '📎', text: 'Attach Google Drive screenshots — preview shown inline in bug detail' },
-      { icon: '👥', text: 'Multi-assignee support with avatar stack' },
-      { icon: '🔔', text: 'Notify Teammates toggle — fires GChat, Slack, email and push notification' },
-      { icon: '📋', text: 'Bug templates: Crash, IAP, UI, Match Engine, Network, Regression + custom' },
-    ],
-  },
-  {
-    tab: 'backlog',
-    title: 'Smart Filters',
-    speech: 'Find any bug in seconds. I have multi-select checkboxes on every filter so you can combine them any way you want!',
-    features: [
-      { icon: '☑️', text: 'Status filter — select multiple statuses at once' },
-      { icon: '🎯', text: 'Priority, Severity, Assignee, Feature, Sprint, Pod — all multi-select' },
-      { icon: '🔍', text: 'Full text search across title, steps, assignee, build, feature' },
-      { icon: '📅', text: 'Date range filter — Today, This Week, Last 7/30/90 days or custom range' },
-      { icon: '🏷️', text: 'Issue Type filter — filter by Happy Flow vs Edge Case vs Regression' },
-      { icon: '📊', text: 'Filter Stats bar — shows count, issue types, top reporters, top devs' },
-      { icon: '📋', text: 'Copy Stats + Issues — full report with all filtered bugs and links' },
-    ],
-  },
-  {
-    tab: 'backlog',
-    title: 'Bulk Actions',
-    speech: 'Select multiple bugs using the checkboxes and take action on all of them at once!',
-    features: [
-      { icon: '✅', text: 'Bulk status change, priority change, sprint assignment, assignee update' },
-      { icon: '🔗', text: 'Copy Link — share a URL that opens BugPulse filtered to exactly those bugs' },
-      { icon: '📋', text: 'Copy Report — plain text report with all selected bug details and links' },
-      { icon: '🗑️', text: 'Bulk delete ' },
-      { icon: '📥', text: 'Export selected as XLSX — formatted spreadsheet with column widths' },
-    ],
-  },
-  {
-    tab: 'board',
-    title: 'Kanban Board',
-    speech: 'Visual board view — see all bugs as cards grouped by status. Drag and drop to update status instantly!',
-    features: [
-      { icon: '🎴', text: 'Cards show ID, title, priority chip, age and assignee avatars' },
-      { icon: '🖱️', text: 'Drag and drop between columns — fires GChat notification on drop' },
-      { icon: '🔽', text: 'Filter by Sprint, Assignee, Priority, Pod — board updates live' },
-      { icon: '✨', text: 'Smooth card animation when dragging — scale + rotate effect' },
-    ],
-  },
-  {
-    tab: 'sprints',
-    title: 'Sprints',
-    speech: 'Organise your work into sprints with start and end dates. Track how many bugs are open, in progress and done!',
-    features: [
-      { icon: '📅', text: 'Create sprints with start/end dates and goals' },
-      { icon: '📊', text: 'Progress bar per sprint — filed, resolved, closed counts' },
-      { icon: '🎯', text: 'SLA breach highlighting — bugs older than configured days turn red' },
-      { icon: '📋', text: 'Release Notes generator — grouped by feature, copy or send to GChat' },
-    ],
-  },
-  {
-    tab: 'features',
-    title: 'Features',
-    speech: 'See bugs grouped by feature and sub-feature — like Dashboard, then Dashboard → Stats, Dashboard → Icon Issue!',
-    features: [
-      { icon: '🎮', text: 'Features tab groups bugs by feature with progress bars' },
-      { icon: '↳', text: 'Sub-features: nested grouping e.g. PvP Road → Shot Selection' },
-      { icon: '🔢', text: 'Bug count, critical count, completion % per feature' },
-      { icon: '🎮', text: 'Feature Kanban button in backlog — horizontal card view by feature' },
-    ],
-  },
-  {
-    tab: 'builds',
-    title: 'Builds & Test Runs',
-    speech: 'Log every build release and execute test cases against it. I help you track release quality over time!',
-    features: [
-      { icon: '📦', text: 'Log builds: version, platform, APK link, release notes, GChat notification' },
-      { icon: '🧪', text: 'Test Runs: create from BugPulse bugs, sprint, feature or upload CSV' },
-      { icon: '📄', text: 'Download test case template — fill in Excel/Sheets and upload back' },
-      { icon: '✅', text: 'Mark each test case: Pass, Fail, Blocked, Retest' },
-      { icon: '🐛', text: 'Log bug inline from a failing test case — pre-fills steps and expected' },
-      { icon: '📊', text: 'Test run stats: pass %, fail count, blocked, coverage per section' },
-    ],
-  },
-  {
-    tab: 'dashboard',
-    title: 'Dashboard & Analytics',
-    speech: 'All the numbers you need for your QA reports and presentations. Charts, trends, pod comparisons — everything!',
-    features: [
-      { icon: '🥧', text: 'Home: 3 pie charts — By Status, By Priority, By Pod (auto-updated)' },
-      { icon: '📈', text: 'Timeline: Last 30/90 days or monthly — Filed vs Resolved trend lines' },
-      { icon: '📅', text: 'Month-wise: day-by-day bar chart + stats cards for any selected month' },
-      { icon: '🏏', text: 'Pod Comparison: pick 2 months — bar chart per pod with IMPROVING/REGRESSING/STABLE' },
-      { icon: '📋', text: 'Copy Report — plain text for QA presentations with pod breakdown' },
-      { icon: '👤', text: 'Personal stats on home: your assigned open, critical, fixed, reported today' },
-    ],
-  },
-  {
-    tab: 'notifs',
-    title: 'Alerts & Notifications',
-    speech: 'Never miss a critical bug! Enable push notifications and I will ping you even when the browser is closed!',
-    features: [
-      { icon: '🔔', text: 'Desktop push notifications — works even when browser is fully closed' },
-      { icon: '📱', text: 'Works on phone too — enable in Chrome on Android' },
-      { icon: '🚨', text: 'Alerts for: new bugs, status changes, builds, EOD reports' },
-      { icon: '⏰', text: 'EOD auto-report — server sends GChat + email at your configured time daily' },
-      { icon: '🌙', text: 'Cron-based — no browser needed for EOD to fire (Cloudflare Worker cron)' },
-      { icon: '🔕', text: 'Disable Natasha — toggle me on/off from profile menu per user' },
-    ],
-  },
-  {
-    tab: 'clickup',
-    title: 'ClickUp Integration',
-    speech: 'See your ClickUp tasks right inside BugPulse and link them to bugs. Two-way status sync!',
-    features: [
-      { icon: '🟣', text: 'Sync all ClickUp tasks — filter by Space/Pod, List, Status, Assignee, Tags' },
-      { icon: '📅', text: 'Due date range filter — see overdue or upcoming tasks' },
-      { icon: '🔗', text: 'Link any ClickUp task to a BugPulse bug — shown in bug detail' },
-      { icon: '🔄', text: '2-way status sync — update ClickUp status from BugPulse drag & drop' },
-    ],
-  },
-  {
-    tab: 'import',
-    title: 'Import & Google Sheets',
-    speech: 'Your whole team can log bugs from a Google Sheet — no BugPulse login needed for entry, and it syncs instantly!',
-    features: [
-      { icon: '📥', text: 'CSV import: bulk upload bugs with all fields, smart title extraction from steps' },
-      { icon: '↩️', text: 'Rollback last import — you can undo the entire batch in one click' },
-      { icon: '📊', text: 'Google Sheets sync: fill a row → appears in BugPulse in 1-2 seconds' },
-      { icon: '🔑', text: 'Bug ID auto-written back to sheet column A after sync' },
-      { icon: '🗂️', text: 'Dropdowns synced from BugPulse — Priority, Status, Pod, Feature, Sprint' },
-      { icon: '🚫', text: 'Deleted bugs never re-created from sheet — permanently blocked' },
-    ],
-  },
-  {
-    tab: null,
-    title: 'Webhooks & Integrations',
-    speech: 'BugPulse connects to your whole team workflow. Configure everything from Webhook Settings in the profile menu!',
-    features: [
-      { icon: '💬', text: 'GChat per pod — each team gets notifications in their own space' },
-      { icon: '💬', text: 'Slack webhook with Block Kit rich messages' },
-      { icon: '📧', text: 'Email notifications via Brevo — new bugs, assignments, builds' },
-      { icon: '🏗️', text: 'Jenkins CI/CD webhook — per team token, fires on build completion' },
-      { icon: '📊', text: 'EOD report — auto-sent server-side at configured IST time, Mon-Fri' },
-      { icon: '🔑', text: 'VAPID keys for Web Push — generate inside BugPulse, store in Cloudflare' },
-    ],
-  },
-  {
-    tab: null,
-    title: 'You are all set!',
-    speech: 'That is everything! BugPulse has 20+ features built just for Hitwicket QA. Go catch some bugs — I will be here if you need me!',
-    features: [
-      { icon: '🐛', text: 'Bug backlog with templates, filters, bulk actions, export' },
-      { icon: '📋', text: 'Kanban board, Sprints, Features, Sub-features' },
-      { icon: '📦', text: 'Builds, Test Runs, TestRail CSV upload' },
-      { icon: '📊', text: 'Dashboard: pie charts, trends, month-wise, pod comparison' },
-      { icon: '🔔', text: 'Push notifications, GChat, Slack, Email, EOD auto-report' },
-      { icon: '🟣', text: 'ClickUp 2-way sync, Google Sheets sync, CSV import' },
-    ],
-  },
+  { tab:null, target:null,
+    title:'Hey! I am Natasha',
+    speech:'Welcome to BugPulse — your QA command centre! I will walk you through every feature. Click Next to explore each screen!',
+    features:[] },
+
+  { tab:'home', target:'#homePieRow',
+    title:'Home — Pie Charts',
+    speech:'Your home screen shows 3 live pie charts — bugs by Status, Priority and Pod. They update instantly when bugs are added!',
+    features:[
+      {icon:'🥧',text:'Status pie — Open, Bugged, QA Pass, Dev Fixed, Closed and more'},
+      {icon:'🎯',text:'Priority pie — Critical, Urgent, High, Medium, Low'},
+      {icon:'🏏',text:'Pod pie — see which team has the most open bugs'},
+    ]},
+
+  { tab:'home', target:'#personalStatsRow',
+    title:'Home — Your Stats',
+    speech:'Below the charts you can see your personal activity — bugs assigned to you, critical ones, how many you fixed today!',
+    features:[
+      {icon:'👤',text:'Assigned Open — bugs currently assigned to you'},
+      {icon:'🚨',text:'Critical Assigned — urgent bugs on your plate'},
+      {icon:'✅',text:'Fixed/Passed — your resolved count'},
+      {icon:'📝',text:'Bugs Reported — total you have filed'},
+    ]},
+
+  { tab:'backlog', target:'#tt-backlog',
+    title:'Bugs Tab',
+    speech:'This is the heart of BugPulse — all bugs in one place. Every issue your team logs lives here!',
+    features:[
+      {icon:'📋',text:'Full bug list with ID, title, priority, status, assignee'},
+      {icon:'🔢',text:'Page counter shows total filtered bugs'},
+      {icon:'⚡',text:'Auto-refreshes every 5 seconds — always up to date'},
+    ]},
+
+  { tab:'backlog', target:'.btn-v',
+    title:'Log a Bug — ＋ NEW BUG',
+    speech:'Click this button to open the bug form! Fill in the details and save — it appears for the whole team instantly.',
+    features:[
+      {icon:'📝',text:'Title, Priority, Severity, Status, Build, Platform, Device'},
+      {icon:'🎮',text:'Feature + Sub-feature — e.g. Dashboard → Icon Issue'},
+      {icon:'📎',text:'Google Drive attachment — image preview shown in bug detail'},
+      {icon:'📋',text:'Templates — Crash, IAP, UI, Match Engine, Regression, Network'},
+      {icon:'🔔',text:'Notify Teammates toggle — fires GChat + push notification on save'},
+    ]},
+
+  { tab:'backlog', target:'#fq',
+    title:'Search Bugs',
+    speech:'Type anything here — bug ID, title, assignee name, build number, steps text — I will find it instantly!',
+    features:[
+      {icon:'🔍',text:'Search across: ID, title, steps, actual, assignee, feature, build, pod'},
+    ]},
+
+  { tab:'backlog', target:'#mfw-status',
+    title:'Status Filter',
+    speech:'Click any filter button to open a checkbox dropdown. Select multiple values at once — much more powerful than a single dropdown!',
+    features:[
+      {icon:'☑️',text:'Multi-select checkboxes — e.g. Bugged + Open + In Progress together'},
+      {icon:'🔢',text:'Purple badge shows how many values selected'},
+      {icon:'🔄',text:'Status, Priority, Assignee, Feature, Sprint, Type, Reporter, Pod — all multi-select'},
+    ]},
+
+  { tab:'backlog', target:'#dateFilterBtn',
+    title:'Date Range Filter',
+    speech:'Click the Date button to filter bugs by when they were filed. Use presets or pick custom from/to dates!',
+    features:[
+      {icon:'📅',text:'Presets: Today, This Week, This Month, Last 7/30/90 days'},
+      {icon:'📆',text:'Custom date range with from/to date pickers'},
+    ]},
+
+  { tab:'backlog', target:'#filterStatsBar',
+    title:'Filter Stats & Copy Report',
+    speech:'When you apply filters, this bar shows a summary of what is visible — and lets you copy a full report for presentations!',
+    features:[
+      {icon:'📊',text:'Shows: total count, Happy Flow, Edge Case, Crash, Critical, QA Pass counts'},
+      {icon:'👤',text:'Top reporters and top devs for the filtered set'},
+      {icon:'📋',text:'Copy Stats + Issues — full text report with all bug details and links'},
+    ]},
+
+  { tab:'board', target:'#tt-board',
+    title:'Board — Kanban View',
+    speech:'Switch to Board for a visual Kanban view. See all bugs as cards in status columns. Drag them to update!',
+    features:[
+      {icon:'🎴',text:'Cards show: ID, title, priority chip, age, assignee avatars'},
+      {icon:'🖱️',text:'Drag and drop between columns — status updates instantly, GChat notified'},
+      {icon:'🔽',text:'Filter by Sprint, Assignee, Priority, Pod right on the board'},
+    ]},
+
+  { tab:'sprints', target:'#tt-sprints',
+    title:'Sprints',
+    speech:'Organise work into sprints. Each sprint shows its bugs with progress bars and completion stats!',
+    features:[
+      {icon:'📅',text:'Create sprints with start/end dates and sprint goals'},
+      {icon:'📊',text:'Progress bar — filed, active, resolved, done counts'},
+      {icon:'🚨',text:'SLA breach — bugs older than limit highlight in red'},
+      {icon:'📋',text:'Release Notes generator — grouped by feature, send to GChat'},
+    ]},
+
+  { tab:'features', target:'#tt-features',
+    title:'Features',
+    speech:'See bugs grouped by feature — and nested by sub-feature! Great for tracking quality per game system.',
+    features:[
+      {icon:'🎮',text:'Feature groups with progress bars and completion %'},
+      {icon:'↳',text:'Sub-features: e.g. PvP Road → Shot Selection, Dashboard → Stats'},
+      {icon:'🔢',text:'Bug count, critical count per feature'},
+      {icon:'👁',text:'Click any bug card to open its detail instantly'},
+    ]},
+
+  { tab:'builds', target:'#tt-builds',
+    title:'Builds',
+    speech:'Every build your team releases gets logged here. Track what was in each build and notify the team!',
+    features:[
+      {icon:'📦',text:'Log build: version, platform, APK link, release notes'},
+      {icon:'🔔',text:'GChat notification to team when new build is uploaded'},
+      {icon:'📋',text:'Release notes grouped by feature — copy or send to GChat'},
+    ]},
+
+  { tab:'builds', target:'#tt-builds',
+    title:'Test Runs',
+    speech:'Create test runs for a build — upload test cases and execute them one by one, marking Pass/Fail/Blocked!',
+    features:[
+      {icon:'🧪',text:'Create run from bugs, sprint, feature or upload CSV'},
+      {icon:'📄',text:'Download test case template — fill in Excel and upload back'},
+      {icon:'✅',text:'Mark each case: Pass, Fail, Blocked, Retest'},
+      {icon:'🐛',text:'Log bug directly from a failing test case — steps pre-filled'},
+      {icon:'📊',text:'Run stats: pass %, fail count, blocked, coverage per section'},
+    ]},
+
+  { tab:'dashboard', target:'#tt-dashboard',
+    title:'Dashboard — Charts',
+    speech:'All your analytics in one place. Use this for QA presentations and sprint reviews!',
+    features:[
+      {icon:'📈',text:'Timeline: Last 30/90 days or monthly — Filed vs Resolved'},
+      {icon:'📅',text:'Month-wise: day-by-day bar chart for any month'},
+      {icon:'🏏',text:'Pod Comparison: 2 months side by side — IMPROVING/REGRESSING/STABLE'},
+      {icon:'📋',text:'Copy Report and Copy for Presentation buttons'},
+    ]},
+
+  { tab:'notifs', target:'#tt-notifs',
+    title:'Alerts & Notifications',
+    speech:'Enable push notifications and I will ping you even when the browser is fully closed — on desktop and phone!',
+    features:[
+      {icon:'🔔',text:'Enable Desktop Notifs button — asks browser permission once'},
+      {icon:'📱',text:'Works on phone Chrome too — enable separately on each device'},
+      {icon:'⏰',text:'EOD report — auto-sent by server at your configured time daily'},
+      {icon:'🔕',text:'Profile menu → Disable Natasha — turns off my cheerful comments'},
+    ]},
+
+  { tab:'clickup', target:'#tt-clickup',
+    title:'ClickUp Integration',
+    speech:'See your ClickUp tasks right inside BugPulse! Filter by Space/Pod and link tasks to bugs.',
+    features:[
+      {icon:'🟣',text:'Sync all ClickUp tasks — filter by Space, List, Status, Assignee, Tags'},
+      {icon:'📅',text:'Due date filter — see overdue or upcoming tasks'},
+      {icon:'🔗',text:'Link ClickUp task to a BugPulse bug — shown in bug detail'},
+      {icon:'🔄',text:'2-way status sync — update ClickUp from BugPulse'},
+    ]},
+
+  { tab:'import', target:'#tt-import',
+    title:'Import & Google Sheets',
+    speech:'Import bugs from CSV or connect a Google Sheet so your team can log issues without even opening BugPulse!',
+    features:[
+      {icon:'📥',text:'CSV import — bulk upload with smart title extraction from steps'},
+      {icon:'📊',text:'Google Sheets sync — fill a row → appears in BugPulse in 1-2 seconds'},
+      {icon:'🔑',text:'Bug ID auto-written to column A of sheet after sync'},
+      {icon:'🗂️',text:'Sheet dropdowns sync from BugPulse — Priority, Status, Pod, Feature, Sprint'},
+    ]},
+
+  { tab:null, target:null,
+    title:'Webhooks & Settings',
+    speech:'Configure all integrations from Profile menu → Webhook Settings. Set up GChat per pod, Slack, Jenkins and EOD schedule!',
+    features:[
+      {icon:'💬',text:'GChat per pod — each team gets notifications in their own space'},
+      {icon:'💬',text:'Slack webhook with rich Block Kit messages'},
+      {icon:'📧',text:'Email via Brevo — new bugs, assignments, builds'},
+      {icon:'🏗️',text:'Jenkins CI/CD — per team webhook token, fires on build'},
+      {icon:'⏰',text:'EOD schedule — set time in IST, auto-sends Mon-Fri server-side'},
+    ]},
+
+  { tab:null, target:null,
+    title:'You are all set!',
+    speech:'That is everything in BugPulse! Access this tour anytime from Profile menu → Feature Tour. Now go catch some bugs!',
+    features:[
+      {icon:'🐛',text:'Log + filter + bulk action bugs'},
+      {icon:'📋',text:'Board, Sprints, Features, Sub-features'},
+      {icon:'📦',text:'Builds + Test Runs + CSV upload'},
+      {icon:'📊',text:'Dashboard: pies, trends, pod comparison'},
+      {icon:'🔔',text:'Push, GChat, Slack, Email, EOD auto-report'},
+      {icon:'🟣',text:'ClickUp sync + Google Sheets sync + CSV import'},
+    ]},
 ];
 
 let _tourStep = 0;
@@ -7753,51 +7774,57 @@ function _showTourCard() {
   overlay.id = 'tourOverlay';
   document.body.appendChild(overlay);
 
-  // Spotlight on target element if specified
+  // Spotlight + scroll target into view
   if (step.target) {
     const el = document.querySelector(step.target);
     if (el) {
-      const r = el.getBoundingClientRect();
-      const spot = document.createElement('div');
-      spot.className = 'tour-spotlight';
-      spot.id = 'tourSpotlight';
-      spot.style.cssText = `top:${r.top-6}px;left:${r.left-6}px;width:${r.width+12}px;height:${r.height+12}px`;
-      document.body.appendChild(spot);
+      el.scrollIntoView({behavior:'smooth', block:'center'});
+      setTimeout(() => {
+        const r = el.getBoundingClientRect();
+        const spot = document.createElement('div');
+        spot.className = 'tour-spotlight';
+        spot.id = 'tourSpotlight';
+        spot.style.top    = (r.top   - 8 + window.scrollY) + 'px';
+        spot.style.left   = (r.left  - 8 + window.scrollX) + 'px';
+        spot.style.width  = (r.width  + 16) + 'px';
+        spot.style.height = (r.height + 16) + 'px';
+        document.body.appendChild(spot);
+      }, 300);
     }
   }
 
   // Progress dots
   const dots = TOUR_STEPS.map((_, i) =>
-    `<div class="tour-dot${i===_tourStep?' on':''}" onclick="_tourStep=${i};_showTourCard()"></div>`
+    '<div class="tour-dot' + (i===_tourStep?' on':'') + '" onclick="_tourStep='+i+';_showTourCard()"></div>'
   ).join('');
 
-  // Feature list HTML
+  // Feature list
   const featHtml = step.features.map(f =>
-    `<div class="tour-feature-item"><span class="tour-feature-icon">${f.icon}</span><span>${f.text}</span></div>`
+    '<div class="tour-feature-item"><span class="tour-feature-icon">'+f.icon+'</span><span>'+f.text+'</span></div>'
   ).join('');
 
-  // Card
+  // Card — always centered
   const card = document.createElement('div');
   card.className = 'tour-card';
   card.id = 'tourCard';
-  card.innerHTML = `
-    <div class="tour-natasha-wrap">
-      <img class="tour-natasha-img" src="natasha.png" alt="Natasha" onerror="this.src='https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png';this.style.borderRadius='50%'">
-      <div class="tour-speech">
-        <div class="tour-speech-title">${step.title}</div>
-        <div class="tour-speech-text">${step.speech}</div>
-      </div>
-    </div>
-    <div class="tour-body">
-      ${featHtml ? `<div class="tour-feature-list">${featHtml}</div>` : ''}
-      <div class="tour-progress">${dots}</div>
-      <div class="tour-btns">
-        <span class="tour-step-num">${_tourStep+1} / ${TOUR_STEPS.length}</span>
-        ${_tourStep > 0 ? `<button class="btn btn-g btn-sm" onclick="prevTour()">← Back</button>` : ''}
-        <button class="btn btn-g btn-sm" onclick="endTour()">Skip tour</button>
-        <button class="btn btn-v btn-sm" onclick="advanceTour()">${_tourStep===TOUR_STEPS.length-1?'Done!':'Next →'}</button>
-      </div>
-    </div>`;
+  card.innerHTML =
+    '<div class="tour-natasha-wrap">' +
+      '<img class="tour-natasha-img" src="natasha.png" alt="Natasha" onerror="this.src=&quot;https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png&quot;">' +
+      '<div class="tour-speech">' +
+        '<div class="tour-speech-title">' + step.title + '</div>' +
+        '<div class="tour-speech-text">' + step.speech + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="tour-body">' +
+      (featHtml ? '<div class="tour-feature-list">' + featHtml + '</div>' : '') +
+      '<div class="tour-progress">' + dots + '</div>' +
+      '<div class="tour-btns">' +
+        '<span class="tour-step-num">' + (_tourStep+1) + ' / ' + TOUR_STEPS.length + '</span>' +
+        (_tourStep > 0 ? '<button class="btn btn-g btn-sm" onclick="prevTour()">← Back</button>' : '') +
+        '<button class="btn btn-g btn-sm" onclick="endTour()">Skip</button>' +
+        '<button class="btn btn-v btn-sm" onclick="advanceTour()">' + (_tourStep===TOUR_STEPS.length-1?'Done!':'Next →') + '</button>' +
+      '</div>' +
+    '</div>';
 
   document.body.appendChild(card);
 }
