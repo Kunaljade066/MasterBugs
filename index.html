@@ -978,7 +978,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
   <button class="btn btn-v btn-sm" onclick="applyBulk()">✓ Apply</button>
   <button class="btn btn-g btn-sm" onclick="copyBulkLink()">🔗 Copy Link</button>
   <button class="btn btn-g btn-sm" onclick="copyBulkReport()">📋 Copy Report</button>
-  ${S.user?.role==='admin'?'<button class="btn btn-r btn-sm" onclick="deleteBulkSelected()">🗑 Delete</button>':''}
+  <button class="btn btn-r btn-sm" id="bulkDeleteBtn" onclick="deleteBulkSelected()" style="display:none">🗑 Delete</button>
   <button class="btn btn-g btn-sm" onclick="clearBulk()">✕ Clear</button>
 </div>
 
@@ -2159,6 +2159,8 @@ function onLogin(){
   loadCursorPref();
   loadNatashaPref();
   updatePushMenuLabel();
+  const _bdb = document.getElementById('bulkDeleteBtn');
+  if(_bdb && S.user?.role==='admin') _bdb.style.display='';
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
   initPushNotifications();
