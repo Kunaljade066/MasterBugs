@@ -3857,7 +3857,15 @@ function renderNotifs(){
       </div>
     </div>`).join('')}` : '';
 
-  // Activity log — fetch from server and show who did what
+  // Show loading placeholder for activity immediately
+  const actPlaceholder = '<div id="activityFeed" style="font-family:var(--mono);font-size:10px;color:var(--dim);padding:12px 0">Loading team activity…</div>';
+  if(!watched.length && !S.localNotifs.length) {
+    el.innerHTML = actPlaceholder;
+  } else {
+    el.innerHTML = watchHtml + notifHtml + actPlaceholder;
+  }
+
+  // Then load actual activity
   loadActivity().then(function(activity) {
     var actHtml = '';
     if(activity.length) {
@@ -3880,17 +3888,17 @@ function renderNotifs(){
       }).join('');
     }
 
-    if(!watched.length && !S.localNotifs.length && !activity.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>';
+    const feed = document.getElementById('activityFeed');
+    if(!feed) return; // tab changed while loading
+    if(!activity.length) {
+      feed.innerHTML = watched.length || S.localNotifs.length ? '' :
+        '<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3><p>No activity yet</p></div>';
       return;
     }
-    el.innerHTML = watchHtml + notifHtml + actHtml;
+    feed.innerHTML = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">📋 TEAM ACTIVITY</div>' + actHtml;
   }).catch(function() {
-    if(!watched.length && !S.localNotifs.length) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>';
-    } else {
-      el.innerHTML = watchHtml + notifHtml;
-    }
+    const feed = document.getElementById('activityFeed');
+    if(feed) feed.innerHTML = '';
   });
 }
 function clickNotif(id,bugId){
