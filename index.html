@@ -8298,10 +8298,9 @@ const TOUR_STEPS = [
     speech:'Welcome to BugPulse — your QA command centre! I will walk you through every feature. Click Next to explore each screen!',
     features:[] },
 
-  { tab:'home', target:'#homePieRow', spotPad:20, spotShape:'12px',
+  { tab:'home', target:'#homePieRow', spotPad:8,
     title:'Home — Pie Charts',
     speech:'Your home screen shows 3 live pie charts — bugs by Status, Priority and Pod. They update instantly when bugs are added!',
-    spotCircles:['#pieCardStatus','#pieCardPriority','#pieCardPod'],
     features:[
       {icon:'🥧',text:'Status pie — Open, Bugged, QA Pass, Dev Fixed, Closed and more'},
       {icon:'🎯',text:'Priority pie — Critical, Urgent, High, Medium, Low'},
@@ -8592,33 +8591,13 @@ function _showTourCard() {
         spot.id = 'tourSpotlight';
         const pad = step.spotPad || 5;
         const cs = window.getComputedStyle(el);
-        spot.style.borderRadius = step.spotShape || cs.borderRadius || '8px';
+        spot.style.borderRadius = cs.borderRadius || '12px';
         spot.style.top    = (r.top   - pad + window.scrollY) + 'px';
         spot.style.left   = (r.left  - pad + window.scrollX) + 'px';
         spot.style.width  = (r.width  + pad*2) + 'px';
         spot.style.height = (r.height + pad*2) + 'px';
         document.body.appendChild(spot);
 
-        // Highlight each pie canvas as individual circles
-        if(step.spotCircles) {
-          step.spotCircles.forEach(function(sel, idx) {
-            const ce = document.querySelector(sel);
-            if(!ce) return;
-            const cr = ce.getBoundingClientRect();
-            const cp = 8;
-            const cs2 = document.createElement('div');
-            cs2.id = 'tourSpotCircle'+idx;
-            const cs2br = window.getComputedStyle(ce).borderRadius || '14px';
-            cs2.style.cssText = 'position:fixed;z-index:99999;border-radius:'+cs2br+';pointer-events:none;' +
-              'box-shadow:0 0 0 3px var(--g1),0 0 20px var(--g1);' +
-              'top:'+(cr.top-cp+window.scrollY)+'px;' +
-              'left:'+(cr.left-cp+window.scrollX)+'px;' +
-              'width:'+(cr.width+cp*2)+'px;' +
-              'height:'+(cr.height+cp*2)+'px;' +
-              'transition:all .4s cubic-bezier(.4,0,.2,1)';
-            document.body.appendChild(cs2);
-          });
-        }
       }, 300);
     }
   }
@@ -8656,29 +8635,35 @@ function _showTourCard() {
       '</div>' +
     '</div>';
 
-  // Position card away from the spotlight target
+  // Position card away from spotlight
   if (step.target) {
     setTimeout(() => {
       const el = document.querySelector(step.target);
-      if(el) {
+      const card = document.getElementById('tourCard');
+      if(el && card) {
         const r = el.getBoundingClientRect();
-        const inTopHalf = r.top < window.innerHeight / 2;
-        const card = document.getElementById('tourCard');
-        if(card) {
-          if(inTopHalf) {
-            // Target in top half → show card in bottom half
-            card.style.top = 'auto';
-            card.style.bottom = '5vh';
-            card.style.transform = 'translateX(-50%)';
-          } else {
-            // Target in bottom half → show card in top half
-            card.style.top = '5vh';
-            card.style.bottom = 'auto';
-            card.style.transform = 'translateX(-50%)';
-          }
+        const cardH = card.offsetHeight || 400;
+        const vp = window.innerHeight;
+        const spaceBelow = vp - r.bottom;
+        const spaceAbove = r.top;
+        if(spaceBelow >= cardH + 20) {
+          // Enough space below — put card below spotlight
+          card.style.top = (r.bottom + window.scrollY + 16) + 'px';
+          card.style.bottom = 'auto';
+          card.style.transform = 'translateX(-50%)';
+        } else if(spaceAbove >= cardH + 20) {
+          // Enough space above — put card above spotlight
+          card.style.top = (r.top + window.scrollY - cardH - 16) + 'px';
+          card.style.bottom = 'auto';
+          card.style.transform = 'translateX(-50%)';
+        } else {
+          // Not enough space either side — center it
+          card.style.top = '50%';
+          card.style.bottom = 'auto';
+          card.style.transform = 'translate(-50%,-50%)';
         }
       }
-    }, 420);
+    }, 450);
   }
   document.body.appendChild(card);
 }
@@ -8704,7 +8689,7 @@ function endTour() {
 }
 
 function closeTourUI() {
-  ['tourOverlay','tourSpotlight','tourCard','tourSpotCircle0','tourSpotCircle1','tourSpotCircle2'].forEach(id => {
+  ['tourOverlay','tourSpotlight','tourCard'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.parentNode?.removeChild(el);
   });
