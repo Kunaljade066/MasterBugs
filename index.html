@@ -1182,16 +1182,16 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           </div>
           <div class="home-quick" id="homeQuick"></div>
           <div id="homeBuildsStrip"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0" id="homePieRow">
-            <div id="pieCardStatus" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0;overflow-x:auto;-webkit-overflow-scrolling:touch" id="homePieRow">
+            <div id="pieCardStatus" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px;min-width:220px">
               <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">BY STATUS</div>
               <canvas id="homePieStatus" style="max-height:180px"></canvas>
             </div>
-            <div id="pieCardPriority" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div id="pieCardPriority" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px;min-width:220px">
               <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:12px">BY PRIORITY</div>
               <canvas id="homePiePriority" style="max-height:180px"></canvas>
             </div>
-            <div id="pieCardPod" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div id="pieCardPod" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px;min-width:220px">
               <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">BY POD / TEAM</div>
               <canvas id="homePiePod" style="max-height:180px"></canvas>
             </div>
