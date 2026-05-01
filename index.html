@@ -1183,15 +1183,15 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="home-quick" id="homeQuick"></div>
           <div id="homeBuildsStrip"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0" id="homePieRow">
-            <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div id="pieCardStatus" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
               <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">BY STATUS</div>
               <canvas id="homePieStatus" style="max-height:180px"></canvas>
             </div>
-            <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div id="pieCardPriority" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
               <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:12px">BY PRIORITY</div>
               <canvas id="homePiePriority" style="max-height:180px"></canvas>
             </div>
-            <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
+            <div id="pieCardPod" style="background:var(--bg2);border:1px solid var(--bd);border-radius:14px;padding:16px">
               <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">BY POD / TEAM</div>
               <canvas id="homePiePod" style="max-height:180px"></canvas>
             </div>
@@ -8301,7 +8301,7 @@ const TOUR_STEPS = [
   { tab:'home', target:'#homePieRow', spotPad:20, spotShape:'12px',
     title:'Home — Pie Charts',
     speech:'Your home screen shows 3 live pie charts — bugs by Status, Priority and Pod. They update instantly when bugs are added!',
-    spotCircles:['#homePieStatus','#homePiePriority','#homePiePod'],
+    spotCircles:['#pieCardStatus','#pieCardPriority','#pieCardPod'],
     features:[
       {icon:'🥧',text:'Status pie — Open, Bugged, QA Pass, Dev Fixed, Closed and more'},
       {icon:'🎯',text:'Priority pie — Critical, Urgent, High, Medium, Low'},
@@ -8608,7 +8608,8 @@ function _showTourCard() {
             const cp = 8;
             const cs2 = document.createElement('div');
             cs2.id = 'tourSpotCircle'+idx;
-            cs2.style.cssText = 'position:fixed;z-index:99999;border-radius:50%;pointer-events:none;' +
+            const cs2br = window.getComputedStyle(ce).borderRadius || '14px';
+            cs2.style.cssText = 'position:fixed;z-index:99999;border-radius:'+cs2br+';pointer-events:none;' +
               'box-shadow:0 0 0 3px var(--g1),0 0 20px var(--g1);' +
               'top:'+(cr.top-cp+window.scrollY)+'px;' +
               'left:'+(cr.left-cp+window.scrollX)+'px;' +
