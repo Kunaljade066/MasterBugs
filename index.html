@@ -1881,13 +1881,36 @@ const clearSession=()=>localStorage.removeItem(SK);
 // ── BUG SYNC — polls every 5 min, only when tab is visible ──────────────
 // Reduces KV reads from ~5,760/day to ~288/day per user
 let _syncTimer=null;
-const SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+// ── BroadcastChannel — instant sync between tabs on same browser ─────────────
+const _bc = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('bugpulse_sync') : null;
+
+function broadcastChange(type) {
+  try { _bc?.postMessage({ type, ts: Date.now(), user: S.user?.name }); } catch(e) {}
+}
+
+if(_bc) {
+  _bc.onmessage = function(e) {
+    if(!S.user) return;
+    // Another tab made a change — refresh immediately
+    if(e.data?.type === 'bug_changed') {
+      refreshAll().catch(()=>{});
+    }
+  };
+}
+
+const SYNC_INTERVAL = 8 * 1000; // 8 seconds when active — near-instant updates
 
 function startFastSync(){
   if(_syncTimer) clearInterval(_syncTimer);
   _syncTimer=setInterval(async()=>{
-    if(document.hidden) return;
     if(!S.user?.idToken) return;
+    // Slow poll when tab hidden
+    if(document.hidden) {
+      // Only poll every 60s when hidden
+      if(!window._lastHiddenPoll || Date.now()-window._lastHiddenPoll < 60000) return;
+      window._lastHiddenPoll = Date.now();
+    }
     try{
       const r=await fetch(WORKER+'/bugs',{headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken}});
       if(!r.ok) return; // never touch S.bugs on any error
@@ -5194,6 +5217,7 @@ async function saveBug(){
           sendBugNotification(res?.bug||data, document.getElementById('f-notif-msg')?.value||'');
         }
         logActivity('created', res?.bug?.id||S.editing, (data.title||'').slice(0,80));
+        broadcastChange('bug_changed');
         // Patch 6: post initial comment if provided
         const initComment = document.getElementById('f-init-comment')?.value?.trim();
         if(initComment && res?.bug?.id) {
@@ -5215,7 +5239,7 @@ async function saveBug(){
 async function delBug(id){
   if(S.user?.role!=='admin'){toast('Admin only','err');return;}
   if(!confirm(`Delete ${id}?`))return;
-  try{const _delBug = S.bugs.find(b=>b.id===id); await api(`/bugs/${id}`,'DELETE'); logActivity('deleted', id, (_delBug?.title||'').slice(0,80));toast(`${id} deleted`,'ok');await refreshAll();}
+  try{const _delBug = S.bugs.find(b=>b.id===id); await api(`/bugs/${id}`,'DELETE'); logActivity('deleted', id, (_delBug?.title||'').slice(0,80));broadcastChange('bug_changed');toast(`${id} deleted`,'ok');await refreshAll();}
   catch(e){toast(e.message,'err');}
 }
 function exportCSV(scope) {
