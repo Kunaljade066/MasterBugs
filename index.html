@@ -1713,19 +1713,7 @@ async function initPushNotifications() {
 }
 
 function showPushBanner() {
-  if (Notification.permission !== 'default') return;
-  if (document.getElementById('pushBanner')) return;
-  const b = document.createElement('div');
-  b.id = 'pushBanner';
-  b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.4)';
-  b.innerHTML = `
-    <div style="font-size:18px">🔔</div>
-    <div style="flex:1;color:#fff;font-size:13px;font-weight:600">Enable desktop notifications to get alerted on new bugs, status changes and builds — even when browser is closed.</div>
-    <button onclick="document.getElementById('pushBanner').remove();requestPushPermission()"
-      style="background:#fff;color:#7c3aed;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Allow</button>
-    <button onclick="document.getElementById('pushBanner').remove();try{localStorage.setItem('hwt_push_dismissed','1')}catch(e){}"
-      style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 14px;font-size:12px;cursor:pointer;flex-shrink:0">Not now</button>`;
-  document.body.prepend(b);
+  // Banner removed — native browser prompt handles permission request directly
 }
 
 function urlBase64ToUint8Array(base64String) {
