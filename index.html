@@ -7068,6 +7068,7 @@ async function saveBuildEntry(editVersion) {
       // Email via Resend through worker
       // Pod-specific email &#8212; check pod_emails_<podname> first, fallback to global team_emails
       const podEmailKey = entry.pod ? 'pod_emails_' + entry.pod.toLowerCase().replace(/[^a-z0-9]/g,'_') : '';
+      const legacyEmailKey = entry.pod ? 'jenkins_' + entry.pod.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_emails' : '';
       const podEmails = (podEmailKey && cfg[podEmailKey]) || (legacyEmailKey && cfg[legacyEmailKey]) || '';
       const emailList = podEmails || cfg.team_emails || '';
       if(emailList && emailList.trim()) {
@@ -7949,11 +7950,25 @@ function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedT
   closedToday = closedToday || [];
   const APP = window.location.origin + window.location.pathname;
   const bugLink = id => APP + '?bug=' + id;
-  const totalOpen = S.bugs.filter(b=>!['Closed','Done','QA Pass','Non-Recreatable','Not a bug'].includes(b.status)).length;
+  const totalActive = S.bugs.filter(b=>!['Closed','Non-Recreatable','Not a bug'].includes(b.status)).length;
   const qaPass = resolvedToday.filter(b => b.status === 'QA Pass');
 
+  // Bar chart helpers
+  const BAR = 12;
+  const FULL = String.fromCharCode(9608); // █
+  const EMPTY = String.fromCharCode(9617); // ░
+
+  // Status breakdown
+  const statuses = ['Bugged','QA Pass','Dev Fixed','Non-Recreatable','Not a bug','Closed'];
+  const maxS = Math.max(1, ...statuses.map(s => S.bugs.filter(b=>b.status===s).length));
+  const statusBar = statuses.map(s => {
+    const n = S.bugs.filter(b=>b.status===s).length;
+    if(!n) return '';
+    const f = Math.round(n/maxS*BAR);
+    return (s+'                ').slice(0,16) + ' ' + FULL.repeat(f) + EMPTY.repeat(BAR-f) + ' ' + n;
+  }).filter(Boolean).join('\n');
+
   // Priority breakdown
-  const BAR = 10;
   const prios = ['Critical','Urgent','High','Medium','Low'];
   const openBugs = S.bugs.filter(b=>!['Closed','Done','QA Pass','Non-Recreatable','Not a bug'].includes(b.status));
   const maxP = Math.max(1, ...prios.map(p => openBugs.filter(b=>b.priority===p).length));
@@ -7961,86 +7976,70 @@ function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedT
     const n = openBugs.filter(b=>b.priority===p).length;
     if(!n) return '';
     const f = Math.round(n/maxP*BAR);
-    return '  ' + (p+'          ').slice(0,10) + ' |' + '#'.repeat(f) + '-'.repeat(BAR-f) + '| ' + n;
+    return (p+'          ').slice(0,10) + ' ' + FULL.repeat(f) + EMPTY.repeat(BAR-f) + ' ' + n;
   }).filter(Boolean).join('\n');
 
-  // Assignee breakdown for today's bugs
-  const assigneeMap = {};
-  todayBugs.forEach(b => {
-    const names = (b.assignees||[]).map(a=>a.name).filter(Boolean);
-    if(!names.length) { assigneeMap['Unassigned'] = (assigneeMap['Unassigned']||0)+1; }
-    names.forEach(n => { assigneeMap[n] = (assigneeMap[n]||0)+1; });
-  });
-  const assigneeLines = Object.entries(assigneeMap).sort((a,b)=>b[1]-a[1])
-    .map(([n,c]) => '  ' + n + ': ' + c).join('\n');
-
   const lines = [
-    '📋 QA DAY-END REPORT — ' + dateStr,
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    '',
-    '📊 SUMMARY',
-    '  🐛 Filed Today    : ' + todayBugs.length,
-    '  ✅ QA Pass Today  : ' + qaPass.length,
-    '  🔧 Resolved Today : ' + resolvedToday.length,
-    '  🔒 Closed Today   : ' + closedToday.length,
-    '  🚨 Critical Open  : ' + critOpen.length,
-    '  📂 Total Open     : ' + totalOpen,
+    '📊 BUG REPORT — ' + dateStr,
+    '━━━━━━━━━━━━━━━━━━━━━━━━',
+    '🐛 Filed today  : ' + todayBugs.length,
+    '✅ QA Pass today: ' + qaPass.length,
+    '✅ Resolved     : ' + resolvedToday.length,
+    '🔒 Closed today : ' + closedToday.length,
+    '🚨 Critical open: ' + critOpen.length,
+    '📋 Total active : ' + totalActive,
     '',
   ];
 
-  if(prioBar) {
-    lines.push('📈 OPEN BY PRIORITY');
-    lines.push(prioBar);
-    lines.push('');
-  }
+  if(statusBar) { lines.push('📊 STATUS BREAKDOWN'); lines.push(statusBar); lines.push(''); }
+  if(prioBar)   { lines.push('🎯 OPEN BY PRIORITY'); lines.push(prioBar); lines.push(''); }
 
   if(todayBugs.length) {
-    lines.push('🐛 BUGS FILED TODAY (' + todayBugs.length + ')');
+    lines.push('🐛 BUGS ADDED TODAY (' + todayBugs.length + '):');
     todayBugs.forEach(b => {
       const aNames = (b.assignees||[]).map(a=>a.name).join(', ') || 'Unassigned';
-      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70));
-      lines.push('    Priority: ' + (b.priority||'—') + ' | Status: ' + (b.status||'—') + ' | Dev: ' + aNames);
-      lines.push('    🔗 ' + bugLink(b.id||''));
+      lines.push('• [' + (b.id||'') + '] ' + (b.title||''));
+      lines.push('  Priority: ' + (b.priority||'—') + ' | Status: ' + (b.status||'—') + (b.feature ? ' | Feature: ' + b.feature : ''));
+      lines.push('  Assigned: ' + aNames);
+      lines.push('  🔗 ' + bugLink(b.id||''));
     });
     lines.push('');
   }
 
-  if(resolvedToday.length) {
-    lines.push('✅ RESOLVED TODAY (' + resolvedToday.length + ')');
-    resolvedToday.forEach(b => {
+  if(qaPass.length) {
+    lines.push('✅ QA PASS TODAY (' + qaPass.length + '):');
+    qaPass.forEach(b => {
       const aNames = (b.assignees||[]).map(a=>a.name).join(', ') || '—';
-      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70) + ' — ' + (b.status||''));
-      lines.push('    Dev: ' + aNames + ' | 🔗 ' + bugLink(b.id||''));
+      lines.push('• [' + (b.id||'') + '] ' + (b.title||''));
+      lines.push('  Priority: ' + (b.priority||'—') + (b.feature ? ' | Feature: ' + b.feature : ''));
+      lines.push('  🔗 ' + bugLink(b.id||''));
     });
     lines.push('');
   }
 
   if(critOpen.length) {
-    lines.push('🚨 CRITICAL/URGENT STILL OPEN (' + critOpen.length + ')');
+    lines.push('🚨 CRITICAL/URGENT OPEN (' + critOpen.length + '):');
     critOpen.slice(0,10).forEach(b => {
       const aNames = (b.assignees||[]).map(a=>a.name).join(', ') || 'Unassigned';
-      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70));
-      lines.push('    ' + (b.priority||'') + ' | Dev: ' + aNames + ' | 🔗 ' + bugLink(b.id||''));
+      lines.push('• [' + (b.id||'') + '] ' + (b.title||''));
+      lines.push('  ' + (b.priority||'') + ' | Assigned: ' + aNames);
+      lines.push('  🔗 ' + bugLink(b.id||''));
     });
     lines.push('');
   }
 
   if(closedToday.length) {
-    lines.push('🔒 CLOSED TODAY (' + closedToday.length + ')');
+    lines.push('🔒 CLOSED TODAY:');
     closedToday.forEach(b => {
-      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70));
-      lines.push('    🔗 ' + bugLink(b.id||''));
+      lines.push('• [' + (b.id||'') + '] ' + (b.title||'') + ' → ' + (b.status||'Closed'));
+      lines.push('  🔗 ' + bugLink(b.id||''));
     });
     lines.push('');
   }
 
-  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  lines.push('🔗 BugPulse: ' + APP);
-  lines.push('Generated by BugPulse at ' + new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST');
-
+  lines.push('Generated by BugPulse · ' + new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}));
   return lines.join('\n');
 }
-
 function getEODTeamFilter() {
   return document.getElementById('eod-team-filter')?.value || '';
 }
@@ -8136,7 +8135,25 @@ async function sendEODToGChat() {
     if (chunks.length > 1) await new Promise(r => setTimeout(r, 500));
   }
   if (allSent) toast('EOD report sent to GChat ✓','ok');
-  else toast('GChat send failed','err');
+  else toast('GChat send failed — check console','err');
+
+  // Also send to pod-specific email
+  const teamSlug = team ? team.toLowerCase().replace(/[^a-z0-9]/g,'_') : '';
+  const eodEmailKey = teamSlug ? 'pod_emails_' + teamSlug : '';
+  const eodEmailList = (eodEmailKey && cfg[eodEmailKey]) || cfg.team_emails || '';
+  if(eodEmailList) {
+    const recipients = eodEmailList.split(',').map(e=>e.trim()).filter(Boolean);
+    const subject = '[BugPulse] EOD Report' + (team ? ' - ' + team : '') + ' - ' + new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'});
+    try {
+      await api('/send-email','POST',{
+        to: recipients,
+        subject,
+        html: '<pre style="font-family:monospace;background:#0d0d20;color:#eeeef8;padding:20px;white-space:pre-wrap">' + esc(txt) + '</pre>',
+        text: txt
+      });
+      toast('EOD also emailed ✓','ok');
+    } catch(e) { console.warn('[eod email]',e.message); }
+  }
 }
 
 async function testWebhook() {
