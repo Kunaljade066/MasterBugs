@@ -7947,27 +7947,100 @@ async function sendSlackWebhook(text, blocks) {
 
 function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday) {
   closedToday = closedToday || [];
-  const bugLink = id => (S.cfg?.app_url || window.location.origin) + '?bug=' + id;
+  const APP = window.location.origin + window.location.pathname;
+  const bugLink = id => APP + '?bug=' + id;
+  const totalOpen = S.bugs.filter(b=>!['Closed','Done','QA Pass','Non-Recreatable','Not a bug'].includes(b.status)).length;
+  const qaPass = resolvedToday.filter(b => b.status === 'QA Pass');
+
+  // Priority breakdown
+  const BAR = 10;
+  const prios = ['Critical','Urgent','High','Medium','Low'];
+  const openBugs = S.bugs.filter(b=>!['Closed','Done','QA Pass','Non-Recreatable','Not a bug'].includes(b.status));
+  const maxP = Math.max(1, ...prios.map(p => openBugs.filter(b=>b.priority===p).length));
+  const prioBar = prios.map(p => {
+    const n = openBugs.filter(b=>b.priority===p).length;
+    if(!n) return '';
+    const f = Math.round(n/maxP*BAR);
+    return '  ' + (p+'          ').slice(0,10) + ' |' + '#'.repeat(f) + '-'.repeat(BAR-f) + '| ' + n;
+  }).filter(Boolean).join('\n');
+
+  // Assignee breakdown for today's bugs
+  const assigneeMap = {};
+  todayBugs.forEach(b => {
+    const names = (b.assignees||[]).map(a=>a.name).filter(Boolean);
+    if(!names.length) { assigneeMap['Unassigned'] = (assigneeMap['Unassigned']||0)+1; }
+    names.forEach(n => { assigneeMap[n] = (assigneeMap[n]||0)+1; });
+  });
+  const assigneeLines = Object.entries(assigneeMap).sort((a,b)=>b[1]-a[1])
+    .map(([n,c]) => '  ' + n + ': ' + c).join('\n');
+
   const lines = [
     '📋 QA DAY-END REPORT — ' + dateStr,
-    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '',
-    '🐛 BUGS FILED TODAY (' + todayBugs.length + ')',
+    '📊 SUMMARY',
+    '  🐛 Filed Today    : ' + todayBugs.length,
+    '  ✅ QA Pass Today  : ' + qaPass.length,
+    '  🔧 Resolved Today : ' + resolvedToday.length,
+    '  🔒 Closed Today   : ' + closedToday.length,
+    '  🚨 Critical Open  : ' + critOpen.length,
+    '  📂 Total Open     : ' + totalOpen,
+    '',
   ];
-  todayBugs.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.priority||'') + ' | ' + (b.status||'')));
-  lines.push('');
-  lines.push('✅ RESOLVED TODAY (' + resolvedToday.length + ')');
-  resolvedToday.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.status||'')));
-  lines.push('');
-  lines.push('🚨 CRITICAL/URGENT OPEN (' + critOpen.length + ')');
-  critOpen.slice(0,10).forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.priority||'')));
-  lines.push('');
-  lines.push('📊 SUMMARY');
-  lines.push('  Filed Today: ' + todayBugs.length);
-  lines.push('  Resolved Today: ' + resolvedToday.length);
-  lines.push('  Closed Today: ' + closedToday.length);
-  lines.push('  Critical Open: ' + critOpen.length);
-  lines.push('  Total Open: ' + S.bugs.filter(b=>!['Closed','Done','QA Pass'].includes(b.status)).length);
+
+  if(prioBar) {
+    lines.push('📈 OPEN BY PRIORITY');
+    lines.push(prioBar);
+    lines.push('');
+  }
+
+  if(todayBugs.length) {
+    lines.push('🐛 BUGS FILED TODAY (' + todayBugs.length + ')');
+    todayBugs.forEach(b => {
+      const aNames = (b.assignees||[]).map(a=>a.name).join(', ') || 'Unassigned';
+      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70));
+      lines.push('    Priority: ' + (b.priority||'—') + ' | Status: ' + (b.status||'—') + ' | Dev: ' + aNames);
+      lines.push('    🔗 ' + bugLink(b.id||''));
+    });
+    lines.push('');
+  }
+
+  if(resolvedToday.length) {
+    lines.push('✅ RESOLVED TODAY (' + resolvedToday.length + ')');
+    resolvedToday.forEach(b => {
+      const aNames = (b.assignees||[]).map(a=>a.name).join(', ') || '—';
+      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70) + ' — ' + (b.status||''));
+      lines.push('    Dev: ' + aNames + ' | 🔗 ' + bugLink(b.id||''));
+    });
+    lines.push('');
+  }
+
+  if(critOpen.length) {
+    lines.push('🚨 CRITICAL/URGENT STILL OPEN (' + critOpen.length + ')');
+    critOpen.slice(0,10).forEach(b => {
+      const aNames = (b.assignees||[]).map(a=>a.name).join(', ') || 'Unassigned';
+      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70));
+      lines.push('    ' + (b.priority||'') + ' | Dev: ' + aNames + ' | 🔗 ' + bugLink(b.id||''));
+    });
+    lines.push('');
+  }
+
+  if(closedToday.length) {
+    lines.push('🔒 CLOSED TODAY (' + closedToday.length + ')');
+    closedToday.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70)));
+    lines.push('');
+  }
+
+  if(assigneeLines) {
+    lines.push('👤 BUGS FILED BY DEV/REPORTER');
+    lines.push(assigneeLines);
+    lines.push('');
+  }
+
+  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  lines.push('🔗 BugPulse: ' + APP);
+  lines.push('Generated by BugPulse at ' + new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) + ' IST');
+
   return lines.join('\n');
 }
 
