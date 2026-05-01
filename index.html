@@ -2338,33 +2338,32 @@ function onLogin(){
   }
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
-  // Welcome Natasha — show after page settles, not clashing with any browser popups
-  setTimeout(() => {
-    const firstName = (S.user?.name||'').split(' ')[0] || 'there';
-    showNatasha('Hey ' + firstName + '! Welcome back 🏏', 'happy');
-  }, 4000);
+
   initPushNotifications();
-  // Auto-subscribe if already granted — silently re-subscribe in background
-  if('Notification' in window && Notification.permission === 'granted') {
-    // Silently subscribe without requesting permission again
-    navigator.serviceWorker?.ready.then(async reg => {
-      try {
-        const r = await fetch(WORKER + '/push/vapid-public-key');
-        const keyRes = await r.json();
-        if(!keyRes?.key) return;
-        const existing = await reg.pushManager.getSubscription();
-        if(existing) return; // already subscribed
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(keyRes.key),
-        });
-        await api('/push/subscribe', 'POST', { subscription: sub }).catch(()=>{});
-      } catch(e) {}
-    }).catch(()=>{});
+  // Push notifications — request permission on login, works natively
+  if('Notification' in window) {
+    if(Notification.permission === 'granted') {
+      // Already granted — silently re-subscribe
+      navigator.serviceWorker?.ready.then(async reg => {
+        try {
+          const r = await fetch(WORKER + '/push/vapid-public-key');
+          const keyRes = await r.json();
+          if(!keyRes?.key) return;
+          const existing = await reg.pushManager.getSubscription();
+          if(existing) return;
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keyRes.key),
+          });
+          await api('/push/subscribe', 'POST', { subscription: sub }).catch(()=>{});
+        } catch(e) {}
+      }).catch(()=>{});
+    } else if(Notification.permission === 'default') {
+      // Ask natively after 2s — browser shows allow/block popup
+      setTimeout(() => requestPushPermission(), 2000);
+    }
     updatePushMenuLabel();
   }
-  // If permission never asked yet — show our own banner instead of native popup
-  // The banner is already in the HTML (push enable banner)
   refreshAll().then(()=>{
     startFastSync();
     updateOfflineBanner();
