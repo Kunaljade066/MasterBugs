@@ -4486,6 +4486,18 @@ function dismissNatasha(){
   setTimeout(()=>{intro.classList.add('gone');wrap.style.animation='';},320);
 }
 
+// Dismiss Natasha on any tap outside her bubble
+(function() {
+  function _onAnyTap(e) {
+    var intro = document.getElementById('natashaIntro');
+    if(!intro || intro.classList.contains('gone')) return;
+    if(intro.contains(e.target)) return;
+    dismissNatasha();
+  }
+  document.addEventListener('click', _onAnyTap, true);
+  document.addEventListener('touchstart', _onAnyTap, {capture:true, passive:true});
+})();
+
 function syncMobileNav(v){
   const map={home:'mn-home',backlog:'mn-backlog',board:'mn-board',sprints:'mn-sprints',features:null,dashboard:'mn-dashboard',notifs:'mn-notifs',clickup:'mn-clickup',import:null,builds:'mn-builds'};
   document.querySelectorAll('.mn-item').forEach(el=>el.classList.remove('on'));
