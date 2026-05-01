@@ -6771,7 +6771,7 @@ function buildPageCard(b) {
           ${!b.is_current?`<button class="btn btn-g btn-xs" onclick="setCurrentBuild('${vEsc}')">📍 Set Current</button>`:''}
           <button class="btn btn-g btn-xs" onclick="openReleaseNotes('${vEsc}')">🚀 Notes</button>
           <button class="btn btn-g btn-xs" onclick="editBuildEntry('${vEsc}')">✏️</button>
-          <button class="btn btn-r btn-xs" onclick="deleteBuildEntry('${vEsc}')">🗑</button>
+          ${S.user?.role==='admin' ? `<button class="btn btn-r btn-xs" onclick="deleteBuildEntry('${vEsc}')">🗑 Delete</button>` : `<button class="btn btn-r btn-xs" onclick="deleteBuildEntryAuth('${vEsc}')">🗑 Delete</button>`}
         </div>
       </div>
       <div class="bpc-stats">
@@ -7487,15 +7487,32 @@ async function setCurrentBuild(version) {
   } catch(e) { toast(e.message,'err'); }
 }
 
-async function deleteBuildEntry(version) {
-  if (!confirm(`Remove "${version}" from build registry?\n\nBugs tagged to this build will NOT be deleted.`)) return;
+async function _doDeleteBuild(version) {
   try {
     let registry = await loadBuildsRegistry();
-    registry = registry.filter(r=>r.version!==version);
+    registry = registry.filter(r => r.version !== version);
     await saveBuildsRegistry(registry);
-    toast(`${version} removed`,'ok');
+    toast(version + ' removed', 'ok');
     renderBuildsPage();
-  } catch(e) { toast(e.message,'err'); }
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function deleteBuildEntry(version) {
+  // Admin direct delete — no password needed
+  if (!confirm('Remove "' + version + '" from build registry?\n\nBugs tagged to this build will NOT be deleted.')) return;
+  await _doDeleteBuild(version);
+}
+
+async function deleteBuildEntryAuth(version) {
+  // Non-admin — require password
+  const pwd = prompt('Enter admin password to delete build "' + version + '":');
+  if (pwd === null) return; // cancelled
+  if (pwd !== 'admin') {
+    toast('Incorrect password — delete cancelled', 'err');
+    return;
+  }
+  if (!confirm('Remove "' + version + '" from build registry?\n\nBugs tagged to this build will NOT be deleted.')) return;
+  await _doDeleteBuild(version);
 }
 
 function filterBugsByBuild(version) {
