@@ -3857,11 +3857,41 @@ function renderNotifs(){
       </div>
     </div>`).join('')}` : '';
 
-  if(!watched.length && !S.localNotifs.length) {
-    el.innerHTML=`<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>`;
-    return;
-  }
-  el.innerHTML = watchHtml + notifHtml;
+  // Activity log — fetch from server and show who did what
+  loadActivity().then(function(activity) {
+    var actHtml = '';
+    if(activity.length) {
+      actHtml = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px;margin-top:4px">📋 TEAM ACTIVITY</div>';
+      actHtml += activity.map(function(a) {
+        var icon = a.action==='created'?'🐛':a.action==='deleted'?'🗑':a.action==='status_changed'?'🔄':a.action==='updated'?'✏️':'📌';
+        var actionLabel = a.action==='created'?'logged a bug':a.action==='deleted'?'deleted a bug':a.action==='status_changed'?'changed status':a.action==='updated'?'edited a bug':'did something';
+        var time = a.created_ts ? new Date(a.created_ts).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+        var avatar = a.user_picture
+          ? '<img src="'+a.user_picture+'" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bd2)">'
+          : '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px">'+icon+'</div>';
+        var onclick = a.bug_id ? 'openDetail(\'' + a.bug_id + '\')' : '';
+        return '<div class="notif-item" style="cursor:'+(a.bug_id?'pointer':'default')+'" onclick="'+onclick+'">' +
+          '<div style="flex-shrink:0">'+avatar+'</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div class="notif-title"><b>'+esc(a.user_name||'Someone')+'</b> '+actionLabel+'</div>' +
+            '<div class="notif-meta">'+esc(a.detail||'')+' · '+time+'</div>' +
+            (a.bug_id ? '<div style="font-family:var(--mono);font-size:9px;color:var(--g1);margin-top:3px">'+esc(a.bug_id)+'</div>' : '') +
+          '</div></div>';
+      }).join('');
+    }
+
+    if(!watched.length && !S.localNotifs.length && !activity.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>';
+      return;
+    }
+    el.innerHTML = watchHtml + notifHtml + actHtml;
+  }).catch(function() {
+    if(!watched.length && !S.localNotifs.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3></div>';
+    } else {
+      el.innerHTML = watchHtml + notifHtml;
+    }
+  });
 }
 function clickNotif(id,bugId){
   const n=S.localNotifs.find(x=>x.id==id);if(n){n.read=true;saveNotifs();updateNotifBadge();}
@@ -5049,9 +5079,11 @@ async function saveBug(){
       if(assignees.length)addNotif('Assignees updated',prev.title,S.editing);
       if(data.status!==prev.status){
         addNotif(`Status: ${prev.title}`,`${prev.status} → ${data.status}`,S.editing);
+        logActivity('status_changed', S.editing, prev.status + ' → ' + data.status + ' | ' + (prev?.title||'').slice(0,60));
         setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,prev.title);showNatasha(msg,mood);},800);
       }
       toast('Updated ✓','ok');
+      logActivity('updated', S.editing, 'Status: ' + data.status + ' | ' + (prev?.title||'').slice(0,60));
       btn.disabled=false;btn.innerHTML='💾 SAVE';
       closePanel();
       const idx=S.bugs.findIndex(b=>b.id===S.editing);
@@ -5135,6 +5167,7 @@ async function saveBug(){
         if(document.getElementById('notifToggle')?.classList.contains('on')) {
           sendBugNotification(res?.bug||data, document.getElementById('f-notif-msg')?.value||'');
         }
+        logActivity('created', res?.bug?.id||S.editing, (data.title||'').slice(0,80));
         // Patch 6: post initial comment if provided
         const initComment = document.getElementById('f-init-comment')?.value?.trim();
         if(initComment && res?.bug?.id) {
@@ -5156,7 +5189,7 @@ async function saveBug(){
 async function delBug(id){
   if(S.user?.role!=='admin'){toast('Admin only','err');return;}
   if(!confirm(`Delete ${id}?`))return;
-  try{await api(`/bugs/${id}`,'DELETE');toast(`${id} deleted`,'ok');await refreshAll();}
+  try{const _delBug = S.bugs.find(b=>b.id===id); await api(`/bugs/${id}`,'DELETE'); logActivity('deleted', id, (_delBug?.title||'').slice(0,80));toast(`${id} deleted`,'ok');await refreshAll();}
   catch(e){toast(e.message,'err');}
 }
 function exportCSV(scope) {
@@ -8399,6 +8432,28 @@ async function saveDropdownChanges() {
   populateDropdowns();
   closePanel();
   toast('Dropdowns saved ✓', 'ok');
+}
+
+
+// ── Activity Log — shared across all users ───────────────────────────────────
+async function logActivity(action, bugId, detail) {
+  try {
+    await api('/activity', 'POST', {
+      action,
+      bug_id: bugId || '',
+      detail: detail || '',
+      user_name: S.user?.name || 'Unknown',
+      user_email: S.user?.email || '',
+      user_picture: S.user?.picture || '',
+    });
+  } catch(e) {} // fail silently — activity log is best-effort
+}
+
+async function loadActivity() {
+  try {
+    const d = await api('/activity');
+    return d.activity || [];
+  } catch(e) { return []; }
 }
 
 // ── Webhook config cache ──────────────────────────────────────────────────────
