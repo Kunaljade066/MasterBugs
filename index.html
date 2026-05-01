@@ -1123,7 +1123,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="pm-item" onclick="toggleCursorPref()" title="Toggle cricket bat / system cursor"><span class="pm-icon" id="cursorPrefIcon">&#128433;</span> <span id="cursorPrefLabel">Default Cursor</span></div>
           <div class="pm-divider"></div>
           <div class="pm-item" onclick="refreshAll();closeProfileMenu()"><span class="pm-icon">&#8635;</span> Refresh Data</div>
-          <div class="pm-item" onclick="startTour(true);closeProfileMenu()"><span class="pm-icon">&#127891;</span> Feature Tour</div>
+          <div class="pm-item" onclick="showCurrentTabTip();closeProfileMenu()"><span class="pm-icon">&#127891;</span> Feature Tour</div>
           <div class="pm-item" onclick="showNatasha();closeProfileMenu()"><span class="pm-icon">&#127951;</span> Say Hi to Natasha</div>
           <div class="pm-item" onclick="toggleNatashaPref();closeProfileMenu()"><span class="pm-icon" id="natashaPrefIcon">&#128277;</span> <span id="natashaPrefLabel">Disable Natasha</span></div>
           <div class="pm-item" id="pmPushToggle" onclick="togglePushFromMenu();closeProfileMenu()"><span class="pm-icon">&#128276;</span> <span id="pmPushLabel">Enable Notifications</span></div>
@@ -3007,8 +3007,7 @@ function goTab(v){
   if(v!=='backlog')closeInlineDrawer();
   S.view=v;
   try { sessionStorage.setItem('hwt_tab', v); } catch(e) {}
-  // Show contextual tip on first visit to each tab
-  if(v !== 'home') setTimeout(() => showTabTip(v), 600);
+  // Contextual tips shown via Full Tour button, not auto
   // Push to browser history so back button works
   try {
     const url = new URL(window.location.href);
@@ -8678,7 +8677,10 @@ function showTabTip(tabName) {
   const fullBtn = document.createElement('button');
   fullBtn.textContent = 'Full Tour';
   fullBtn.style.cssText = 'font-family:var(--mono);font-size:10px;background:none;border:1px solid var(--bd);color:var(--dim);padding:5px 10px;border-radius:7px;cursor:pointer';
-  fullBtn.onclick = function() { startTour(true); };
+  fullBtn.onclick = function() {
+    document.getElementById('tabTipCard')?.remove();
+    startTour(true);
+  };
   const gotBtn = document.createElement('button');
   gotBtn.textContent = 'Got it!';
   gotBtn.style.cssText = 'font-family:var(--mono);font-size:10px;background:var(--g1);border:none;color:#fff;padding:6px 16px;border-radius:7px;cursor:pointer;font-weight:700';
@@ -8692,6 +8694,21 @@ function showTabTip(tabName) {
 
   // Auto-dismiss after 8 seconds
   setTimeout(() => { document.getElementById('tabTipCard')?.remove(); }, 8000);
+}
+
+
+function showCurrentTabTip() {
+  // Show tip for current tab, ignoring seen state
+  const tab = S.view || 'backlog';
+  if(TAB_TIPS[tab]) {
+    // Temporarily clear seen so it shows
+    const seen = getTipsSeen();
+    delete seen[tab];
+    try { localStorage.setItem(TIP_KEY, JSON.stringify(seen)); } catch(e) {}
+    showTabTip(tab);
+  } else {
+    startTour(true);
+  }
 }
 
 const TOUR_KEY = 'hwt_tour_done_v1';
@@ -8762,9 +8779,10 @@ function startTour(force) {
   try { if (!force && localStorage.getItem(TOUR_KEY)) return; } catch(e) {}
   _tourStep = 0;
   _tourActive = true;
-  // Hide Natasha during tour
+  // Hide Natasha and any tab tip during tour
   const nIntro = document.getElementById('natashaIntro');
   if(nIntro) nIntro.style.display = 'none';
+  document.getElementById('tabTipCard')?.remove();
   showTourStep();
 }
 
