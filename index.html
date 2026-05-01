@@ -2701,6 +2701,30 @@ function populateMFDropdowns() {
   Object.keys(MF_STATE).forEach(k => updateMFBadge(k));
 }
 
+// Handle browser back/forward — restore tab
+window.addEventListener('popstate', (e) => {
+  if(!S.user) return;
+  const tab = e.state?.tab || new URL(window.location.href).searchParams.get('tab') || 'home';
+  // Use internal tab switch without pushing new history entry
+  S.view = tab;
+  try { sessionStorage.setItem('hwt_tab', tab); } catch(e) {}
+  ['home','backlog','board','sprints','features','dashboard','notifs','clickup','import','builds'].forEach(n => {
+    const el = document.getElementById('v-'+n);
+    if(el) el.style.display = n===tab ? '' : 'none';
+    const tb = document.getElementById('tt-'+n);
+    if(tb) tb.classList.toggle('on', n===tab);
+  });
+  // Trigger tab-specific rendering
+  if(tab==='clickup' && _cuLoaded) cuApplyFilters();
+  else if(tab==='board') renderBoard();
+  else if(tab==='home') { renderHome(); setTimeout(renderHomePieCharts,80); }
+  else if(tab==='dashboard') renderDashboard();
+  else if(tab==='sprints') renderSprints();
+  else if(tab==='features') renderFeatures();
+  else if(tab==='builds') renderBuildsPage();
+  else if(tab==='backlog') renderTable();
+});
+
 // ══════════════════════════════════════════
 // DATE FILTER + FILTER STATS
 // ══════════════════════════════════════════
@@ -2967,6 +2991,12 @@ function goTab(v){
   if(v!=='backlog')closeInlineDrawer();
   S.view=v;
   try { sessionStorage.setItem('hwt_tab', v); } catch(e) {}
+  // Push to browser history so back button works
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', v);
+    history.pushState({ tab: v }, '', url.toString());
+  } catch(e) {}
   ['home','backlog','board','sprints','features','dashboard','notifs','clickup','import','builds'].forEach(n=>{
     const el=document.getElementById('v-'+n);if(el)el.style.display=n===v?'':'none';
     document.getElementById('tt-'+n)?.classList.toggle('on',n===v);
@@ -5719,6 +5749,19 @@ const CU_TOKEN = 'pk_194617170_NZZKCEMOLFHZOYLIWV9EF6D6T6KDB42X';
 const CU_API   = 'https://api.clickup.com/api/v2';
 let _cuTasks = [], _cuFiltered = [], _cuLists = [], _cuLoaded = false, _cuView = 'list';
 
+// Restore ClickUp cache from localStorage
+(function() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('hwt_cu_cache') || 'null');
+    if(cached && cached.ts && Date.now() - cached.ts < 4 * 3600 * 1000) {
+      // Cache valid for 4 hours
+      _cuTasks = cached.tasks || [];
+      _cuLists = cached.lists || [];
+      _cuLoaded = true;
+    }
+  } catch(e) {}
+})();
+
 // ── ClickUp localStorage cache ──────────────────────────
 const CU_CACHE_KEY = 'hwt_cu_cache_v1';
 const CU_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
@@ -5923,6 +5966,10 @@ async function loadClickUp(force) {
     }));
 
     _cuLoaded = true;
+    // Save to localStorage so data persists (4 hour cache)
+    try {
+      localStorage.setItem('hwt_cu_cache', JSON.stringify({tasks:_cuTasks, lists:_cuLists, ts:Date.now()}));
+    } catch(e) {}
     cuSaveCache(teams[0].name);
     cuBuildFilters();
     _cuFiltered = [..._cuTasks];
@@ -5957,7 +6004,13 @@ function cuBuildFilters() {
   if(aSel) aSel.innerHTML='<option value="">All Assignees</option>'+Object.entries(aMap).map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('');
 
   // Spaces/Pods
-  const spaces=[...new Set(_cuTasks.map(t=>t._spaceName).filter(Boolean))].sort();
+  // Populate spaces from spaceName + folderName (covers Openers, Middle Order etc.)
+  const spaceSet = new Set();
+  _cuTasks.forEach(t => {
+    if(t._spaceName) spaceSet.add(t._spaceName);
+    if(t._folderName && t._folderName !== 'hidden') spaceSet.add(t._folderName);
+  });
+  const spaces = [...spaceSet].sort();
   const spSel=document.getElementById('cu-space-sel');
   if(spSel) spSel.innerHTML='<option value="">All Spaces/Pods</option>'+spaces.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
 
@@ -5989,21 +6042,27 @@ function cuApplyFilters() {
   const toTs   = dt ? new Date(dt).getTime() + 86399999 : Infinity;
 
   _cuFiltered = _cuTasks.filter(t => {
-    if(spv && (t._spaceName||t._spaceId||'') !== spv) return false;
+    // Space filter — match against space name, list name, folder name
+    if(spv) {
+      const spvl = spv.toLowerCase();
+      const matches = [t._spaceName, t._listName, t._folderName]
+        .some(v => v && String(v).toLowerCase().includes(spvl));
+      if(!matches) return false;
+    }
     if(lv  && t._listId !== lv) return false;
-    if(sv  && (t.status?.status||'') !== sv) return false;
-    if(pv  && (t.priority?.priority||'') !== pv) return false;
+    if(sv  && (t.status?.status||'').toLowerCase() !== sv.toLowerCase()) return false;
+    if(pv  && (t.priority?.priority||'').toLowerCase() !== pv.toLowerCase()) return false;
     if(av  && !(t.assignees||[]).some(a => String(a.id) === String(av))) return false;
     if(tv  && !(t.tags||[]).some(tag => tag.name === tv)) return false;
-    // Date filter on due date
     if(fromTs || toTs < Infinity) {
       const due = t.due_date ? parseInt(t.due_date) : 0;
       if(!due || due < fromTs || due > toTs) return false;
     }
     if(q) {
-      const hay = [t.name, t.custom_id, t.id, t.status?.status,
-        (t.assignees||[]).map(a => a.username||a.email).join(' '),
-        t._listName, t._spaceName,
+      const hay = [
+        t.name, t.custom_id, t.id, t.status?.status,
+        (t.assignees||[]).map(a => (a.username||a.email||a.initials||'')).join(' '),
+        t._listName, t._spaceName, t._folderName,
         (t.tags||[]).map(tag => tag.name).join(' '),
         t.description||''
       ].join(' ').toLowerCase();
