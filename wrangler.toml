@@ -1,11 +1,8 @@
 name = "bugpulse-worker"
-main = "worker.js"
+main = "sw.js"   # ✅ FIX HERE
 compatibility_date = "2024-01-01"
 
-[[d1_databases]]
-binding = "DB"
-database_name = "bugpulse-db"
-database_id = "5dcb154d-6c6d-461d-852c-700d7e5ce9ac"
+account_id = "249926b229fd248bb245cfa8da5c4ba0"
 
 [triggers]
 crons = ["* * * * *"]
