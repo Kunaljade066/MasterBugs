@@ -3822,83 +3822,97 @@ function renderDashboard(){
 // NOTIFICATIONS
 // ══════════════════════════════════════════
 function renderNotifs(){
-  loadNotifs();const el=document.getElementById('notifsWrap');if(!el)return;
-  // Show push enable button if not granted
+  loadNotifs();
+  const el = document.getElementById('notifsWrap');
+  if(!el) return;
+
+  // Push enable button
   const pushBtn = document.getElementById('pushEnableBtn');
   if(pushBtn) pushBtn.style.display = (('Notification' in window) && Notification.permission !== 'granted') ? '' : 'none';
 
-  // Watchlist section
+  // Build left panel — watchlist + personal notifs
   const watched = getWatchedBugs();
-  const watchHtml = watched.length ? `
-    <div style="margin-bottom:18px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">👁 WATCHLIST (${watched.length})</div>
-      ${watched.map(b=>`
-        <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openDetail('${b.id}')">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(b.title||'')}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">${esc(b.id)} · ${pChip(b.priority)} ${stChip(b.status)}</div>
-          </div>
-          <button onclick="event.stopPropagation();toggleWatch('${b.id}');renderNotifs()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;font-family:var(--mono)">✕ Unwatch</button>
-        </div>`).join('')}
-    </div>` : '';
 
-  const notifHtml = S.localNotifs.length ? `
-    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:10px">🔔 NOTIFICATIONS</div>
-    ${S.localNotifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" onclick="clickNotif(${n.id},'${n.bugId||''}')">
-      <div style="flex-shrink:0;margin-top:3px">${n.read?'<div style="width:7px;height:7px"></div>':'<div class="notif-dot"></div>'}</div>
-      <div style="flex:1;min-width:0">
-        <div class="notif-title">${esc(n.title||'')}</div>
-        <div class="notif-meta">${esc(n.body||'')} · ${n.ts}</div>
-        ${n.bugId?`<div style="margin-top:5px;display:flex;gap:6px;align-items:center">
-          <span style="font-family:var(--mono);font-size:9px;color:var(--g1)">${esc(n.bugId)}</span>
-          <button onclick="event.stopPropagation();navigator.clipboard.writeText('${APP_URL}?bug=${n.bugId}').then(()=>toast('Link copied ✓','ok'))" style="background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.25);color:var(--g2);font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:6px;cursor:pointer">🔗 Copy Link</button>
-        </div>`:''}
-      </div>
-    </div>`).join('')}` : '';
+  const watchHtml = watched.length ? '<div style="margin-bottom:18px">' +
+    '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">👁 WATCHLIST (' + watched.length + ')</div>' +
+    watched.map(b =>
+      '<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openDetail(\'' + b.id + '\')">' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(b.title||'') + '</div>' +
+          '<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">' + esc(b.id) + ' · ' + pChip(b.priority) + ' ' + stChip(b.status) + '</div>' +
+        '</div>' +
+        '<button onclick="event.stopPropagation();toggleWatch(\'' + b.id + '\');renderNotifs()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;font-family:var(--mono)">✕</button>' +
+      '</div>'
+    ).join('') + '</div>' : '';
 
-  // Show loading placeholder for activity immediately
-  const actPlaceholder = '<div id="activityFeed" style="font-family:var(--mono);font-size:10px;color:var(--dim);padding:12px 0">Loading team activity…</div>';
-  if(!watched.length && !S.localNotifs.length) {
-    el.innerHTML = actPlaceholder;
-  } else {
-    el.innerHTML = watchHtml + notifHtml + actPlaceholder;
-  }
+  const notifHtml = S.localNotifs.length ?
+    '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:10px">🔔 MY NOTIFICATIONS</div>' +
+    S.localNotifs.map(n =>
+      '<div class="notif-item ' + (n.read?'':'unread') + '" onclick="clickNotif(' + n.id + ',\'' + (n.bugId||'') + '\')">' +
+        '<div style="flex-shrink:0;margin-top:3px">' + (n.read ? '<div style="width:7px;height:7px"></div>' : '<div class="notif-dot"></div>') + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div class="notif-title">' + esc(n.title||'') + '</div>' +
+          '<div class="notif-meta">' + esc(n.body||'') + ' · ' + n.ts + '</div>' +
+          (n.bugId ? '<span style="font-family:var(--mono);font-size:9px;color:var(--g1)">' + esc(n.bugId) + '</span>' : '') +
+        '</div>' +
+      '</div>'
+    ).join('') : '';
 
-  // Then load actual activity
+  // Layout: 2 columns on desktop, stacked on mobile
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">' +
+      // LEFT — personal notifs + watchlist
+      '<div>' +
+        '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">🔔 MY ALERTS</div>' +
+        (watchHtml || '') +
+        (notifHtml || '') +
+        (!watched.length && !S.localNotifs.length ? '<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:20px 0 0;text-align:center">No personal alerts yet</div>' : '') +
+        (S.localNotifs.length ? '<button onclick="markAllRead()" style="margin-top:10px;font-family:var(--mono);font-size:10px;background:none;border:1px solid var(--bd);color:var(--dim);padding:4px 10px;border-radius:6px;cursor:pointer">Mark all read</button>' : '') +
+      '</div>' +
+      // RIGHT — team activity feed
+      '<div>' +
+        '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">📋 TEAM ACTIVITY</div>' +
+        '<div id="activityFeed">Loading…</div>' +
+      '</div>' +
+    '</div>';
+
+  // Fetch and render team activity
   loadActivity().then(function(activity) {
-    var actHtml = '';
-    if(activity.length) {
-      actHtml = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px;margin-top:4px">📋 TEAM ACTIVITY</div>';
-      actHtml += activity.map(function(a) {
-        var icon = a.action==='created'?'🐛':a.action==='deleted'?'🗑':a.action==='status_changed'?'🔄':a.action==='updated'?'✏️':'📌';
-        var actionLabel = a.action==='created'?'logged a bug':a.action==='deleted'?'deleted a bug':a.action==='status_changed'?'changed status':a.action==='updated'?'edited a bug':'did something';
-        var time = a.created_ts ? new Date(a.created_ts).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-        var avatar = a.user_picture
-          ? '<img src="'+a.user_picture+'" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--bd2)">'
-          : '<div style="width:32px;height:32px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:14px">'+icon+'</div>';
-        var onclick = a.bug_id ? 'openDetail(\'' + a.bug_id + '\')' : '';
-        return '<div class="notif-item" style="cursor:'+(a.bug_id?'pointer':'default')+'" onclick="'+onclick+'">' +
-          '<div style="flex-shrink:0">'+avatar+'</div>' +
-          '<div style="flex:1;min-width:0">' +
-            '<div class="notif-title"><b>'+esc(a.user_name||'Someone')+'</b> '+actionLabel+'</div>' +
-            '<div class="notif-meta">'+esc(a.detail||'')+' · '+time+'</div>' +
-            (a.bug_id ? '<div style="font-family:var(--mono);font-size:9px;color:var(--g1);margin-top:3px">'+esc(a.bug_id)+'</div>' : '') +
-          '</div></div>';
-      }).join('');
-    }
-
     const feed = document.getElementById('activityFeed');
-    if(!feed) return; // tab changed while loading
+    if(!feed) return;
     if(!activity.length) {
-      feed.innerHTML = watched.length || S.localNotifs.length ? '' :
-        '<div class="empty"><div class="empty-icon">🔔</div><h3>ALL CAUGHT UP</h3><p>No activity yet</p></div>';
+      feed.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:20px 0;text-align:center">No activity yet<br><span style="font-size:9px;opacity:.6">Actions like logging bugs, status changes and deletions will appear here</span></div>';
       return;
     }
-    feed.innerHTML = '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">📋 TEAM ACTIVITY</div>' + actHtml;
+    // No header here — it's already in the container
+    feed.innerHTML = activity.map(function(a) {
+      var icon = a.action==='created'?'🐛':a.action==='deleted'?'🗑':a.action==='status_changed'?'🔄':a.action==='updated'?'✏️':'📌';
+      var actionLabel = {
+        created: 'logged a bug',
+        deleted: 'deleted a bug',
+        status_changed: 'changed status',
+        updated: 'edited a bug',
+      }[a.action] || 'did something';
+      var time = a.created_ts ? new Date(a.created_ts).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+      var avatar = a.user_picture
+        ? '<img src="' + a.user_picture + '" style="width:30px;height:30px;border-radius:50%;border:2px solid var(--bd2);flex-shrink:0" onerror="this.style.display=\'none\'">'
+        : '<div style="width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">' + icon + '</div>';
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bd);cursor:' + (a.bug_id?'pointer':'default') + '" ' +
+        (a.bug_id ? 'onclick="openDetail(\'' + a.bug_id + '\')"' : '') + '>' +
+        avatar +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:12px;color:var(--text);font-weight:600">' + esc(a.user_name||'Someone') + ' <span style="font-weight:400;color:var(--mist)">' + actionLabel + '</span></div>' +
+          (a.detail ? '<div style="font-size:11px;color:var(--mist);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(a.detail) + '</div>' : '') +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
+            (a.bug_id ? '<span style="font-family:var(--mono);font-size:9px;color:var(--g1);background:rgba(124,58,237,.1);padding:1px 6px;border-radius:4px">' + esc(a.bug_id) + '</span>' : '') +
+            '<span style="font-family:var(--mono);font-size:9px;color:var(--dim)">' + time + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
   }).catch(function() {
     const feed = document.getElementById('activityFeed');
-    if(feed) feed.innerHTML = '';
+    if(feed) feed.innerHTML = '<div style="color:var(--dim);font-size:11px">Could not load activity</div>';
   });
 }
 function clickNotif(id,bugId){
