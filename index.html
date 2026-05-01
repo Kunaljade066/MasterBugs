@@ -1929,7 +1929,7 @@ function startFastSync(){
         fresh.forEach(b=>{if(!b.assignees)b.assignees=b.assignee_email?[{name:b.assignee||'',email:b.assignee_email,picture:b.assignee_picture||''}]:[];});
         S.bugs=fresh;
         updateSbBadges();populateDropdowns();applyF();
-        setCloud('ok',`&#9729; ${S.bugs.length}`);
+        setCloud('ok',`☁ ${S.bugs.length}`);
         if(S.view==='home'){ renderHome(); setTimeout(renderHomePieCharts, 100); }
         else if(S.view==='board')renderBoard();
       }
@@ -2515,7 +2515,7 @@ function setCloud(s,l){
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 
 async function refreshAll(){
-  setCloud('busy','loading&#8230;');
+  setCloud('busy','loading...');
   try{
     const [bugsD,sprintsD,teamD,settingsD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team'),api('/settings').catch(()=>({settings:null}))]);
     if(settingsD?.settings){_webhookCfgCache=settingsD.settings;try{localStorage.setItem(WEBHOOK_KEY,JSON.stringify(_webhookCfgCache));}catch(e){}}
@@ -2524,7 +2524,7 @@ async function refreshAll(){
 
     // SAFETY GUARD: don't wipe existing bugs if response looks wrong
     if(freshBugs.length===0 && S.bugs.length>0){
-      setCloud('err','&#9888; sync issue');
+      setCloud('err','⚠ sync issue');
       toast('&#9888; Sync returned 0 bugs &#8212; keeping current data. Check connection.','err');
       return;
     }
@@ -2535,7 +2535,7 @@ async function refreshAll(){
     loadDDConfigFromSprints(_rawSprints);
     S.bugs.forEach(b=>{if(!b.assignees)b.assignees=b.assignee_email?[{name:b.assignee||'',email:b.assignee_email,picture:b.assignee_picture||''}]:[];});
     updateSbBadges();populateDropdowns();applyF();populateBoardSprint();
-    setCloud('ok',`&#9729; ${S.bugs.length}`);
+    setCloud('ok',`☁ ${S.bugs.length}`);
     renderSlaWarnings();
       if(S.view==='home')renderHome();
     else if(S.view==='board')renderBoard();
@@ -8715,60 +8715,57 @@ const TOUR_KEY = 'hwt_tour_done_v1';
 
 const TOUR_STEPS = [
   { tab:null, target:null,
-    title:'Hey! I am Natasha &#128075;',
-    speech:'Welcome to BugPulse &#8212; your QA hub! Let me show you the 5 key things you need to know. It will take 30 seconds!',
+    title:'Hey! I am Natasha',
+    speech:'Welcome to BugPulse! Let me show you the key features. Takes less than a minute!',
     features:[]},
-
   { tab:'backlog', target:'#newBugBtn',
     title:'Log a Bug',
-    speech:'Tap + NEW BUG to report any issue. Add priority, steps, assignee and attach screenshots from Google Drive.',
+    speech:'Tap + NEW BUG to report any issue. Add priority, steps, assignee and attach screenshots.',
     features:[
-      {icon:'&#128203;',text:'Templates: Crash, IAP, UI, Network, Regression'},
-      {icon:'&#128276;',text:'Notify Teammates &#8212; fires GChat + push instantly'},
-      {icon:'&#128206;',text:'Google Drive screenshots with inline preview'},
+      {icon:'📋',text:'Templates: Crash, IAP, UI, Network, Regression'},
+      {icon:'🔔',text:'Notify Teammates — fires GChat + push instantly'},
     ]},
-
   { tab:'backlog', target:'#mfw-status',
-    title:'Filter & Search',
-    speech:'Use the search box and filter buttons to find any bug instantly. All filters support multi-select!',
+    title:'Smart Filters',
+    speech:'Multi-select filters for Status, Priority, Assignee, Pod, Sprint and more. Find any bug instantly!',
     features:[
-      {icon:'&#128269;',text:'Search across title, steps, assignee, build, feature'},
-      {icon:'&#9745;&#65039;',text:'Multi-select: Status, Priority, Pod, Assignee, Sprint'},
-      {icon:'&#128202;',text:'Filter Stats &#8594; Copy Stats for QA presentations'},
+      {icon:'☑️',text:'Multi-select checkboxes on every filter'},
+      {icon:'📊',text:'Filter Stats → Copy Stats for QA reports'},
     ]},
-
   { tab:'board', target:'#tt-board',
     title:'Kanban Board',
-    speech:'Switch to Board for a visual drag-and-drop Kanban. Move cards between columns to update status instantly.',
+    speech:'Drag and drop bugs between columns to update status. Filter by Sprint, Pod or Assignee.',
     features:[
-      {icon:'&#127924;',text:'Drag cards between columns &#8212; updates sync to team'},
-      {icon:'&#128317;',text:'Filter by Sprint, Pod, Assignee, Priority'},
+      {icon:'🎴',text:'Drag cards — status updates sync to team'},
     ]},
-
   { tab:'dashboard', target:'#tt-dashboard',
     title:'Dashboard',
-    speech:'Charts, trends and pod comparisons for your QA reports. Use Copy Report for presentations!',
+    speech:'Live pie charts, timeline trends and pod comparisons. Copy reports for presentations!',
     features:[
-      {icon:'&#129383;',text:'Pie charts by Status, Priority, Pod &#8212; live updates'},
-      {icon:'&#128200;',text:'Timeline, month-wise stats, pod comparison'},
+      {icon:'🥧',text:'Status, Priority, Pod pie charts'},
+      {icon:'📈',text:'Timeline, month-wise, pod comparison'},
     ]},
-
+  { tab:'builds', target:'#tt-builds',
+    title:'Builds & Test Runs',
+    speech:'Log every build and run test cases. Mark Pass/Fail and log bugs inline!',
+    features:[
+      {icon:'📦',text:'Log builds — notify team via GChat & email'},
+      {icon:'🧪',text:'Test Runs — upload CSV, mark Pass/Fail'},
+    ]},
   { tab:'notifs', target:'#tt-notifs',
     title:'Alerts & Activity',
-    speech:'See what your whole team is doing &#8212; bug logs, status changes, deletions &#8212; all in real time.',
+    speech:'Your watchlist and the team activity feed. See who logged what in real time!',
     features:[
-      {icon:'&#128276;',text:'My Alerts &#8212; bugs assigned to you, status changes'},
-      {icon:'&#128203;',text:'Team Activity &#8212; who did what and when'},
+      {icon:'👁',text:'Watchlist — watch any bug'},
+      {icon:'📋',text:'Team Activity — who did what'},
     ]},
-
   { tab:null, target:null,
-    title:'You are ready! &#128640;',
-    speech:'That is all you need to get started! Explore Sprints, Builds, ClickUp sync and more at your own pace. I am always here in the profile menu!',
+    title:'You are all set!',
+    speech:'Explore Sprints, ClickUp sync, Google Sheets import and more. I am always in the profile menu!',
     features:[
-      {icon:'&#127939;',text:'Sprints &#8212; organise bugs into sprints'},
-      {icon:'&#128230;',text:'Builds &#8212; log releases + test runs'},
-      {icon:'&#128995;',text:'ClickUp &#8212; 2-way task sync'},
-      {icon:'&#128202;',text:'Import &#8212; Google Sheets sync'},
+      {icon:'🏃',text:'Sprints — organise bugs into sprints'},
+      {icon:'🟣',text:'ClickUp + Google Sheets sync'},
+      {icon:'📥',text:'CSV import + EOD auto-reports'},
     ]},
 ];
 
