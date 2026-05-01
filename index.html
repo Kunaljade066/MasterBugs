@@ -2338,25 +2338,33 @@ function onLogin(){
   }
   loadNotifs();updateNotifBadge();
   scheduleTokenRefresh();
-  // Welcome Natasha on login
+  // Welcome Natasha — show after page settles, not clashing with any browser popups
   setTimeout(() => {
     const firstName = (S.user?.name||'').split(' ')[0] || 'there';
-    showNatasha('Hey ' + firstName + '! Welcome back to BugPulse. Tap the tour button in your profile to explore features!', 'happy');
-  }, 1800);
+    showNatasha('Hey ' + firstName + '! Welcome back 🏏', 'happy');
+  }, 4000);
   initPushNotifications();
-  // Auto-request notification permission on first login
-  if('Notification' in window && Notification.permission === 'default') {
-    setTimeout(() => {
-      Notification.requestPermission().then(p => {
-        if(p === 'granted') {
-          registerPush();
-          updatePushMenuLabel();
-        }
-      });
-    }, 3000); // wait 3s after login before asking
-  } else if(Notification.permission === 'granted') {
-    registerPush(); // already granted — subscribe silently
+  // Auto-subscribe if already granted — silently re-subscribe in background
+  if('Notification' in window && Notification.permission === 'granted') {
+    // Silently subscribe without requesting permission again
+    navigator.serviceWorker?.ready.then(async reg => {
+      try {
+        const r = await fetch(WORKER + '/push/vapid-public-key');
+        const keyRes = await r.json();
+        if(!keyRes?.key) return;
+        const existing = await reg.pushManager.getSubscription();
+        if(existing) return; // already subscribed
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(keyRes.key),
+        });
+        await api('/push/subscribe', 'POST', { subscription: sub }).catch(()=>{});
+      } catch(e) {}
+    }).catch(()=>{});
+    updatePushMenuLabel();
   }
+  // If permission never asked yet — show our own banner instead of native popup
+  // The banner is already in the HTML (push enable banner)
   refreshAll().then(()=>{
     startFastSync();
     updateOfflineBanner();
@@ -8426,27 +8434,26 @@ function openNewSprint() {
   openPanel();
 }
 
-function registerPush() {
+async function registerPush() {
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
     toast('Push not supported in this browser', 'err'); return;
   }
-  Notification.requestPermission().then(perm => {
-    if(perm !== 'granted') { toast('Notifications blocked — enable in browser settings', 'err'); return; }
-    navigator.serviceWorker.ready.then(async sw => {
-      try {
-        const cfg = getWebhookConfig();
-        const vapidKey = cfg.vapid_public_key || '';
-        if(!vapidKey) { toast('VAPID key not configured — check Webhook Settings', 'err'); return; }
-        const sub = await sw.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: vapidKey,
-        });
-        await api('/push/subscribe', 'POST', { subscription: sub });
-        toast('Push notifications enabled ✓', 'ok');
-        updatePushMenuLabel();
-      } catch(e) { toast('Push setup failed: ' + e.message, 'err'); }
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted') { toast('Notifications blocked — enable in browser settings', 'err'); return; }
+  try {
+    // Fetch VAPID public key from worker (not from settings cache)
+    const r = await fetch(WORKER + '/push/vapid-public-key');
+    const keyRes = await r.json();
+    if(!keyRes?.key) { toast('Push setup failed — VAPID key not configured on server', 'err'); return; }
+    const reg = _swRegistration || await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(keyRes.key),
     });
-  });
+    await api('/push/subscribe', 'POST', { subscription: sub });
+    toast('Push notifications enabled ✓', 'ok');
+    updatePushMenuLabel();
+  } catch(e) { toast('Push setup failed: ' + e.message, 'err'); }
 }
 
 function handleImportCSV(file) {
@@ -9463,7 +9470,7 @@ async function saveEditComment(bugId, idx) {
     <div class="natasha-bubble">
       <div class="natasha-name-tag">NATASHA</div>
       <div class="natasha-text" id="natashaText">Welcome back! Ready to squash some bugs today? &#127951;</div>
-      <button class="natasha-ok" onclick="dismissNatasha()">LET'S GO!</button>
+      <button class="natasha-ok" onclick="dismissNatasha()">Got it! ✓</button>
     </div>
     <div class="natasha-char-wrap">
       <img id="natashaImg" src="natasha.png" alt="Natasha"
