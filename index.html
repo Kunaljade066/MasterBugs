@@ -1003,7 +1003,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
   <div class="login-bg-overlay"></div>
   <div class="lc">
     <div class="lc-logo">
-      <img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket" onerror="this.style.display='none';this.parentElement.innerHTML='&#127951;'">
+      <img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" alt="Hitwicket" onerror="this.style.display='none';this.parentElement.innerHTML='🏏'">
     </div>
     <div class="lc-title">BugPulse</div>
     <div class="lc-sub">Hitwicket &#183; Bug Management</div>
@@ -1744,13 +1744,13 @@ async function requestPushPermission() {
   const result = await Notification.requestPermission();
   _pushPermission = result;
   if (result !== 'granted') {
-    toast('Notifications blocked &#8212; please allow in browser settings', 'err'); return false;
+    toast('Notifications blocked — please allow in browser settings', 'err'); return false;
   }
 
   try {
     const r = await fetch(WORKER + '/push/vapid-public-key');
     const keyRes = await r.json();
-    if (!keyRes?.key) { toast('Push setup failed &#8212; contact admin', 'err'); return false; }
+    if (!keyRes?.key) { toast('Push setup failed — contact admin', 'err'); return false; }
 
     const reg = _swRegistration || await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.subscribe({
@@ -1759,7 +1759,7 @@ async function requestPushPermission() {
     });
 
     const saved = await api('/push/subscribe', 'POST', sub.toJSON());
-    if (!saved?.ok) { toast('Push setup failed &#8212; try again', 'err'); return false; }
+    if (!saved?.ok) { toast('Push setup failed — try again', 'err'); return false; }
 
     try { localStorage.setItem('hwt_push_enabled', '1'); } catch(e) {}
     updatePushMenuLabel();
@@ -2306,8 +2306,8 @@ function onLogin(){
   else{av.textContent=avi(S.user.name);av.style.background=avc(S.user.name);}
   document.getElementById('unm').textContent=(S.user.name||'').split(' ')[0];
   const ut=document.getElementById('utag');ut.textContent=S.user.role;ut.className='utag '+(S.user.role==='admin'?'utag-admin':'utag-member');
-  document.getElementById('pmName').textContent=S.user.name||'&#8212;';
-  document.getElementById('pmEmail').textContent=S.user.email||'&#8212;';
+  document.getElementById('pmName').textContent=S.user.name||'—';
+  document.getElementById('pmEmail').textContent=S.user.email||'—';
   if(S.user.role!=='admin')document.getElementById('sprintNewBtn').style.display='none';
   if(S.user.role==='admin'){
     document.getElementById('managePodBtn').style.display='flex';
@@ -2459,7 +2459,7 @@ async function api(path,method='GET',body=null){
   const d=await r.json();
   if(r.status===401){
     // Token expired &#8212; get a fresh one from Google, then retry the call once
-    toast('&#128260; Refreshing session&#8230;','info');
+    toast('🔄 Refreshing session…','info');
     try {
       const refreshed = await doTokenRefresh();
       if(!refreshed) {
@@ -2475,7 +2475,7 @@ async function api(path,method='GET',body=null){
           return d2;
         }
         // Session older than 7 days &#8212; actually expire
-        toast('Session expired (7 days) &#8212; please sign in again','err');
+        toast('Session expired (7 days) — please sign in again','err');
         setTimeout(()=>{ clearSession(); location.reload(); }, 2500);
         throw new Error('Session expired');
       }
@@ -2483,7 +2483,7 @@ async function api(path,method='GET',body=null){
       const r2=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
       const d2=await r2.json();
       if(!r2.ok)throw new Error(d2.error||`HTTP ${r2.status}`);
-      toast('&#9989; Session refreshed','ok');
+      toast('✅ Session refreshed','ok');
       return d2;
     } catch(e2) {
       if(e2.message.includes('expired')) throw e2;
@@ -2525,7 +2525,7 @@ async function refreshAll(){
     // SAFETY GUARD: don't wipe existing bugs if response looks wrong
     if(freshBugs.length===0 && S.bugs.length>0){
       setCloud('err','⚠ sync issue');
-      toast('&#9888; Sync returned 0 bugs &#8212; keeping current data. Check connection.','err');
+      toast('⚠ Sync returned 0 bugs — keeping current data. Check connection.','err');
       return;
     }
 
@@ -3068,11 +3068,11 @@ function renderHome(){
       <div class="hq-icon">&#128203;</div><div class="hq-n" style="color:var(--text)">${total}</div><div class="hq-l">Total</div>
     </div>`;
   const critBugs=S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).slice(0,6);
-  document.getElementById('homeCritical').innerHTML=critBugs.length?critBugs.map(homeBugRow).join(''):emptySmall('&#127881;','All clear!');
+  document.getElementById('homeCritical').innerHTML=critBugs.length?critBugs.map(homeBugRow).join(''):emptySmall('🎉','All clear!');
   const miBugs=S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===u?.email)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).slice(0,6);
-  document.getElementById('homeMine').innerHTML=miBugs.length?miBugs.map(homeBugRow).join(''):emptySmall('&#127919;','Nothing assigned!');
+  document.getElementById('homeMine').innerHTML=miBugs.length?miBugs.map(homeBugRow).join(''):emptySmall('🎯','Nothing assigned!');
   const recent=[...S.bugs].sort((a,b)=>(b.created_ts||0)-(a.created_ts||0)).slice(0,8);
-  document.getElementById('homeRecent').innerHTML=recent.length?recent.map(homeBugRow).join(''):emptySmall('&#129431;','No bugs yet');
+  document.getElementById('homeRecent').innerHTML=recent.length?recent.map(homeBugRow).join(''):emptySmall('🦗','No bugs yet');
   renderHomeBuildsStrip();
   renderPersonalStats();
   setTimeout(renderHomePieCharts, 80);
@@ -3099,10 +3099,10 @@ function renderTable(){
   S.page=Math.min(Math.max(1,S.page),tp);
   const s=(S.page-1)*ps,e=Math.min(total,s+ps),sl=S.filtered.slice(s,e);
   document.getElementById('tTitle').textContent=`Issues (${total})`;
-  document.getElementById('tMeta').textContent=total?`${s+1}&#8211;${e} of ${total}`:'';
+  document.getElementById('tMeta').textContent=total?`${s+1}–${e} of ${total}`:'';
   document.getElementById('pgInfo').textContent=`${S.page}/${tp}`;
   document.getElementById('bl-sub').textContent=total+' issues';
-  if(!sl.length){document.getElementById('tBody').innerHTML=`<div class="empty"><div class="empty-icon">&#129431;</div><h3>No issues</h3><p>Adjust filters or add a new bug.</p></div>`;return;}
+  if(!sl.length){document.getElementById('tBody').innerHTML=`<div class="empty"><div class="empty-icon">🦗</div><h3>No issues</h3><p>Adjust filters or add a new bug.</p></div>`;return;}
   const cols=[{k:'id',l:'ID'},{k:'title',l:'Title'},{k:'priority',l:'Priority'},{k:'severity',l:'Severity'},{k:'status',l:'Status'},{k:'age',l:'Age'},{k:'assignees',l:'Assignees'},{k:'feature',l:'Feature'},{k:'sprint',l:'Sprint'},...DD_FIELDS.map(f=>({k:f.key,l:f.label})),{k:'build',l:'Build'}];
   const pageIds=sl.map(b=>b.id);
   const allPageSelected=pageIds.length>0&&pageIds.every(id=>_bulkSelected.has(id));
@@ -3391,7 +3391,7 @@ async function kDrop(e, newStatus) {
   renderBoard();
   try {
     await api('/bugs/'+bugId, 'PUT', { status: newStatus, _restricted: true });
-    toast(`${bugId} &#8594; ${newStatus}`, 'ok');
+    toast(`${bugId} → ${newStatus}`, 'ok');
     logActivity('status_changed', bugId, oldStatus + ' &#8594; ' + newStatus + ' | ' + (bug.title||'').slice(0,60));
     // Push to ClickUp if linked
     syncStatusToClickUp(bug, newStatus);
@@ -3413,7 +3413,7 @@ async function kDrop(e, newStatus) {
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 function renderSprints(){
   const el=document.getElementById('sprintsWrap');if(!el)return;
-  if(!S.sprints.length){el.innerHTML=`<div class="empty"><div class="empty-icon">&#127939;</div><h3>NO SPRINTS</h3><p>Create a sprint to organise your work.</p></div>`;return;}
+  if(!S.sprints.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🏃</div><h3>NO SPRINTS</h3><p>Create a sprint to organise your work.</p></div>`;return;}
   el.innerHTML=S.sprints.map(sp=>{
     const sb=S.bugs.filter(b=>b.sprint===sp.name);
     const done=sb.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
@@ -3463,7 +3463,7 @@ function openSprintForm(){
 async function saveSprint(){
   const name=document.getElementById('sp-nm')?.value?.trim();
   if(!name){toast('Name required','err');return;}
-  try{await api('/sprints','POST',{name,start:document.getElementById('sp-s')?.value||'',end:document.getElementById('sp-e')?.value||'',goal:document.getElementById('sp-g')?.value||''});closePanel();await refreshAll();goTab('sprints');toast('Sprint created &#10003;','ok');}
+  try{await api('/sprints','POST',{name,start:document.getElementById('sp-s')?.value||'',end:document.getElementById('sp-e')?.value||'',goal:document.getElementById('sp-g')?.value||''});closePanel();await refreshAll();goTab('sprints');toast('Sprint created ✓','ok');}
   catch(e){toast(e.message,'err');}
 }
 async function delSprint(id){if(!confirm('Delete sprint?'))return;try{await api(`/sprints/${id}`,'DELETE');await refreshAll();toast('Deleted','ok');}catch(e){toast(e.message,'err');}}
@@ -3568,7 +3568,7 @@ function goToBugsClean(){
 function renderFeatures(){
   const el=document.getElementById('featuresWrap');if(!el)return;
   const feats=[...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort();
-  if(!feats.length){el.innerHTML=`<div class="empty"><div class="empty-icon">&#127918;</div><h3>NO FEATURES</h3><p>Add feature tags when creating bugs.</p></div>`;return;}
+  if(!feats.length){el.innerHTML=`<div class="empty"><div class="empty-icon">🎮</div><h3>NO FEATURES</h3><p>Add feature tags when creating bugs.</p></div>`;return;}
   const dc=['#7c3aed','#0891b2','#059669','#d97706','#dc2626','#7c3aed','#db2777','#0d9488'];
 
   el.innerHTML = feats.map((feat,i)=>{
@@ -4013,7 +4013,7 @@ async function ddRenameField(){
   if(!name?.trim()||name.trim()===f.label)return;
   f.label=name.trim();
   renderDropdownManagerBody();
-  try{await persistDDConfig();toast('Field renamed &#10003;','ok');}catch(e){toast('Renamed locally &#8212; sync failed, try again','info');}
+  try{await persistDDConfig();toast('Field renamed ✓','ok');}catch(e){toast('Renamed locally — sync failed, try again','info');}
 }
 async function ddDeleteField(){
   const f=DD_FIELDS.find(x=>x.key===_ddActiveKey);if(!f)return;
@@ -4022,7 +4022,7 @@ async function ddDeleteField(){
   DD_FIELDS.splice(DD_FIELDS.indexOf(f),1);
   _ddActiveKey=DD_FIELDS[0]?.key||'pod';
   renderDropdownManagerBody();
-  try{await persistDDConfig();toast('Field deleted &#10003;','ok');}catch(e){toast('Deleted locally &#8212; sync failed, try again','info');}
+  try{await persistDDConfig();toast('Field deleted ✓','ok');}catch(e){toast('Deleted locally — sync failed, try again','info');}
 }
 async function ddMoveOpt(idx,dir){
   const f=DD_FIELDS.find(x=>x.key===_ddActiveKey);if(!f)return;
@@ -4035,10 +4035,10 @@ async function ddMoveOpt(idx,dir){
 async function ddDeleteFeature(feat){
   const bugs=S.bugs.filter(b=>b.feature===feat);
   if(!confirm(`Delete feature "${feat}"?\n${bugs.length} bug(s) will have their feature tag cleared.`))return;
-  toast('Clearing feature tags&#8230;','info');
+  toast('Clearing feature tags…','info');
   let done=0;
   for(const bug of bugs){try{await api(`/bugs/${bug.id}`,'PUT',{...bug,feature:''});done++;}catch(e){}}
-  toast(`"${feat}" deleted, ${done} bug(s) updated &#10003;`,'ok');
+  toast(`"${feat}" deleted, ${done} bug(s) updated ✓`,'ok');
   await refreshAll();
   _ddActiveKey='__features__';
   renderDropdownManagerBody();
@@ -4055,9 +4055,9 @@ async function ddAddOpt(){
   renderDropdownManagerBody();
   try{
     await persistDDConfig();
-    toast(`"${val}" added &#10003; &#8212; visible to all users`,'ok');
+    toast(`"${val}" added ✓ — visible to all users`,'ok');
   }catch(e){
-    toast(`"${val}" added locally. Backend sync failed &#8212; try again.`,'info');
+    toast(`"${val}" added locally. Backend sync failed — try again.`,'info');
   }
 }
 
@@ -4070,9 +4070,9 @@ async function ddRemoveOpt(idx){
   renderDropdownManagerBody();
   try{
     await persistDDConfig();
-    toast(`"${name}" removed &#10003;`,'ok');
+    toast(`"${name}" removed ✓`,'ok');
   }catch(e){
-    toast(`Removed locally. Backend sync failed &#8212; try again.`,'info');
+    toast(`Removed locally. Backend sync failed — try again.`,'info');
   }
 }
 
@@ -4086,7 +4086,7 @@ async function ddAddField(){
   _ddActiveKey = key;
   try{
     await persistDDConfig();
-    toast(`Field "${name.trim()}" created &#8212; visible to all &#10003;`,'ok');
+    toast(`Field "${name.trim()}" created — visible to all ✓`,'ok');
   }catch(e){toast('Created locally (backend sync failed)','info');}
   renderDropdownManagerBody();
 }
@@ -4109,7 +4109,7 @@ function buildMultiAssigneePicker(bug){
 }
 function renderMapTags(){
   const c=document.getElementById('mapTags');if(!c)return;
-  c.innerHTML=_mapAssignees.map((a,i)=>`<span class="map-tag">${avEl(a.name,a.picture,16)}<span>${esc(a.name)}</span><button class="map-tag-remove" onclick="mapRemove(${i})">&#10005;</button></span>`).join('');
+  c.innerHTML=_mapAssignees.map((a,i)=>`<span class="map-tag">${avEl(a.name,a.picture,16)}<span>${esc(a.name)}</span><button class="map-tag-remove" onclick="mapRemove(${i})">✕</button></span>`).join('');
   const q=document.getElementById('map-q');if(q)q.placeholder=_mapAssignees.length?'Add more&#8230;':'Search team&#8230;';
 }
 function mapRemove(i){_mapAssignees.splice(i,1);renderMapTags();}
@@ -4334,7 +4334,7 @@ async function postComment(bugId){
   }
   try{
     await api(`/bugs/${bugId}/comment`,'POST',{text:txt,mentions:mentions.map(m=>({name:m.name,email:m.email}))});
-    toast('Comment posted &#10003;','ok');
+    toast('Comment posted ✓','ok');
     hideMentionDrop();
     closePanel();await refreshAll();openDetail(bugId);
   }catch(e){toast(e.message,'err');}
@@ -4423,7 +4423,7 @@ function loadNatashaPref() {
     const off = localStorage.getItem(NATASHA_PREF_KEY(S.user?.email)) === 'off';
     const icon = document.getElementById('natashaPrefIcon');
     const lbl  = document.getElementById('natashaPrefLabel');
-    if(icon) icon.textContent = off ? '&#128276;' : '&#128277;';
+    if(icon) icon.textContent = off ? '🔔' : '🔕';
     if(lbl)  lbl.textContent  = off ? 'Enable Natasha' : 'Disable Natasha';
     return off;
   } catch(e) { return false; }
@@ -4433,7 +4433,7 @@ function toggleNatashaPref() {
   const off = loadNatashaPref();
   try { localStorage.setItem(NATASHA_PREF_KEY(S.user?.email), off ? 'on' : 'off'); } catch(e) {}
   loadNatashaPref();
-  toast(off ? 'Natasha re-enabled &#127951;' : 'Natasha disabled &#128277;', 'ok');
+  toast(off ? 'Natasha re-enabled 🎸' : 'Natasha disabled 🔕', 'ok');
 }
 
 function showNatasha(msg, mood='default'){
@@ -4574,7 +4574,7 @@ function saveTemplates(tmpl) {
 
 function openTemplateSelector(onSelect) {
   const tmpl = getTemplates();
-  document.getElementById('panelTitle').textContent = '&#128203; BUG TEMPLATES';
+  document.getElementById('panelTitle').textContent = '📋 BUG TEMPLATES';
   document.getElementById('panelId').textContent = 'SELECT TEMPLATE';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
@@ -4725,7 +4725,7 @@ function saveEditedTemplate(id) {
   }
   saveTemplates(tmpl);
   openManageTemplates();
-  toast('Template saved &#10003;','ok');
+  toast('Template saved ✓','ok');
 }
 
 function addCustomTemplate() { openEditTemplate(null); }
@@ -4744,7 +4744,7 @@ function openFeatureKanban() {
   const features = [...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort();
   const systems  = [...new Set(S.bugs.map(b=>b.pod||b.platform).filter(Boolean))].sort();
 
-  document.getElementById('panelTitle').textContent = '&#127918; FEATURE / SYSTEM VIEW';
+  document.getElementById('panelTitle').textContent = '🎮 FEATURE / SYSTEM VIEW';
   document.getElementById('panelId').textContent = S.bugs.length + ' bugs';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Close</button>`;
@@ -4793,7 +4793,7 @@ function buildBugForm(bug,full){
   const spOpts=S.sprints.map(s=>`<option value="${esc(s.name)}"${bug?.sprint===s.name?' selected':''}>${esc(s.name)}</option>`).join('');
   const stOpts=ALL_STATUSES.map(v=>`<option value="${v}"${(bug?.status||'Open')===v?' selected':''}>${v}</option>`).join('');
   document.getElementById('panelTitle').textContent=bug?(full?'EDIT '+bug.id:'UPDATE '+bug.id):'NEW BUG';
-  document.getElementById('panelFooter').innerHTML=`<button class="btn btn-g" onclick="closePanel()">Cancel</button>${!bug?'<button class="btn btn-g" onclick="openTemplateSelector()">&#128203; Template</button>':''}<button class="btn btn-v" id="panelSave" onclick="saveBug()">&#128190; SAVE</button>`;
+  document.getElementById('panelFooter').innerHTML=`<button class="btn btn-g" onclick="closePanel()">Cancel</button>${!bug?'<button class="btn btn-g" onclick="openTemplateSelector()">📋 Template</button>':''}<button class="btn btn-v" id="panelSave" onclick="saveBug()">💾 SAVE</button>`;
 
   if(bug&&!full){
     document.getElementById('panelBody').innerHTML=`
@@ -4905,14 +4905,14 @@ function checkRecurrenceUI(title, feature) {
     const found = checkRecurrence(title, feature);
     if(!found) { box.style.display='none'; return; }
     box.style.display='block';
-    det.innerHTML = `This bug was previously filed as <strong style="color:#f87171;cursor:pointer" onclick="openDetail('${found.id}');closePanel()">${found.id}</strong> &#8212; <em>${esc(found.title||'')}</em> and marked <strong>${found.status}</strong>. Is this a regression?`;
+    det.innerHTML = `This bug was previously filed as <strong style="color:#f87171;cursor:pointer" onclick="openDetail('${found.id}');closePanel()">${found.id}</strong> — <em>${esc(found.title||'')}</em> and marked <strong>${found.status}</strong>. Is this a regression?`;
   }, 600);
 }
 
 // &#9472;&#9472; SLA Config Panel &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
 function openSLASettings() {
   const cfg = getSLAConfig();
-  document.getElementById('panelTitle').textContent = '&#9201; SLA RULES';
+  document.getElementById('panelTitle').textContent = '⏱ SLA RULES';
   document.getElementById('panelId').textContent = 'SETTINGS';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
@@ -4954,7 +4954,7 @@ function saveSLASettings() {
   });
   saveSLAConfig(cfg);
   renderSlaWarnings();
-  toast('SLA rules saved &#10003;', 'ok');
+  toast('SLA rules saved ✓', 'ok');
   closePanel();
 }
 
@@ -4970,7 +4970,7 @@ function checkDup(txt,curId){
     .filter(m=>m.score>0).sort((a,b)=>b.score-a.score).slice(0,8);
   if(!candidates.length){box.classList.remove('on');return;}
   box.classList.add('on');
-  lst.innerHTML=`<div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;font-family:var(--mono);font-size:9px;color:var(--g2)"><span class="spin" style="width:10px;height:10px;border-width:1.5px"></span>Checking with AI&#8230;</div>`
+  lst.innerHTML=`<div style="display:flex;align-items:center;gap:5px;margin-bottom:7px;font-family:var(--mono);font-size:9px;color:var(--g2)"><span class="spin" style="width:10px;height:10px;border-width:1.5px"></span>Checking with AI…</div>`
     +candidates.slice(0,3).map(m=>`<div class="dup-item" onclick="openDetail('${m.bug.id}');closePanel()"><span class="dup-id">${esc(m.bug.id)}</span><span class="dup-t">${esc(m.bug.title||'')}</span>${stChip(m.bug.status)}</div>`).join('');
   _dupTimer=setTimeout(()=>_aiDup(txt,curId,candidates),900);
 }
@@ -4990,7 +4990,7 @@ async function _aiDup(txt,curId,candidates){
   if(!local.length){box.classList.remove('on');return;}
 
   box.classList.add('on');
-  lst.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:var(--mute);margin-bottom:6px;letter-spacing:1px">&#9889; KEYWORD MATCH</div>`
+  lst.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:var(--mute);margin-bottom:6px;letter-spacing:1px">⚡ KEYWORD MATCH</div>`
     +local.slice(0,4).map(r=>{
       const bug=S.bugs.find(b=>b.id===r.id);if(!bug)return'';
       const pct=Math.min(99,Math.round((r.score/Math.max(r.maxWords,1))*100));
@@ -5014,7 +5014,7 @@ async function _aiDup(txt,curId,candidates){
     const arr=JSON.parse(jsonMatch[0]);
     if(!Array.isArray(arr)||!arr.length)throw new Error('Empty result');
     box.classList.add('on');
-    lst.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-bottom:6px;letter-spacing:1px">&#10024; AI ANALYSIS</div>`
+    lst.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-bottom:6px;letter-spacing:1px">✨ AI ANALYSIS</div>`
       +arr.map(r=>{
         const bug=S.bugs.find(b=>b.id===r.id);if(!bug)return'';
         const col=r.similarity==='HIGH'?'var(--g5)':'var(--g3)';
@@ -5061,12 +5061,12 @@ function toggleWatch(bugId) {
     toast('Removed from watchlist','ok');
   } else {
     wl.push(bugId);
-    toast('Added to watchlist &#128065;','ok');
+    toast('Added to watchlist 👁','ok');
   }
   try { localStorage.setItem(WATCHLIST_KEY, JSON.stringify(wl)); } catch(e) {}
   // Update button if visible
   const btn = document.getElementById('watchBtn-'+bugId);
-  if(btn) { btn.textContent = wl.includes(bugId) ? '&#128065; Watching' : '&#128065; Watch'; btn.classList.toggle('btn-v', wl.includes(bugId)); btn.classList.toggle('btn-g', !wl.includes(bugId)); }
+  if(btn) { btn.textContent = wl.includes(bugId) ? '👁 Watching' : '👁 Watch'; btn.classList.toggle('btn-v', wl.includes(bugId)); btn.classList.toggle('btn-g', !wl.includes(bugId)); }
 }
 function getWatchedBugs() {
   const wl = getWatchlist();
@@ -5122,9 +5122,9 @@ async function saveBug(){
         logActivity('status_changed', S.editing, prev.status + ' &#8594; ' + data.status + ' | ' + (prev?.title||'').slice(0,60));
         setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,prev.title);showNatasha(msg,mood);},800);
       }
-      toast('Updated &#10003;','ok');
+      toast('Updated ✓','ok');
       logActivity('updated', S.editing, 'Status: ' + data.status + ' | ' + (prev?.title||'').slice(0,60));
-      btn.disabled=false;btn.innerHTML='&#128190; SAVE';
+      btn.disabled=false;btn.innerHTML='💾 SAVE';
       closePanel();
       const idx=S.bugs.findIndex(b=>b.id===S.editing);
       if(idx>=0){Object.assign(S.bugs[idx],{status:data.status,assignees});}
@@ -5134,7 +5134,7 @@ async function saveBug(){
       return;
     }else{
       const title=document.getElementById('f-title')?.value?.trim();
-      if(!title){toast('Title required','err');btn.disabled=false;btn.innerHTML='&#128190; SAVE';return;}
+      if(!title){toast('Title required','err');btn.disabled=false;btn.innerHTML='💾 SAVE';return;}
       const data={
         title,priority:document.getElementById('f-p')?.value||'Medium',
         severity:document.getElementById('f-sv')?.value||'',
@@ -5166,10 +5166,10 @@ async function saveBug(){
         } else if(S.editing) {
           logActivity('updated', S.editing, (data.title||'').slice(0,80));
         }
-        toast('Bug updated &#10003;','ok');
+        toast('Bug updated ✓','ok');
         if(S.view==='dashboard') setTimeout(renderDashboard, 100);
         if(S.view==='home') { setTimeout(renderHome, 100); setTimeout(renderHomePieCharts, 200); }
-        btn.disabled=false;btn.innerHTML='&#128190; SAVE';
+        btn.disabled=false;btn.innerHTML='💾 SAVE';
         closePanel();
         const uidx=S.bugs.findIndex(b=>b.id===S.editing);
         if(uidx>=0){S.bugs[uidx]={...S.bugs[uidx],...data,assignees};}
@@ -5182,17 +5182,17 @@ async function saveBug(){
         // Offline: queue locally if no network
         if(!navigator.onLine){
           queueBugOffline(data);
-          btn.disabled=false;btn.innerHTML='&#128190; SAVE';
+          btn.disabled=false;btn.innerHTML='💾 SAVE';
           closePanel();
           return;
         }
         res=await api('/bugs','POST',data);
         if(assignees.length)addNotif('New bug assigned',data.title,res.bug?.id);
-        toast(`Created: ${res.bug?.id} &#10003;`,'ok');
+        toast(`Created: ${res.bug?.id} ✓`,'ok');
         const _nid=res.bug?.id||'';
         const _nm=[`Nice catch! ${_nid} is on the radar &#128269; Go find more!`,`${_nid} filed! &#127951; One down &#8212; how many more are hiding?`,`Bug logged &#10003; ${_nid} &#8212; keep hunting, the pitch is full of them!`,`${_nid} trapped! &#127919; Your team will thank you. Spot another?`,`Good eye! ${_nid} queued up. More bugs won't escape you! &#128064;`];const _createMood='celebrate';
 
-        btn.disabled=false;btn.innerHTML='&#128190; SAVE';
+        btn.disabled=false;btn.innerHTML='💾 SAVE';
         closePanel();
 
         if(res?.bug){
@@ -5223,8 +5223,8 @@ async function saveBug(){
         return;
       }
     }
-  }catch(e){toast('&#10060; '+e.message,'err');}
-  btn.disabled=false;btn.innerHTML='&#128190; SAVE';
+  }catch(e){toast('❌ '+e.message,'err');}
+  btn.disabled=false;btn.innerHTML='💾 SAVE';
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -5337,7 +5337,7 @@ function exportCSV(scope) {
     const scopeLabel = scope==='all'?'all':scope==='selection'?'selected':'filtered';
     XLSX.utils.book_append_sheet(wb, ws, 'Bugs');
     XLSX.writeFile(wb, `bugpulse_${scopeLabel}_${nowLabel}.xlsx`);
-    toast(`Exported ${src.length} bugs as Excel &#10003;`, 'ok');
+    toast(`Exported ${src.length} bugs as Excel ✓`, 'ok');
     return;
   }
 
@@ -5357,7 +5357,7 @@ function exportCSV(scope) {
   a.href = URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8'}));
   a.download = `bugpulse_${scopeLabel}_${nowLabel}.csv`;
   a.style.display='none'; document.body.appendChild(a); a.click(); a.remove();
-  toast(`Exported ${src.length} bugs &#10003;`,'ok');
+  toast(`Exported ${src.length} bugs ✓`,'ok');
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -5409,10 +5409,10 @@ function applyCursorPref(pref, save=true) {
   const lbl = document.getElementById('cursorPrefLabel');
   const ico = document.getElementById('cursorPrefIcon');
   if (lbl) lbl.textContent = pref === 'default' ? 'Cricket Cursor' : 'Default Cursor';
-  if (ico) ico.textContent = pref === 'default' ? '&#127951;' : '&#128433;';
+  if (ico) ico.textContent = pref === 'default' ? '🏏' : '🖱';
   if (save) {
     try { localStorage.setItem(CURSOR_KEY(S.user?.email), pref); } catch(e) {}
-    toast(pref === 'default' ? '&#128433; Default cursor active' : '&#127951; Cricket cursor active', 'ok');
+    toast(pref === 'default' ? '🖱 Default cursor active' : '🏏 Cricket cursor active', 'ok');
   }
 }
 
@@ -5517,11 +5517,11 @@ function updateBulkBar() {
     cnt.textContent = `${_bulkSelected.size} selected`;
     // Populate status select
     const ss = document.getElementById('bulkStatus');
-    if(ss) ss.innerHTML = '<option value="">Change Status&#8230;</option>' +
+    if(ss) ss.innerHTML = '<option value="">Change Status…</option>' +
       ALL_STATUSES.map(s=>`<option value="${esc(s)}">${s}</option>`).join('');
     // Populate assignee select
     const as = document.getElementById('bulkAssignee');
-    if(as) as.innerHTML = '<option value="">Change Assignee&#8230;</option>' +
+    if(as) as.innerHTML = '<option value="">Change Assignee…</option>' +
       S.teamMembers.map(m=>`<option value="${esc(m.email)}">${esc(m.name)}</option>`).join('');
   } else {
     bar.classList.remove('on');
@@ -5554,17 +5554,17 @@ async function applyBulk() {
     }
     try { await api(`/bugs/${id}`,'PUT',update); done++; } catch(e) {}
   }
-  toast(`Updated ${done} bug(s) &#10003;`,'ok');
+  toast(`Updated ${done} bug(s) ✓`,'ok');
   clearBulk();
   await refreshAll();
-  if(btn){ btn.disabled=false; btn.innerHTML='&#10003; Apply'; }
+  if(btn){ btn.disabled=false; btn.innerHTML='✓ Apply'; }
 }
 
 function copyBulkLink() {
   if(!_bulkSelected.size) { toast('Select bugs first','err'); return; }
   const ids = [..._bulkSelected].join(',');
   const url = APP_URL + '?bugs=' + encodeURIComponent(ids);
-  navigator.clipboard.writeText(url).then(() => toast(`Link to ${_bulkSelected.size} bugs copied &#10003;`,'ok'));
+  navigator.clipboard.writeText(url).then(() => toast(`Link to ${_bulkSelected.size} bugs copied ✓`,'ok'));
 }
 
 function copyBulkReport() {
@@ -5589,7 +5589,7 @@ function copyBulkReport() {
   lines.push('&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;');
   lines.push(`Shared link: ${APP_URL}?bugs=${encodeURIComponent([..._bulkSelected].join(','))}`);
   navigator.clipboard.writeText(lines.join('\n'))
-    .then(() => toast(`Report for ${bugs.length} bugs copied &#10003;`,'ok'));
+    .then(() => toast(`Report for ${bugs.length} bugs copied ✓`,'ok'));
 }
 
 async function deleteBulkSelected() {
@@ -5667,7 +5667,7 @@ async function addLink(bugId) {
   links.push({type, targetId});
   try {
     await api(`/bugs/${bugId}`,'PUT',{...bug, links});
-    toast(`Linked &#10003;`,'ok');
+    toast(`Linked ✓`,'ok');
     closePanel(); await refreshAll(); openDetail(bugId);
   } catch(e) { toast(e.message,'err'); }
 }
@@ -5722,7 +5722,7 @@ async function flushOfflineQueue() {
   }
   if(flushed) {
     saveOfflineQueue(q.slice(flushed));
-    toast(`&#9989; ${flushed} queued bug(s) synced`,'ok');
+    toast(`✅ ${flushed} queued bug(s) synced`,'ok');
     debouncedRefresh(500);
   }
 }
@@ -5732,7 +5732,7 @@ function queueBugOffline(data) {
   q.push({...data, _queued_at: Date.now()});
   saveOfflineQueue(q);
   updateOfflineBanner();
-  toast('&#128230; Saved offline &#8212; will sync when connected','info');
+  toast('📦 Saved offline — will sync when connected','info');
 }
 
 window.addEventListener('online',  updateOfflineBanner);
@@ -5951,7 +5951,7 @@ async function syncStatusToClickUp(bug, newStatus) {
   const cuId = (bug.clickup_task_id || '').trim();
   if(!cuId) return;
   const pushed = await cuPushStatus(cuId, newStatus);
-  if(pushed) toast(`Status synced to ClickUp &#10003;`, 'ok');
+  if(pushed) toast(`Status synced to ClickUp ✓`, 'ok');
 }
 
 // Called during loadClickUp &#8212; pull CU status &#8594; BugPulse for linked bugs
@@ -5974,7 +5974,7 @@ async function syncStatusFromClickUp() {
   }
   if(updated > 0) {
     applyF();
-    toast(`${updated} bug${updated!==1?'s':''} updated from ClickUp &#10003;`, 'ok');
+    toast(`${updated} bug${updated!==1?'s':''} updated from ClickUp ✓`, 'ok');
   }
 }
 
@@ -5987,7 +5987,7 @@ async function loadClickUp(force) {
       cuBuildFilters();
       _cuFiltered = [..._cuTasks];
       document.getElementById('cuFilters').style.display = 'flex';
-      document.getElementById('cu-sub').textContent = `${_cuTasks.length} tasks &#183; ${_cuLists.length} lists &#183; ${teamName} (cached)`;
+      document.getElementById('cu-sub').textContent = `${_cuTasks.length} tasks · ${_cuLists.length} lists · ${teamName} (cached)`;
       cuRender();
       return;
     }
@@ -5996,12 +5996,12 @@ async function loadClickUp(force) {
   const body = document.getElementById('cuBody');
   if (!body) return;
   document.getElementById('cuFilters').style.display = 'none';
-  body.innerHTML = '<div style="padding:48px;text-align:center"><span class="spin" style="width:28px;height:28px;border-width:3px"></span><div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:14px;letter-spacing:2px">SYNCING CLICKUP&#8230;</div></div>';
+  body.innerHTML = '<div style="padding:48px;text-align:center"><span class="spin" style="width:28px;height:28px;border-width:3px"></span><div style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:14px;letter-spacing:2px">SYNCING CLICKUP…</div></div>';
 
   try {
     const teamsData = await cuFetch('/team');
     const teams = teamsData.teams || [];
-    if (!teams.length) { body.innerHTML='<div class="empty"><div class="empty-icon">&#128995;</div><h3>NO WORKSPACE</h3></div>'; return; }
+    if (!teams.length) { body.innerHTML='<div class="empty"><div class="empty-icon">🟣</div><h3>NO WORKSPACE</h3></div>'; return; }
     const teamId = teams[0].id;
 
     const spacesData = await cuFetch(`/team/${teamId}/space?archived=false`);
@@ -6051,12 +6051,12 @@ async function loadClickUp(force) {
     cuBuildFilters();
     _cuFiltered = [..._cuTasks];
     document.getElementById('cuFilters').style.display = 'flex';
-    document.getElementById('cu-sub').textContent = `${_cuTasks.length} tasks &#183; ${_cuLists.length} lists &#183; ${teams[0].name}`;
+    document.getElementById('cu-sub').textContent = `${_cuTasks.length} tasks · ${_cuLists.length} lists · ${teams[0].name}`;
     cuRender();
-    toast(`ClickUp synced &#8212; ${_cuTasks.length} tasks &#10003;`, 'ok');
+    toast(`ClickUp synced — ${_cuTasks.length} tasks ✓`, 'ok');
     syncStatusFromClickUp(); // pull CU status &#8594; BugPulse for linked bugs
   } catch(e) {
-    document.getElementById('cuBody').innerHTML = `<div class="empty"><div class="empty-icon">&#128995;</div><h3>CLICKUP ERROR</h3><p>${esc(e.message)}</p></div>`;
+    document.getElementById('cuBody').innerHTML = `<div class="empty"><div class="empty-icon">🟣</div><h3>CLICKUP ERROR</h3><p>${esc(e.message)}</p></div>`;
     toast('ClickUp: '+e.message,'err');
   }
 }
@@ -6218,7 +6218,7 @@ function cuDue(t){
 function cuRenderList(){
   const body=document.getElementById('cuBody');if(!body)return;
   const tasks=_cuFiltered;
-  if(!tasks.length){body.innerHTML='<div class="empty"><div class="empty-icon">&#128995;</div><h3>NO TASKS</h3><p>No tasks match filters.</p></div>';return;}
+  if(!tasks.length){body.innerHTML='<div class="empty"><div class="empty-icon">🟣</div><h3>NO TASKS</h3><p>No tasks match filters.</p></div>';return;}
   let h=`<table><thead><tr>
     <th>ID</th><th>Title</th><th>Status</th><th>Priority</th><th>Assignees</th><th>List</th><th>Due</th><th>Tags</th><th>Time</th>
   </tr></thead><tbody>`;
@@ -6255,7 +6255,7 @@ function cuRenderList(){
 function cuRenderBoard(){
   const body=document.getElementById('cuBody');if(!body)return;
   const tasks=_cuFiltered;
-  if(!tasks.length){body.innerHTML='<div class="empty"><div class="empty-icon">&#128995;</div><h3>NO TASKS</h3></div>';return;}
+  if(!tasks.length){body.innerHTML='<div class="empty"><div class="empty-icon">🟣</div><h3>NO TASKS</h3></div>';return;}
 
   // Build unique status columns preserving order from data
   const statusOrder=[];
@@ -6302,7 +6302,7 @@ function cuRenderBoard(){
 function cuRenderGroup(){
   const body=document.getElementById('cuBody');if(!body)return;
   const tasks=_cuFiltered;
-  if(!tasks.length){body.innerHTML='<div class="empty"><div class="empty-icon">&#128995;</div><h3>NO TASKS</h3></div>';return;}
+  if(!tasks.length){body.innerHTML='<div class="empty"><div class="empty-icon">🟣</div><h3>NO TASKS</h3></div>';return;}
 
   // Group by list, preserve list order
   const listOrder=[],listMap={};
@@ -6365,7 +6365,7 @@ function cuRenderGroup(){
     });
     h+=`</tbody></table></div></div>`;
   });
-  body.innerHTML=h||'<div class="empty"><div class="empty-icon">&#128995;</div><h3>NO TASKS</h3></div>';
+  body.innerHTML=h||'<div class="empty"><div class="empty-icon">🟣</div><h3>NO TASKS</h3></div>';
 }
 
 // &#9472;&#9472; FULL TASK DETAIL PANEL &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
@@ -6641,7 +6641,7 @@ function importHandleFile(file) {
 }
 
 function importShowPreview() {
-  document.getElementById('importPreviewLabel').textContent = `Preview &#8212; ${_importRows.length} bug${_importRows.length!==1?'s':''} ready to import`;
+  document.getElementById('importPreviewLabel').textContent = `Preview — ${_importRows.length} bug${_importRows.length!==1?'s':''} ready to import`;
   let h = '<table><thead><tr><th>#</th><th>Title</th><th>Priority</th><th>Status</th><th>Feature</th><th>Sprint</th></tr></thead><tbody>';
   _importRows.slice(0,10).forEach((row,i) => {
     const fullTitle = row.title||'';
@@ -6697,9 +6697,9 @@ async function importSubmit() {
       done++;
     } catch(e) { failed++; }
     bar.style.width = Math.round(((done+failed)/_importRows.length)*100) + '%';
-    lbl.textContent = `Importing&#8230; ${done+failed} / ${_importRows.length}`;
+    lbl.textContent = `Importing… ${done+failed} / ${_importRows.length}`;
   }
-  lbl.textContent = '&#9989; Done - ' + done + ' imported' + (failed ? ', '+failed+' failed' : '');
+  lbl.textContent = '✅ Done - ' + done + ' imported' + (failed ? ', '+failed+' failed' : '');
   toast('Imported ' + done + ' bugs', 'ok');
   // Store imported IDs for rollback 
   if(_importedBugIds.length) {
@@ -6761,7 +6761,7 @@ async function renderBuildsPage() {
   const wrap = document.getElementById('buildsWrap');
   const banner = document.getElementById('buildsCurrentBanner');
   if (!wrap) return;
-  wrap.innerHTML = `<div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">Loading builds&#8230;</div>`;
+  wrap.innerHTML = `<div style="padding:40px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">Loading builds…</div>`;
 
   let registry = [];
   try { registry = await loadBuildsRegistry(); } catch(e) {}
@@ -6780,7 +6780,7 @@ async function renderBuildsPage() {
     return b.version.localeCompare(a.version, undefined, {numeric:true});
   });
 
-  document.getElementById('builds-sub').textContent = `${builds.length} build${builds.length!==1?'s':''} tracked &#183; ${Object.values(bugMap).flat().length} bugs tagged`;
+  document.getElementById('builds-sub').textContent = `${builds.length} build${builds.length!==1?'s':''} tracked · ${Object.values(bugMap).flat().length} bugs tagged`;
 
   if (!builds.length) {
     if(banner) banner.innerHTML = '';
@@ -6930,7 +6930,7 @@ async function _openBuildForm(editVersion) {
   let registry = [];
   try { registry = await loadBuildsRegistry(); } catch(e) {}
   const existing = editVersion ? registry.find(r => r.version === editVersion) : null;
-  document.getElementById('panelTitle').textContent = editVersion ? '&#9999;&#65039; EDIT BUILD' : '&#128230; LOG BUILD';
+  document.getElementById('panelTitle').textContent = editVersion ? '✏️ EDIT BUILD' : '📦 LOG BUILD';
   document.getElementById('panelId').textContent = editVersion || 'NEW';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
@@ -7091,9 +7091,9 @@ async function saveBuildEntry(editVersion) {
           });
         } catch(e) { console.warn('[build email]', e.message); }
       } // end if(cfg.team_emails)
-      toast(`Build ${version} logged & team notified &#10003;`,'ok');
+      toast(`Build ${version} logged & team notified ✓`,'ok');
     } else {
-      toast(`Build ${version} saved &#10003;`,'ok');
+      toast(`Build ${version} saved ✓`,'ok');
     }
     recordBuild(version);
     closePanel();
@@ -7101,7 +7101,7 @@ async function saveBuildEntry(editVersion) {
     if(S.view==='home') renderHomeBuildsStrip();
   } catch(e) {
     toast('Error: '+e.message,'err');
-    if(btn){btn.disabled=false;btn.innerHTML='&#128190; Save Build';}
+    if(btn){btn.disabled=false;btn.innerHTML='💾 Save Build';}
   }
 }
 
@@ -7115,7 +7115,7 @@ function openReleaseNotes(version) {
   const fixed  = buildBugs.filter(b => DONE.includes(b.status));
   const open   = buildBugs.filter(b => !DONE.includes(b.status));
 
-  document.getElementById('panelTitle').textContent = '&#128640; RELEASE NOTES';
+  document.getElementById('panelTitle').textContent = '🚀 RELEASE NOTES';
   document.getElementById('panelId').textContent = version;
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Close</button>
@@ -7191,7 +7191,7 @@ function buildReleaseNotesText(version) {
 
 function copyReleaseNotes(version) {
   navigator.clipboard.writeText(buildReleaseNotesText(version).replace(/\*/g,'').replace(/_/g,''))
-    .then(() => toast('Release notes copied &#10003;', 'ok'));
+    .then(() => toast('Release notes copied ✓', 'ok'));
 }
 
 async function sendReleaseNotesToGChat(version) {
@@ -7200,7 +7200,7 @@ async function sendReleaseNotesToGChat(version) {
   await sendGChatWebhook(buildReleaseNotesText(version));
   // Slack too
   if(cfg.slack_url) await sendSlackWebhook(buildReleaseNotesText(version).replace(/\*/g,'*'));
-  toast('Release notes sent to GChat &#10003;', 'ok');
+  toast('Release notes sent to GChat ✓', 'ok');
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -7287,7 +7287,7 @@ function openNewTestRun() {
     bvSet.forEach(v => builds.push(v));
   } catch(e) {}
 
-  document.getElementById('panelTitle').textContent = '&#129514; NEW TEST RUN';
+  document.getElementById('panelTitle').textContent = '🧪 NEW TEST RUN';
   document.getElementById('panelId').textContent = 'TEST RUN';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
@@ -7378,7 +7378,7 @@ function downloadTestCaseTemplate() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  toast('Template downloaded &#8212; fill it in and upload!', 'ok');
+  toast('Template downloaded — fill it in and upload!', 'ok');
 }
 
 function trSetSource(src) {
@@ -7421,8 +7421,8 @@ function trHandleCsvFile(file) {
       });
     }
     const preview = document.getElementById('tr-csv-preview');
-    if(preview) preview.textContent = `&#10003; ${_trCsvCases.length} test cases loaded`;
-    toast(`${_trCsvCases.length} test cases parsed &#10003;`, 'ok');
+    if(preview) preview.textContent = `✓ ${_trCsvCases.length} test cases loaded`;
+    toast(`${_trCsvCases.length} test cases parsed ✓`, 'ok');
   };
   reader.readAsText(file);
 }
@@ -7457,7 +7457,7 @@ function createTestRun() {
   saveTestRuns(runs);
   closePanel();
   renderTestRuns();
-  toast(`Test run created &#8212; ${run.cases.length} cases &#10003;`, 'ok');
+  toast(`Test run created — ${run.cases.length} cases ✓`, 'ok');
 }
 
 function openTestRun(idx) {
@@ -7468,7 +7468,7 @@ function openTestRun(idx) {
   const RESULTS = { pass:'&#10003; Pass', fail:'&#10005; Fail', blocked:'&#8856; Blocked', pending:'&#8212; Pending' };
   const COLORS  = { pass:'#34d399', fail:'#f87171', blocked:'#fbbf24', pending:'var(--dim)' };
 
-  document.getElementById('panelTitle').textContent = '&#129514; ' + (run.name||'Test Run');
+  document.getElementById('panelTitle').textContent = '🧪 ' + (run.name||'Test Run');
   document.getElementById('panelId').textContent = run.build || '';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel();renderTestRuns()">Close</button>
@@ -7559,7 +7559,7 @@ function exportTestRun(idx) {
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download = `testrun_${(run.name||'run').replace(/\s+/g,'_')}_${run.build||''}.csv`;
   a.style.display='none'; document.body.appendChild(a); a.click(); a.remove();
-  toast('Test run exported &#10003;', 'ok');
+  toast('Test run exported ✓', 'ok');
 }
 
 async function setCurrentBuild(version) {
@@ -7573,7 +7573,7 @@ async function setCurrentBuild(version) {
     }
     registry = registry.map(r=>({...r,is_current:r.version===version}));
     await saveBuildsRegistry(registry);
-    toast(`${version} set as current build &#10003;`,'ok');
+    toast(`${version} set as current build ✓`,'ok');
     renderBuildsPage();
     if(S.view==='home') renderHomeBuildsStrip();
   } catch(e) { toast(e.message,'err'); }
@@ -7600,7 +7600,7 @@ async function deleteBuildEntryAuth(version) {
   const pwd = prompt('Enter admin password to delete build "' + version + '":');
   if (pwd === null) return; // cancelled
   if (pwd !== 'admin') {
-    toast('Incorrect password &#8212; delete cancelled', 'err');
+    toast('Incorrect password — delete cancelled', 'err');
     return;
   }
   if (!confirm('Remove "' + version + '" from build registry?\n\nBugs tagged to this build will NOT be deleted.')) return;
@@ -7655,7 +7655,7 @@ ${open.filter(b=>!['Critical','Urgent'].includes(b.priority)).length?'\n&#128308
 ${fixed.length?'\n&#9989; FIXED:\n'+fixed.map(b=>`  &#8226; [${b.id}] ${b.title}\n    &#128279; ${bugLink(b.id)}`).join('\n'):''}
 
 Generated by BugPulse &#183; ${new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})}`;
-  navigator.clipboard.writeText(report).then(()=>toast('Build report copied &#10003;','ok')).catch(()=>toast('Copy failed','err'));
+  navigator.clipboard.writeText(report).then(()=>toast('Build report copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -7952,7 +7952,7 @@ function filterBugsByTeam(bugs, team) {
 }
 
 function openDayEndReport() {
-  document.getElementById('panelTitle').textContent = '&#128202; DAY-END REPORT';
+  document.getElementById('panelTitle').textContent = '📊 DAY-END REPORT';
   document.getElementById('panelId').textContent = 'EOD';
   const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
   document.getElementById('panelFooter').innerHTML = `
@@ -7976,7 +7976,7 @@ function openDayEndReport() {
 function copyDayEndReport() {
   const txt = document.getElementById('dayEndReportText')?.value;
   if (!txt) return;
-  navigator.clipboard.writeText(txt).then(() => toast('Report copied &#10003;','ok')).catch(() => toast('Copy failed','err'));
+  navigator.clipboard.writeText(txt).then(() => toast('Report copied ✓','ok')).catch(() => toast('Copy failed','err'));
 }
 
 function refreshEODReport() {
@@ -8036,7 +8036,7 @@ async function sendEODToGChat() {
     if (!ok) allSent = false;
     if (chunks.length > 1) await new Promise(r => setTimeout(r, 500));
   }
-  if (allSent) toast('EOD report sent to GChat &#10003;','ok');
+  if (allSent) toast('EOD report sent to GChat ✓','ok');
   else toast('GChat send failed','err');
 }
 
@@ -8044,14 +8044,14 @@ async function testWebhook() {
   const url = document.getElementById('wh-gchat')?.value?.trim();
   if (!url) { toast('Enter a GChat webhook URL first','err'); return; }
   const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'&#129514; BugPulse webhook test &#10003;'}) }).then(r=>r.ok).catch(()=>false);
-  toast(ok ? 'Test sent to GChat &#10003;' : 'GChat test failed','ok');
+  toast(ok ? 'Test sent to GChat ✓' : 'GChat test failed','ok');
 }
 
 async function testSlackWebhook() {
   const url = document.getElementById('wh-slack')?.value?.trim();
   if (!url) { toast('Enter a Slack webhook URL first','err'); return; }
   const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'&#129514; BugPulse Slack webhook test &#10003;'}) }).then(r=>r.ok).catch(()=>false);
-  toast(ok ? 'Test sent to Slack &#10003;' : 'Slack test failed','err');
+  toast(ok ? 'Test sent to Slack ✓' : 'Slack test failed','err');
 }
 
 function buildPodGChatFields(cfg) {
@@ -8082,7 +8082,7 @@ async function openWebhookSettings() {
   const cfg = Object.assign({}, getWebhookConfig(), data?.settings||{});
   _webhookCfgCache = cfg;
   const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
-  document.getElementById('panelTitle').textContent = '&#128276; WEBHOOK SETTINGS';
+  document.getElementById('panelTitle').textContent = '🔔 WEBHOOK SETTINGS';
   document.getElementById('panelId').textContent = 'WEBHOOKS';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
@@ -8167,7 +8167,7 @@ async function saveWebhookSettings() {
     eod_schedule_on: document.getElementById('wh-eod-on')?.classList.contains('on'),
   };
   await saveWebhookConfig(cfg);
-  toast('Webhook settings saved &#10003;','ok');
+  toast('Webhook settings saved ✓','ok');
   closePanel();
 }
 
@@ -8271,7 +8271,7 @@ function exportBugsXLSX(ids) {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-  toast('Exported ' + bugs.length + ' bugs &#10003;', 'ok');
+  toast('Exported ' + bugs.length + ' bugs ✓', 'ok');
 }
 
 // &#9472;&#9472; Restored missing functions &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
@@ -8342,7 +8342,7 @@ async function sendBugNotification(bug, customMsg) {
     await sendSlackWebhook('&#128027; New Bug: '+bug.id+' &#8212; '+(bug.title||''), blocks);
   }
 
-  toast('Team notified &#10003;', 'ok');
+  toast('Team notified ✓', 'ok');
 }
 
 async function bulkAction(action) {
@@ -8394,7 +8394,7 @@ function openNewSprint() {
   const panel = document.getElementById('panelBody');
   const title = document.getElementById('panelTitle');
   if(!panel||!title) return;
-  title.textContent = '&#127939; NEW SPRINT';
+  title.textContent = '🏃 NEW SPRINT';
   panel.innerHTML = `
     <div class="fg"><label class="fl">Sprint Name</label><input class="fi2" id="sp-name" placeholder="Sprint 10"></div>
     <div class="fg"><label class="fl">Start Date</label><input class="fi2" type="date" id="sp-start"></div>
@@ -8409,18 +8409,18 @@ function registerPush() {
     toast('Push not supported in this browser', 'err'); return;
   }
   Notification.requestPermission().then(perm => {
-    if(perm !== 'granted') { toast('Notifications blocked &#8212; enable in browser settings', 'err'); return; }
+    if(perm !== 'granted') { toast('Notifications blocked — enable in browser settings', 'err'); return; }
     navigator.serviceWorker.ready.then(async sw => {
       try {
         const cfg = getWebhookConfig();
         const vapidKey = cfg.vapid_public_key || '';
-        if(!vapidKey) { toast('VAPID key not configured &#8212; check Webhook Settings', 'err'); return; }
+        if(!vapidKey) { toast('VAPID key not configured — check Webhook Settings', 'err'); return; }
         const sub = await sw.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: vapidKey,
         });
         await api('/push/subscribe', 'POST', { subscription: sub });
-        toast('Push notifications enabled &#10003;', 'ok');
+        toast('Push notifications enabled ✓', 'ok');
         updatePushMenuLabel();
       } catch(e) { toast('Push setup failed: ' + e.message, 'err'); }
     });
@@ -8446,7 +8446,7 @@ lter(l => l.trim());
     if(!bugs.length) { toast('No valid rows found', 'err'); return; }
     try {
       const res = await api('/bugs/import', 'POST', { bugs });
-      toast('Imported ' + (res.created||bugs.length) + ' bugs &#10003;', 'ok');
+      toast('Imported ' + (res.created||bugs.length) + ' bugs ✓', 'ok');
       refreshAll();
     } catch(err) { toast('Import failed: ' + err.message, 'err'); }
   };
@@ -8457,7 +8457,7 @@ function openManageDropdowns() {
   const panel = document.getElementById('panelBody');
   const title = document.getElementById('panelTitle');
   if(!panel||!title) return;
-  title.textContent = '&#9881;&#65039; MANAGE DROPDOWNS';
+  title.textContent = '⚙️ MANAGE DROPDOWNS';
   const fieldsHtml = DD_FIELDS.map((f,fi) => `
     <div style="margin-bottom:16px;background:var(--bg3);border-radius:10px;padding:12px">
       <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g2);margin-bottom:8px">${f.label}</div>
@@ -8493,7 +8493,7 @@ async function saveDropdownChanges() {
   await saveDDConfig();
   populateDropdowns();
   closePanel();
-  toast('Dropdowns saved &#10003;', 'ok');
+  toast('Dropdowns saved ✓', 'ok');
 }
 
 
@@ -9108,7 +9108,7 @@ function renderMonthwiseChart() {
           '</div>';
         }).join('');
     } else {
-      trendEl.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--dim)">No issue type data &#8212; tag bugs with Issue Type when logging.</div>';
+      trendEl.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--dim)">No issue type data — tag bugs with Issue Type when logging.</div>';
     }
   }
 
@@ -9285,7 +9285,7 @@ function copyPodReport() {
   text += 'TOTAL'.padEnd(20) + String(t1).padEnd(20) + String(t2).padEnd(20);
   text += (t2 < t1 ? 'IMPROVING' : t2 > t1 ? 'REGRESSING' : 'STABLE') + '\n';
 
-  navigator.clipboard.writeText(text).then(()=>toast('Pod comparison report copied &#10003;','ok'));
+  navigator.clipboard.writeText(text).then(()=>toast('Pod comparison report copied ✓','ok'));
 }
 
 function renderStatusChart() {
@@ -9360,7 +9360,7 @@ function toggleShareMenu(e, bugId, title) {
 }
 function copyBugLink(bugId) {
   const url = `${APP_URL}?bug=${bugId}`;
-  navigator.clipboard.writeText(url).then(()=>toast('Link copied &#10003;','ok')).catch(()=>toast('Copy failed','err'));
+  navigator.clipboard.writeText(url).then(()=>toast('Link copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 function shareBugWhatsApp(bugId, title, priority) {
   const url = `${APP_URL}?bug=${bugId}`;
@@ -9370,14 +9370,14 @@ function shareBugWhatsApp(bugId, title, priority) {
 function shareBugSlack(bugId, title) {
   const url = `${APP_URL}?bug=${bugId}`;
   const msg = `:bug: *${bugId}* &#8212; ${title}\n<${url}|View in BugPulse>`;
-  navigator.clipboard.writeText(msg).then(()=>toast('Slack message copied &#10003;','ok')).catch(()=>toast('Copy failed','err'));
+  navigator.clipboard.writeText(msg).then(()=>toast('Slack message copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 function copyBugSummary(bugId) {
   const bug = S.bugs.find(b=>b.id===bugId);
   if(!bug) return;
   const assignees = (bug.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
   const summary = `Bug: ${bug.id}\nTitle: ${bug.title||''}\nPriority: ${bug.priority||''} | Status: ${bug.status||''}\nAssignee: ${assignees}\nFeature: ${bug.feature||'&#8212;'}\nBuild: ${bug.build||'&#8212;'}\nSteps: ${bug.steps||'&#8212;'}\nActual: ${bug.actual||'&#8212;'}`;
-  navigator.clipboard.writeText(summary).then(()=>toast('Summary copied &#10003;','ok')).catch(()=>toast('Copy failed','err'));
+  navigator.clipboard.writeText(summary).then(()=>toast('Summary copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -9429,7 +9429,7 @@ async function saveEditComment(bugId, idx) {
   comments[idx] = {...comments[idx], text: newText, edited: true, edited_at: new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})};
   try {
     await api(`/bugs/${bugId}`, 'PUT', {...bug, comments});
-    toast('Comment updated &#10003;','ok');
+    toast('Comment updated ✓','ok');
     closePanel(); await refreshAll(); openDetail(bugId);
   } catch(e) { toast(e.message,'err'); }
 }
