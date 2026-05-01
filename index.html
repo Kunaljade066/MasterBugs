@@ -7957,6 +7957,11 @@ async function saveWebhookSettings() {
 
 
 
+
+function getAttachmentValue() {
+  return document.getElementById('f-attachment')?.value?.trim() || '';
+}
+
 // ── Missing utility functions ─────────────────────────────────────────────────
 
 function onLogout() {
