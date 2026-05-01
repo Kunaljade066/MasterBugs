@@ -3375,6 +3375,7 @@ async function kDrop(e, newStatus) {
   try {
     await api('/bugs/'+bugId, 'PUT', { status: newStatus, _restricted: true });
     toast(`${bugId} → ${newStatus}`, 'ok');
+    logActivity('status_changed', bugId, oldStatus + ' → ' + newStatus + ' | ' + (bug.title||'').slice(0,60));
     // Push to ClickUp if linked
     syncStatusToClickUp(bug, newStatus);
     // Notify on status change
@@ -5142,8 +5143,11 @@ async function saveBug(){
         if(assignees.length)addNotif('Assignees updated',data.title,S.editing);
         if(prev&&data.status!==prev.status){
           addNotif(`Status: ${res.bug?.id||S.editing}`,`${data.title} → ${data.status}`,S.editing);
+          logActivity('status_changed', S.editing, (prev.status||'') + ' → ' + data.status + ' | ' + (data.title||'').slice(0,60));
           syncStatusToClickUp(res.bug||{...prev,...data}, data.status);
           setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,data.title);showNatasha(msg,mood);},800);
+        } else if(S.editing) {
+          logActivity('updated', S.editing, (data.title||'').slice(0,80));
         }
         toast('Bug updated ✓','ok');
         if(S.view==='dashboard') setTimeout(renderDashboard, 100);
