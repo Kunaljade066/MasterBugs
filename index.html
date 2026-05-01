@@ -2018,7 +2018,10 @@ async function doTokenRefresh() {
         return true;
       }
     }
-    console.warn('[token] Silent refresh unavailable');
+    // Silent refresh unavailable — this is normal on some browsers/devices
+    // Don't log out. Session stays valid for 8 hours via localStorage.
+    // Next API call will retry if it gets a 401.
+    console.log('[token] Silent refresh not available — keeping existing session');
     return false;
   } catch(e) {
     console.warn('[token] Refresh error:', e.message);
@@ -2042,8 +2045,10 @@ function scheduleTokenRefresh() {
   // Refresh at 45 min — well before the 60 min Google expiry
   _refreshTimer = setInterval(() => {
     if (!S.user?.idToken) return;
-    doTokenRefresh().catch(() => {});
-  }, 45 * 60 * 1000);
+    doTokenRefresh().then(ok => {
+      if(!ok) console.log('[token] Will retry refresh next cycle');
+    }).catch(() => {});
+  }, 55 * 60 * 1000); // refresh at 55 min, tokens last 60 min
 }
 
 async function ensureFreshToken() {
@@ -2442,10 +2447,21 @@ async function api(path,method='GET',body=null){
     try {
       const refreshed = await doTokenRefresh();
       if(!refreshed) {
-        // Silent refresh failed — force re-login
-        toast('Session expired — please sign in again','err');
+        // Silent refresh failed — check if session is still within 8 hour window
+        const sess = loadSession();
+        const age = Date.now() - (sess?.ts || 0);
+        if(sess && age < 8 * 3600 * 1000) {
+          // Session still valid — keep using existing token, it may still work
+          console.warn('[api] Silent refresh failed but session <8h, continuing...');
+          const r2=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
+          const d2=await r2.json();
+          if(!r2.ok)throw new Error(d2.error||'HTTP '+r2.status);
+          return d2;
+        }
+        // Session older than 8 hours — actually expire
+        toast('Session expired (8h) — please sign in again','err');
         setTimeout(()=>{ clearSession(); location.reload(); }, 2500);
-        throw new Error('Session expired — please sign in again');
+        throw new Error('Session expired');
       }
       // Retry original call with new token
       const r2=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
