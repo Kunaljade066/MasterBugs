@@ -8298,7 +8298,7 @@ const TOUR_STEPS = [
     speech:'Welcome to BugPulse — your QA command centre! I will walk you through every feature. Click Next to explore each screen!',
     features:[] },
 
-  { tab:'home', target:'#homePieRow', spotPad:8,
+  { tab:'home', target:null,
     title:'Home — Pie Charts',
     speech:'Your home screen shows 3 live pie charts — bugs by Status, Priority and Pod. They update instantly when bugs are added!',
     features:[
@@ -8471,15 +8471,7 @@ const TOUR_STEPS = [
       {icon:'🎓',text:'Feature Tour — replay this tour anytime'},
     ]},
 
-  { tab:null, target:null,
-    title:'Customise Dropdowns',
-    speech:'All the dropdown options in BugPulse can be customised to match your team — pods, platforms and any custom fields!',
-    features:[
-      {icon:'🏏',text:'Pod — Openers, Middle Order, LiveOps, Tech Infra and more'},
-      {icon:'📱',text:'Platform — Android, iOS, Web, PC, Console'},
-      {icon:'➕',text:'Custom fields can be added for your specific workflow'},
-      {icon:'⚡',text:'Changes reflect instantly across all bug forms and filters'},
-    ]},
+
 
   { tab:null, target:null,
     title:'SLA Breach Alerts',
