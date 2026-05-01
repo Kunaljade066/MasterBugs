@@ -6875,6 +6875,13 @@ async function _openBuildForm(editVersion) {
         </div>
       </div>
 
+      <div class="fg">
+        <label class="fl">Pod / Team <span style="color:var(--dim);font-weight:400">(for pod-specific GChat &amp; email notifications)</span></label>
+        <select class="fi2" id="bf-pod">
+          <option value="">— All teams (global notification) —</option>
+          ${getDropOpts('pod').map(p=>`<option value="${esc(p)}"${existing?.pod===p?' selected':''}>${esc(p)}</option>`).join('')}
+        </select>
+      </div>
       <div class="notif-toggle-row" style="margin-top:6px">
         <button class="notif-toggle${(existing?.is_current||!editVersion)?' on':''}" id="bf-current-toggle" onclick="this.classList.toggle('on')"></button>
         <span class="notif-toggle-label">Mark as <b>current build</b> (shown as active to whole team)</span>
@@ -6899,6 +6906,7 @@ async function saveBuildEntry(editVersion) {
     if (isCurrent) registry = registry.map(r => ({...r, is_current:false}));
     const entry = {
       version,
+      pod: document.getElementById('bf-pod')?.value?.trim()||'',
       platform: document.getElementById('bf-platform')?.value?.trim()||'',
       link: document.getElementById('bf-link')?.value?.trim()||'',
       notes: document.getElementById('bf-notes')?.value?.trim()||'',
@@ -6916,11 +6924,17 @@ async function saveBuildEntry(editVersion) {
       addNotif(`📦 Build: ${version}`, `${entry.platform?entry.platform+' · ':''}${entry.notes?entry.notes.slice(0,80):'New build available'}`, null);
       // GChat webhook notification for build
       const cfg = getWebhookConfig();
-      if(cfg.gchat_url && cfg.notif_build_available !== false) {
+      if(cfg.notif_build_available !== false) {
         const buildTrackerUrl = APP_URL + '#builds';
-        const downloadLine = entry.link ? `\n📥 Download: ${entry.link}` : '';
-        const gchatText = `📦 *New Build Available — ${version}*\n${entry.platform?'Platform: '+entry.platform+'\n':''}${entry.notes?'Notes: '+entry.notes.slice(0,120)+'\n':''}${downloadLine}\n🔗 Build Tracker: ${buildTrackerUrl}`;
-        await sendGChatWebhook(gchatText);
+        const downloadLine = entry.link ? '\n📥 Download: ' + entry.link : '';
+        const podLine = entry.pod ? '\nPod: ' + entry.pod : '';
+        const gchatText = '📦 *New Build Available — ' + version + '*\n' +
+          (entry.platform ? 'Platform: ' + entry.platform + '\n' : '') +
+          podLine +
+          (entry.notes ? 'Notes: ' + entry.notes.slice(0,120) + '\n' : '') +
+          downloadLine + '\n🔗 Build Tracker: ' + buildTrackerUrl;
+        // Send to pod-specific GChat URL if pod selected, else global
+        await sendGChatWebhook(gchatText, entry.pod||'');
       }
       if(cfg.slack_url && cfg.notif_build_available !== false) {
         const btu = APP_URL + '#builds';
@@ -6935,8 +6949,12 @@ async function saveBuildEntry(editVersion) {
         ]);
       }
       // Email via Resend through worker
-      if(cfg.team_emails && cfg.team_emails.trim()) {
-        const recipients = cfg.team_emails.split(',').map(function(e){return e.trim();}).filter(Boolean);
+      // Pod-specific email — check pod_emails_<podname> first, fallback to global team_emails
+      const podEmailKey = entry.pod ? 'pod_emails_' + entry.pod.toLowerCase().replace(/[^a-z0-9]/g,'_') : '';
+      const podEmails = podEmailKey ? cfg[podEmailKey] : '';
+      const emailList = podEmails || cfg.team_emails || '';
+      if(emailList && emailList.trim()) {
+        const recipients = emailList.split(',').map(function(e){return e.trim();}).filter(Boolean);
         const buildUrl = APP_URL + '?tab=builds';
         const downloadSection = entry.link
           ? '<p><a href="' + esc(entry.link) + '" style="color:#06b6d4">Download / Install Build</a></p>'
@@ -7929,12 +7947,21 @@ function buildPodGChatFields(cfg) {
   if (!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured — add pods in Manage Dropdowns first.</div>';
   return pods.map(pod => {
     const safeId = pod.replace(/[^a-z0-9]/gi,'_');
-    const key = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    const val = esc(cfg[key]||'');
-    return '<div class="fg" style="margin-bottom:8px">' +
-      '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">' + esc(pod) + '</label>' +
-      '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + val + '" placeholder="GChat webhook for ' + esc(pod) + '">' +
-      '</div>';
+    const gchatKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const emailKey = 'pod_emails_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const gchatVal = esc(cfg[gchatKey]||'');
+    const emailVal = esc(cfg[emailKey]||'');
+    return '<div style="background:rgba(124,58,237,.05);border-radius:8px;padding:10px 12px;margin-bottom:10px">' +
+      '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g2);margin-bottom:8px">' + esc(pod) + '</div>' +
+      '<div class="fg" style="margin-bottom:6px">' +
+        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">💬 GChat Webhook URL</label>' +
+        '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + gchatVal + '" placeholder="https://chat.googleapis.com/v1/spaces/…">' +
+      '</div>' +
+      '<div class="fg" style="margin-bottom:0">' +
+        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">📧 Email Recipients (comma-separated)</label>' +
+        '<input class="fi2" id="wh-pod-emails-' + safeId + '" value="' + emailVal + '" placeholder="dev@hitwicket.com, qa@hitwicket.com">' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
@@ -8009,9 +8036,11 @@ async function openWebhookSettings() {
 async function saveWebhookSettings() {
   const _podGChatUrls = {};
   (DD_FIELDS.find(f=>f.key==='pod')?.options || []).forEach(pod => {
-    const elId = 'wh-pod-gchat-' + pod.replace(/[^a-z0-9]/gi,'_');
-    const key  = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    _podGChatUrls[key] = document.getElementById(elId)?.value?.trim()||'';
+    const safeId = pod.replace(/[^a-z0-9]/gi,'_');
+    const gchatKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const emailKey = 'pod_emails_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    _podGChatUrls[gchatKey] = document.getElementById('wh-pod-gchat-' + safeId)?.value?.trim()||'';
+    _podGChatUrls[emailKey] = document.getElementById('wh-pod-emails-' + safeId)?.value?.trim()||'';
   });
   const cfg = {
     gchat_url: document.getElementById('wh-gchat')?.value?.trim()||'',
@@ -8181,7 +8210,7 @@ async function sendBugNotification(bug, customMsg) {
       }}]};
       await sendGChatCard(card, bug.pod||'');
     } else {
-      const gchatText = '\ud83d\udc1b *New Bug Filed \u2014 '+(bug.id||'')+'*\\n*'+(bug.title||'')+'*\\nPriority: '+(bug.priority||'Medium')+' | Status: '+(bug.status||'Open')+'\\nPod: '+(bug.pod||'\u2014')+' | Build: '+(bug.build||'\u2014')+' | Assignee: '+assigneeNames+'\\n\ud83d\udd17 View: '+bugUrl;
+      const gchatText = '\ud83d\udc1b *New Bug Filed \u2014 '+(bug.id||'')+'*\n*'+(bug.title||'')+'*\nPriority: '+(bug.priority||'Medium')+' | Status: '+(bug.status||'Open')+'\nPod: '+(bug.pod||'\u2014')+' | Build: '+(bug.build||'\u2014')+' | Assignee: '+assigneeNames+'\n\ud83d\udd17 View: '+bugUrl;
       await sendGChatWebhook(gchatText, bug.pod||'');
     }
   }
