@@ -1495,7 +1495,7 @@ const APP_URL   = window.location.origin + window.location.pathname;
 async function fetchConfig() {
   try {
     const res  = await fetch(WORKER + '/config');
-    if (!res.ok) return; // worker has no /config &#8212; use hardcoded defaults
+    if (!res.ok) return; // worker has no /config — use hardcoded defaults
     const data = await res.json();
     if (data.google_client_id) {
       GOOGLE_ID = data.google_client_id;
@@ -1667,7 +1667,7 @@ const avEl=(name,pic,sz=24)=>pic
   ?`<div class="av" style="width:${sz}px;height:${sz}px"><img src="${pic}" alt=""></div>`
   :`<div class="av" style="width:${sz}px;height:${sz}px;font-size:${sz<20?7:9}px;background:${avc(name)}">${avi(name)}</div>`;
 function avStack(assignees,sz=22){
-  if(!assignees||!assignees.length)return`<span style="font-size:11px;color:var(--dim)">&#8212;</span>`;
+  if(!assignees||!assignees.length)return`<span style="font-size:11px;color:var(--dim)">—</span>`;
   const show=assignees.slice(0,3),extra=assignees.length-3;
   let h=`<div class="av-stack" style="--sz:${sz}px">`;
   h+=show.map(a=>avEl(a.name,a.picture,sz)).join('');
@@ -1719,8 +1719,8 @@ function showPushBanner() {
   b.id = 'pushBanner';
   b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#7c3aed,#5b21b6);padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.4)';
   b.innerHTML = `
-    <div style="font-size:18px">&#128276;</div>
-    <div style="flex:1;color:#fff;font-size:13px;font-weight:600">Enable desktop notifications to get alerted on new bugs, status changes and builds &#8212; even when browser is closed.</div>
+    <div style="font-size:18px">🔔</div>
+    <div style="flex:1;color:#fff;font-size:13px;font-weight:600">Enable desktop notifications to get alerted on new bugs, status changes and builds — even when browser is closed.</div>
     <button onclick="document.getElementById('pushBanner').remove();requestPushPermission()"
       style="background:#fff;color:#7c3aed;border:none;border-radius:8px;padding:8px 18px;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">Allow</button>
     <button onclick="document.getElementById('pushBanner').remove();try{localStorage.setItem('hwt_push_dismissed','1')}catch(e){}"
@@ -1771,7 +1771,7 @@ async function requestPushPermission() {
       try {
         await api('/push/notify', 'POST', {
           title: 'BugPulse',
-          body: 'Notifications active &#8212; you will be alerted on new bugs and builds.',
+          body: 'Notifications active — you will be alerted on new bugs and builds.',
           icon: 'https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png',
           tag: 'test',
         });
@@ -1834,7 +1834,7 @@ function showPushPrompt() {
   banner.id = 'pushPromptBanner';
   banner.style.cssText = 'position:fixed;bottom:80px;right:20px;z-index:8000;background:var(--bg2);border:1px solid var(--g1);border-radius:12px;padding:14px 18px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:300px;backdrop-filter:blur(12px);animation:slideInRight .3s ease';
   banner.innerHTML = `
-    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:6px">&#128276; STAY UPDATED</div>
+    <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:6px">🔔 STAY UPDATED</div>
     <div style="font-size:12px;color:var(--mist);line-height:1.6;margin-bottom:12px">Get notified about critical bugs and EOD reports even when you're on another tab.</div>
     <div style="display:flex;gap:8px">
       <button onclick="requestPushPermission();document.getElementById('pushPromptBanner')?.remove()" 
@@ -1900,7 +1900,7 @@ if(_bc) {
   };
 }
 
-const SYNC_INTERVAL = 8 * 1000; // 8 seconds when active &#8212; near-instant updates
+const SYNC_INTERVAL = 8 * 1000; // 8 seconds when active — near-instant updates
 
 function startFastSync(){
   if(_syncTimer) clearInterval(_syncTimer);
@@ -1945,7 +1945,7 @@ function startFastSync(){
           const key = 'hwt_crit_push_' + new Date().toISOString().slice(0,13);
           if(!sessionStorage.getItem(key)) {
             sessionStorage.setItem(key, '1');
-            sendDesktopNotification(`&#128680; ${crit.length} Critical Bug${crit.length!==1?'s':''} Open`, crit.slice(0,2).map(b=>b.title).join(' &#183; '));
+            sendDesktopNotification(`🚨 ${crit.length} Critical Bug${crit.length!==1?'s':''} Open`, crit.slice(0,2).map(b=>b.title).join(' · '));
           }
         }
       }
@@ -2038,14 +2038,14 @@ async function doTokenRefresh() {
       if (d.ok) {
         S.user = { ...d, idToken: newToken };
         saveSession();
-        console.log('[token] &#9989; Silently refreshed');
+        console.log('[token] ✅ Silently refreshed');
         return true;
       }
     }
     // Silent refresh unavailable &#8212; this is normal on some browsers/devices
     // Don't log out. Session stays valid for 8 hours via localStorage.
     // Next API call will retry if it gets a 401.
-    console.log('[token] Silent refresh not available &#8212; keeping existing session');
+    console.log('[token] Silent refresh not available — keeping existing session');
     return false;
   } catch(e) {
     console.warn('[token] Refresh error:', e.message);
@@ -2188,7 +2188,7 @@ function initGSI() {
     auto_select:           false,
     cancel_on_tap_outside: true,
     hosted_domain:         ALLOWED,
-    use_fedcm_for_prompt:  true,  // opt into FedCM &#8212; fixes GSI_LOGGER warning
+    use_fedcm_for_prompt:  true,  // opt into FedCM — fixes GSI_LOGGER warning
   });
   _gsiInited = true;
 }
@@ -2205,7 +2205,7 @@ function initGoogleSignIn() {
 
 // The button's onclick &#8212; same popup flow as Blueprint
 function doGoogleSignIn() {
-  if (!GOOGLE_ID) { loginErr('App config not loaded yet, please wait&#8230;'); return; }
+  if (!GOOGLE_ID) { loginErr('App config not loaded yet, please wait…'); return; }
   initGSI();
 
   const btn = document.getElementById('gSignInFallbackBtn');
@@ -2264,14 +2264,14 @@ function checkOAuthFragment() {
   const token = params.get('id_token');
   if (!token) return false;
   history.replaceState({}, '', window.location.pathname);
-  setLoad(60, 'Verifying&#8230;');
+  setLoad(60, 'Verifying…');
   verifyToken(token);
   return true;
 }
 
 async function verifyToken(token) {
   if (!token) { loginErr('No credential received.'); return; }
-  setLoad(60, 'Verifying&#8230;');
+  setLoad(60, 'Verifying…');
   try {
     const r = await fetch(WORKER + '/auth/verify', {
       method:  'POST',
@@ -2282,7 +2282,7 @@ async function verifyToken(token) {
     if (!r.ok) throw new Error(d.error || 'Auth failed');
     S.user = { ...d, idToken: token };
     saveSession();
-    setLoad(80, 'Loading data&#8230;');
+    setLoad(80, 'Loading data…');
     onLogin();
   } catch(e) {
     loginErr(e.message);
@@ -2367,10 +2367,10 @@ function onLogin(){
     const firstName=(S.user.name||'').split(' ')[0]||'there';
     const critCount=S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).length;
     const myCount=S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user?.email)).length;
-    let msg=`Hey ${firstName}! Welcome back to BugPulse! &#127951;`;
+    let msg=`Hey ${firstName}! Welcome back to BugPulse! 🏏`;
     let loginMood='happy';
-    if(critCount>0){msg=`Hey ${firstName}! There are ${critCount} critical bug${critCount>1?'s':''} waiting! Let's smash them! &#128680;`;loginMood='angry';}
-    else if(myCount>0){msg=`Hey ${firstName}! You have ${myCount} bug${myCount>1?'s':''} assigned. Time to get cracking! &#127951;`;loginMood='cool';}
+    if(critCount>0){msg=`Hey ${firstName}! There are ${critCount} critical bug${critCount>1?'s':''} waiting! Let's smash them! 🚨`;loginMood='angry';}
+    else if(myCount>0){msg=`Hey ${firstName}! You have ${myCount} bug${myCount>1?'s':''} assigned. Time to get cracking! 🏏`;loginMood='cool';}
     setTimeout(()=>showNatasha(msg,loginMood),600);
   });
 }
@@ -2506,7 +2506,7 @@ async function api(path,method='GET',body=null){
       return d2;
     } catch(e2) {
       if(e2.message.includes('expired')) throw e2;
-      throw new Error(d.error||'Session expired &#8212; please sign in again');
+      throw new Error(d.error||'Session expired — please sign in again');
     }
   }
   if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);
@@ -2669,7 +2669,7 @@ function buildMFDrop(key) {
   const sel = MF_STATE[key];
 
   const checkItem = (val) => {
-    const label = val === '__unassigned__' ? '&#8212; No Assignee &#8212;' : val;
+    const label = val === '__unassigned__' ? '— No Assignee —' : val;
     const checked = sel.has(val) ? 'checked' : '';
     return `<div class="mf-item" onclick="toggleMFItem('${key}','${val.replace(/'/g,"\\'")}',this)">
       <input type="checkbox" ${checked} onclick="event.stopPropagation();toggleMFItem('${key}','${val.replace(/'/g,"\\'")}',this.parentElement)">
@@ -2926,7 +2926,7 @@ function copyFilteredStats() {
   bugs.forEach(b => {
     const assignees = (b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
     text += '['+b.id+'] '+( b.title||'')+' \n';
-    text += '  '+( b.priority||'Medium')+' | '+(b.status||'')+' | '+(b.issue_type||'')+' | Reporter: '+(b.reporter||'&#8212;')+' | Dev: '+assignees+'\n';
+    text += '  '+( b.priority||'Medium')+' | '+(b.status||'')+' | '+(b.issue_type||'')+' | Reporter: '+(b.reporter||'—')+' | Dev: '+assignees+'\n';
     text += '  '+APP_URL+'?bug='+b.id+'\n';
   });
 
@@ -3068,23 +3068,23 @@ function renderHome(){
   const done=S.bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
   const total=S.bugs.length;
   document.getElementById('homeQuick').innerHTML=`
-    <div class="hq-card" onclick="showInlineDrawer('&#128995; Open Bugs',S.bugs.filter(b=>b.status==='Open'))">
-      <div class="hq-icon">&#128995;</div><div class="hq-n" style="color:#a78bfa">${open}</div><div class="hq-l">Open</div>
+    <div class="hq-card" onclick="showInlineDrawer('🟣 Open Bugs',S.bugs.filter(b=>b.status==='Open'))">
+      <div class="hq-icon">🟣</div><div class="hq-n" style="color:#a78bfa">${open}</div><div class="hq-l">Open</div>
     </div>
-    <div class="hq-card" onclick="showInlineDrawer('&#128309; Active Bugs',S.bugs.filter(b=>['In Progress','Bugged'].includes(b.status)))">
-      <div class="hq-icon">&#128309;</div><div class="hq-n" style="color:var(--g2)">${active}</div><div class="hq-l">Active</div>
+    <div class="hq-card" onclick="showInlineDrawer('🔵 Active Bugs',S.bugs.filter(b=>['In Progress','Bugged'].includes(b.status)))">
+      <div class="hq-icon">🔵</div><div class="hq-n" style="color:var(--g2)">${active}</div><div class="hq-l">Active</div>
     </div>
-    <div class="hq-card" onclick="showInlineDrawer('&#128680; Critical & Urgent',S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)))">
-      <div class="hq-icon">&#128680;</div><div class="hq-n" style="color:var(--g5)">${crit}</div><div class="hq-l">Critical</div>
+    <div class="hq-card" onclick="showInlineDrawer('🚨 Critical & Urgent',S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)))">
+      <div class="hq-icon">🚨</div><div class="hq-n" style="color:var(--g5)">${crit}</div><div class="hq-l">Critical</div>
     </div>
-    <div class="hq-card" onclick="showInlineDrawer('&#128100; Assigned to Me',S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user?.email)))">
-      <div class="hq-icon">&#128100;</div><div class="hq-n" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${mine}</div><div class="hq-l">Mine</div>
+    <div class="hq-card" onclick="showInlineDrawer('👤 Assigned to Me',S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user?.email)))">
+      <div class="hq-icon">👤</div><div class="hq-n" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${mine}</div><div class="hq-l">Mine</div>
     </div>
-    <div class="hq-card" onclick="showInlineDrawer('&#128736; Resolved',S.bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)))">
-      <div class="hq-icon">&#128736;</div><div class="hq-n" style="color:var(--g4)">${done}</div><div class="hq-l">Resolved</div>
+    <div class="hq-card" onclick="showInlineDrawer('🛠 Resolved',S.bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)))">
+      <div class="hq-icon">🛠</div><div class="hq-n" style="color:var(--g4)">${done}</div><div class="hq-l">Resolved</div>
     </div>
-    <div class="hq-card" onclick="showInlineDrawer('&#128203; All Bugs',S.bugs)">
-      <div class="hq-icon">&#128203;</div><div class="hq-n" style="color:var(--text)">${total}</div><div class="hq-l">Total</div>
+    <div class="hq-card" onclick="showInlineDrawer('📋 All Bugs',S.bugs)">
+      <div class="hq-icon">📋</div><div class="hq-n" style="color:var(--text)">${total}</div><div class="hq-l">Total</div>
     </div>`;
   const critBugs=S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).slice(0,6);
   document.getElementById('homeCritical').innerHTML=critBugs.length?critBugs.map(homeBugRow).join(''):emptySmall('🎉','All clear!');
@@ -3126,7 +3126,7 @@ function renderTable(){
   const pageIds=sl.map(b=>b.id);
   const allPageSelected=pageIds.length>0&&pageIds.every(id=>_bulkSelected.has(id));
   let h=`<table><thead><tr><th onclick="toggleSelectAll(event)" style="width:30px;cursor:pointer" title="Select all on page"><div class="cb-wrap"><input type="checkbox" ${allPageSelected?'checked':''} onclick="toggleSelectAll(event)"></div></th>`;
-  cols.forEach(c=>{const ar=S.sortCol===c.k?(S.sortDir===1?' &#9650;':' &#9660;'):'';h+=`<th onclick="sortBy('${c.k}')">${c.l}${ar}</th>`;});
+  cols.forEach(c=>{const ar=S.sortCol===c.k?(S.sortDir===1?' ▲':' ▼'):'';h+=`<th onclick="sortBy('${c.k}')">${c.l}${ar}</th>`;});
   h+=`<th>Actions</th></tr></thead><tbody>`;
   sl.forEach(bug=>{
     const _isSel=_bulkSelected.has(bug.id);
@@ -3137,21 +3137,21 @@ function renderTable(){
     h+=`<tr onclick="openDetail('${bug.id}')" style="cursor:pointer;${_slaRow?'background:rgba(239,68,68,.04)':''}${_isSel?';background:rgba(124,58,237,.1)':''}">
       <td onclick="event.stopPropagation()" style="width:30px"><div class="cb-wrap"><input type="checkbox" ${_isSel?'checked':''} onclick="toggleBulkSelect('${bug.id}',event)"></div></td>
       <td class="tc-id mob-hide-id" style="white-space:nowrap">
-        ${esc(bug.id||'&#8212;')}
+        ${esc(bug.id||'—')}
         ${bug.feature?`<div style="font-family:var(--mono);font-size:8px;color:var(--g1);opacity:.5;margin-top:1px;max-width:100px;overflow:hidden;text-overflow:ellipsis">${esc(bug.feature.slice(0,14))}</div>`:''}
       </td>
-      <td class="tc-title" title="${esc(bug.title||'')}">${esc(bug.title||'&#8212;')}</td>
+      <td class="tc-title" title="${esc(bug.title||'')}">${esc(bug.title||'—')}</td>
       <td>${pChip(bug.priority)}</td><td>${svrChip(bug.severity)}</td><td>${stChip(bug.status)}</td>
       <td>${ageChip(bug)}</td>
       <td>${avStack(bug.assignees||[],20)}</td>
-      <td><span style="font-size:11px;font-weight:600">${esc(bug.feature||'&#8212;')}</span></td>
+      <td><span style="font-size:11px;font-weight:600">${esc(bug.feature||'—')}</span></td>
       <td>${bug.sprint?`<span class="chip chip-sprint">${esc(bug.sprint)}</span>`:''}</td>
       ${DD_FIELDS.map(f=>bug[f.key]?`<td><span class="chip chip-gray">${esc(bug[f.key])}</span></td>`:'<td></td>').join('')}
-      <td><span style="font-family:var(--mono);font-size:10px;color:var(--mute)">${esc(bug.build||'&#8212;')}</span></td>
+      <td><span style="font-family:var(--mono);font-size:10px;color:var(--mute)">${esc(bug.build||'—')}</span></td>
       <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px">
-          <button class="btn btn-g btn-xs" onclick="openEdit('${bug.id}')">&#9999;&#65039;</button>
-          ${S.user?.role==='admin'?`<button class="btn btn-r btn-xs" onclick="delBug('${bug.id}')">&#128465;</button>`:''}
+          <button class="btn btn-g btn-xs" onclick="openEdit('${bug.id}')">✏️</button>
+          ${S.user?.role==='admin'?`<button class="btn btn-r btn-xs" onclick="delBug('${bug.id}')">🗑</button>`:''}
         </div>
       </td>
     </tr>`;
@@ -3250,7 +3250,7 @@ function renderHomePieCharts() {
     ctx2d.fillStyle = '#6060a0';
     ctx2d.font = '11px monospace';
     ctx2d.textAlign = 'center';
-    ctx2d.fillText('No pod data &#8212; tag bugs with Pod', ctxPod.width/2, ctxPod.height/2);
+    ctx2d.fillText('No pod data — tag bugs with Pod', ctxPod.width/2, ctxPod.height/2);
   }
 }
 
@@ -3377,7 +3377,7 @@ function renderBoard(){
           <div class="kcard-id">${esc(bug.id)}</div>
           <div class="kcard-title">${esc(bug.title||'')}</div>
           <div class="kcard-foot">${pChip(bug.priority)}${ageChip(bug)}${avStack(bug.assignees||[],18)}</div>
-        </div>`).join('') || `<div class="kcol-empty">&#8212; drop here &#8212;</div>`}
+        </div>`).join('') || `<div class="kcol-empty">— drop here —</div>`}
       </div>
     </div>`;
   }).join('');
@@ -3411,13 +3411,13 @@ async function kDrop(e, newStatus) {
   try {
     await api('/bugs/'+bugId, 'PUT', { status: newStatus, _restricted: true });
     toast(`${bugId} → ${newStatus}`, 'ok');
-    logActivity('status_changed', bugId, oldStatus + ' &#8594; ' + newStatus + ' | ' + (bug.title||'').slice(0,60));
+    logActivity('status_changed', bugId, oldStatus + ' → ' + newStatus + ' | ' + (bug.title||'').slice(0,60));
     // Push to ClickUp if linked
     syncStatusToClickUp(bug, newStatus);
     // Notify on status change
     const cfg = getWebhookConfig();
     const bugUrl = APP_URL + '?bug=' + bugId;
-    const msg = `&#128202; *Status Update &#8212; ${bugId}*\n${bug.title||''}\n${oldStatus} &#8594; *${newStatus}*\n&#128279; ${bugUrl}`;
+    const msg = `📊 *Status Update — ${bugId}*\n${bug.title||''}\n${oldStatus} → *${newStatus}*\n🔗 ${bugUrl}`;
     sendGChatWebhook(msg, bug?.pod||'');
     if(cfg.slack_url) sendSlackWebhook(msg);
   } catch(err) {
@@ -3439,7 +3439,7 @@ function renderSprints(){
     const pct=sb.length?Math.round(done/sb.length*100):0;
     return`<div class="sprint-card">
       <div class="sprint-hd">
-        <div><div class="sprint-name">${esc(sp.name)}</div><div class="sprint-dates">${esc(sp.start||'&#8212;')} &#8594; ${esc(sp.end||'&#8212;')}</div></div>
+        <div><div class="sprint-name">${esc(sp.name)}</div><div class="sprint-dates">${esc(sp.start||'—')} → ${esc(sp.end||'—')}</div></div>
         <div style="flex:1;display:flex;align-items:center;gap:8px;margin-left:16px"><div class="sprint-prog"><div class="sprint-prog-fill" style="width:${pct}%"></div></div><span class="sprint-pct">${pct}%</span></div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
           <span class="chip chip-gray">${sb.length} bugs</span>
@@ -3463,7 +3463,7 @@ function renderSprints(){
 
 function fBySprint(n){
   const bugs = S.bugs.filter(b=>b.sprint===n);
-  showInlineDrawer('&#127939; Sprint: '+n, bugs, ()=>fBySprint(n));
+  showInlineDrawer('🏃 Sprint: '+n, bugs, ()=>fBySprint(n));
 }
 function openSprintForm(){
   if(S.user?.role!=='admin'){toast('Admin only','err');return;}
@@ -3476,7 +3476,7 @@ function openSprintForm(){
       <div class="fg"><label class="fl">Start</label><input type="date" class="fi2" id="sp-s" value="${new Date().toISOString().slice(0,10)}"></div>
       <div class="fg"><label class="fl">End</label><input type="date" class="fi2" id="sp-e" value="${new Date(Date.now()+14*86400000).toISOString().slice(0,10)}"></div>
     </div>
-    <div class="fg"><label class="fl">Goal</label><textarea class="fi2" id="sp-g" rows="2" placeholder="Sprint goal&#8230;"></textarea></div>`;
+    <div class="fg"><label class="fl">Goal</label><textarea class="fi2" id="sp-g" rows="2" placeholder="Sprint goal…"></textarea></div>`;
   openPanel();
 }
 async function saveSprint(){
@@ -3503,8 +3503,8 @@ function showInlineDrawer(title, bugs, refreshFn){
       <span style="font-family:var(--mono);font-size:10px;color:var(--mute)">${bugs.length} bug${bugs.length!==1?'s':''}</span>
     </div>
     <div style="display:flex;gap:6px">
-      <button class="btn btn-g btn-sm" onclick="goToBacklogFiltered()" title="Open in Bugs tab">&#128203; Open in Bugs</button>
-      <button class="btn btn-g btn-sm" onclick="closeInlineDrawer()">&#10005;</button>
+      <button class="btn btn-g btn-sm" onclick="goToBacklogFiltered()" title="Open in Bugs tab">📋 Open in Bugs</button>
+      <button class="btn btn-g btn-sm" onclick="closeInlineDrawer()">✕</button>
     </div>
   </div>`;
 
@@ -3610,7 +3610,7 @@ function renderFeatures(){
       const subOpen = subBugs.filter(b=>!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).length;
       return `
         <div style="margin-bottom:8px">
-          ${sub ? `<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:${c};opacity:.7;margin-bottom:5px;padding-left:2px">&#8627; ${esc(sub)}</div>` : ''}
+          ${sub ? `<div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:${c};opacity:.7;margin-bottom:5px;padding-left:2px">↳ ${esc(sub)}</div>` : ''}
           <div style="display:flex;flex-wrap:wrap;gap:7px">
             ${subBugs.slice(0,6).map(bug=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;cursor:pointer;flex:1;min-width:150px;max-width:220px;transition:all .15s" onclick="openDetail('${bug.id}')" onmouseenter="this.style.borderColor='${c}'" onmouseleave="this.style.borderColor='var(--bd)'">
               <div style="font-family:var(--mono);font-size:9px;color:${c};margin-bottom:4px">${esc(bug.id)}</div>
@@ -3626,7 +3626,7 @@ function renderFeatures(){
       <div class="sprint-hd">
         <div style="display:flex;align-items:center;gap:9px;flex:1">
           <div style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0;box-shadow:0 0 8px ${c}"></div>
-          <div><div class="sprint-name">${esc(feat)}</div><div class="sprint-dates">${fb.length} issues &#183; ${subKeys.filter(s=>s).length} sub-features</div></div>
+          <div><div class="sprint-name">${esc(feat)}</div><div class="sprint-dates">${fb.length} issues · ${subKeys.filter(s=>s).length} sub-features</div></div>
           <div style="flex:1;display:flex;align-items:center;gap:8px;margin-left:14px">
             <div class="sprint-prog"><div class="sprint-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${c},${c}aa)"></div></div>
             <span class="sprint-pct" style="color:${c}">${pct}%</span>
@@ -3648,12 +3648,12 @@ function renderFeatures(){
 
 function fBySubFeat(feat, sub) {
   const bugs = S.bugs.filter(b => b.feature === feat && (b.sub_feature||'') === sub);
-  showInlineDrawer(`&#127918; ${feat}${sub?' &#8594; '+sub:''}`, bugs);
+  showInlineDrawer(`🎮 ${feat}${sub?' → '+sub:''}`, bugs);
 }
 
 function fByFeat(f){
   const bugs = S.bugs.filter(b=>b.feature===f);
-  showInlineDrawer('&#127918; Feature: '+f, bugs, ()=>fByFeat(f));
+  showInlineDrawer('🎮 Feature: '+f, bugs, ()=>fByFeat(f));
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -3668,7 +3668,7 @@ function dashDrillDown(field, value){
   } else {
     bugs = S.bugs;
   }
-  showInlineDrawer('&#128202; '+value+' ('+field+')', bugs);
+  showInlineDrawer('📊 '+value+' ('+field+')', bugs);
 }
 
 // &#9472;&#9472; Bug Age Heatmap &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
@@ -3721,7 +3721,7 @@ function renderBugHeatmap() {
 
   el.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px 18px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">&#128467; BUG FILING HEATMAP &#8212; LAST 12 WEEKS</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">🗓 BUG FILING HEATMAP — LAST 12 WEEKS</div>
       <div style="display:flex;gap:3px;align-items:flex-start">
         <div style="display:flex;flex-direction:column;gap:3px;margin-right:4px;padding-top:0">
           ${dayNames.map((d,i)=>`<div style="font-family:var(--mono);font-size:8px;color:var(--dim);height:12px;line-height:12px;width:14px">${i%2===1?d:''}</div>`).join('')}
@@ -3837,13 +3837,13 @@ function renderDashboard(){
   const dc=['var(--g1)','var(--g2)','var(--g4)','var(--g3)','var(--g5)','#c4b5fd','var(--g6)','#0d9488'];
   const pco={'Critical':'var(--g5)','High':'var(--g3)','Medium':'var(--g4)','Low':'var(--g2)','Urgent':'var(--g5)'};
   const sco={'Open':'#a78bfa','In Progress':'var(--g2)','In Review':'var(--g3)','Dev Fixed':'#6ee7b7','Done':'var(--g4)','Bugged':'var(--g5)','QA Pass':'var(--g4)'};
-  const cntBy=f=>Object.entries(S.bugs.reduce((a,b)=>{const v=b[f]||'&#8212;';a[v]=(a[v]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const cntBy=f=>Object.entries(S.bugs.reduce((a,b)=>{const v=b[f]||'—';a[v]=(a[v]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,8);
   const cntByAssignee=()=>{const m={};S.bugs.forEach(b=>(b.assignees||[]).forEach(a=>{if(a.name)m[a.name]=(m[a.name]||0)+1;}));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);};
   const bc=(title,data,co={},filterKey='')=>{
     const mx=data.length?Math.max(...data.map(d=>d[1])):1;
     return`<div class="dash-card"><div class="dash-title">${title}</div>
       ${data.map(([l,v],i)=>`<div class="bar-row" style="cursor:pointer" onclick="dashDrillDown('${filterKey||''}','${l.replace(/'/g,"\'")}')" title="View ${v} bug${v!==1?'s':''}">
-        <div class="bar-lbl" title="${l}">${l.length>11?l.slice(0,11)+'&#8230;':l}</div>
+        <div class="bar-lbl" title="${l}">${l.length>11?l.slice(0,11)+'…':l}</div>
         <div class="bar-bg"><div class="bar-fill" style="width:${(v/mx*100).toFixed(1)}%;background:${co[l]||dc[i%dc.length]};box-shadow:0 0 6px ${co[l]||dc[i%dc.length]}44"></div></div>
         <div class="bar-n">${v}</div>
       </div>`).join('')||'<div style="color:var(--dim);font-size:11px;font-family:var(--mono)">No data</div>'}
@@ -3871,25 +3871,25 @@ function renderNotifs(){
   const watched = getWatchedBugs();
 
   const watchHtml = watched.length ? '<div style="margin-bottom:18px">' +
-    '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">&#128065; WATCHLIST (' + watched.length + ')</div>' +
+    '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">👁 WATCHLIST (' + watched.length + ')</div>' +
     watched.map(b =>
       '<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openDetail(\'' + b.id + '\')">' +
         '<div style="flex:1;min-width:0">' +
           '<div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(b.title||'') + '</div>' +
-          '<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">' + esc(b.id) + ' &#183; ' + pChip(b.priority) + ' ' + stChip(b.status) + '</div>' +
+          '<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">' + esc(b.id) + ' · ' + pChip(b.priority) + ' ' + stChip(b.status) + '</div>' +
         '</div>' +
-        '<button onclick="event.stopPropagation();toggleWatch(\'' + b.id + '\');renderNotifs()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;font-family:var(--mono)">&#10005;</button>' +
+        '<button onclick="event.stopPropagation();toggleWatch(\'' + b.id + '\');renderNotifs()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:10px;padding:3px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;font-family:var(--mono)">✕</button>' +
       '</div>'
     ).join('') + '</div>' : '';
 
   const notifHtml = S.localNotifs.length ?
-    '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:10px">&#128276; MY NOTIFICATIONS</div>' +
+    '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:10px">🔔 MY NOTIFICATIONS</div>' +
     S.localNotifs.map(n =>
       '<div class="notif-item ' + (n.read?'':'unread') + '" onclick="clickNotif(' + n.id + ',\'' + (n.bugId||'') + '\')">' +
         '<div style="flex-shrink:0;margin-top:3px">' + (n.read ? '<div style="width:7px;height:7px"></div>' : '<div class="notif-dot"></div>') + '</div>' +
         '<div style="flex:1;min-width:0">' +
           '<div class="notif-title">' + esc(n.title||'') + '</div>' +
-          '<div class="notif-meta">' + esc(n.body||'') + ' &#183; ' + n.ts + '</div>' +
+          '<div class="notif-meta">' + esc(n.body||'') + ' · ' + n.ts + '</div>' +
           (n.bugId ? '<span style="font-family:var(--mono);font-size:9px;color:var(--g1)">' + esc(n.bugId) + '</span>' : '') +
         '</div>' +
       '</div>'
@@ -3900,7 +3900,7 @@ function renderNotifs(){
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">' +
       // LEFT &#8212; personal notifs + watchlist
       '<div>' +
-        '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">&#128276; MY ALERTS</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">🔔 MY ALERTS</div>' +
         (watchHtml || '') +
         (notifHtml || '') +
         (!watched.length && !S.localNotifs.length ? '<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:20px 0 0;text-align:center">No personal alerts yet</div>' : '') +
@@ -3908,8 +3908,8 @@ function renderNotifs(){
       '</div>' +
       // RIGHT &#8212; team activity feed
       '<div>' +
-        '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">&#128203; TEAM ACTIVITY</div>' +
-        '<div id="activityFeed">Loading&#8230;</div>' +
+        '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:12px">📋 TEAM ACTIVITY</div>' +
+        '<div id="activityFeed">Loading…</div>' +
       '</div>' +
     '</div>';
 
@@ -3923,7 +3923,7 @@ function renderNotifs(){
     }
     // No header here &#8212; it's already in the container
     feed.innerHTML = activity.map(function(a) {
-      var icon = a.action==='created'?'&#128027;':a.action==='deleted'?'&#128465;':a.action==='status_changed'?'&#128260;':a.action==='updated'?'&#9999;&#65039;':'&#128204;';
+      var icon = a.action==='created'?'🐛':a.action==='deleted'?'🗑':a.action==='status_changed'?'🔄':a.action==='updated'?'✏️':'📌';
       var actionLabel = {
         created: 'logged a bug',
         deleted: 'deleted a bug',
@@ -3982,8 +3982,8 @@ function renderDropdownManagerBody(){
 
   const tabs=[
     ...DD_FIELDS.map(f=>`<button class="btn ${_ddActiveKey===f.key?'btn-v':'btn-g'} btn-sm" onclick="_ddActiveKey='${f.key}';renderDropdownManagerBody()">${esc(f.label)}</button>`),
-    `<button class="btn ${isFeat?'btn-v':'btn-g'} btn-sm" onclick="_ddActiveKey='__features__';renderDropdownManagerBody()">&#127918; Features</button>`,
-    `<button class="btn btn-g btn-sm" style="border-style:dashed" onclick="ddAddField()">&#65291; New Field</button>`,
+    `<button class="btn ${isFeat?'btn-v':'btn-g'} btn-sm" onclick="_ddActiveKey='__features__';renderDropdownManagerBody()">🎮 Features</button>`,
+    `<button class="btn btn-g btn-sm" style="border-style:dashed" onclick="ddAddField()">＋ New Field</button>`,
   ].join('');
 
   let content='';
@@ -3991,36 +3991,36 @@ function renderDropdownManagerBody(){
     const feats=[...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].sort();
     content=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mute)">features in use (${feats.length})</span><span style="font-family:var(--mono);font-size:9px;color:var(--dim)">Delete clears the tag from all its bugs</span></div>
     <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;overflow:hidden">
-      ${feats.length?feats.map(feat=>{const cnt=S.bugs.filter(b=>b.feature===feat).length;const safe=feat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03)"><span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(feat)}</span><span style="font-family:var(--mono);font-size:10px;color:var(--mute)">${cnt} bug${cnt!==1?'s':''}</span><button class="pod-del-btn" onclick="ddDeleteFeature('${safe}')">&#128465; Delete</button></div>`;}).join(''):`<div style="padding:16px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">No features logged yet</div>`}
+      ${feats.length?feats.map(feat=>{const cnt=S.bugs.filter(b=>b.feature===feat).length;const safe=feat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return`<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03)"><span style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${esc(feat)}</span><span style="font-family:var(--mono);font-size:10px;color:var(--mute)">${cnt} bug${cnt!==1?'s':''}</span><button class="pod-del-btn" onclick="ddDeleteFeature('${safe}')">🗑 Delete</button></div>`;}).join(''):`<div style="padding:16px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">No features logged yet</div>`}
     </div>`;
   }else{
     content=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <span style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mute)">${esc(lbl)} options (${opts.length})</span>
       <div style="display:flex;gap:5px">
-        <button class="btn btn-g btn-xs" onclick="ddRenameField()">&#9999;&#65039; Rename</button>
-        ${!isBuiltin?`<button class="btn btn-r btn-xs" onclick="ddDeleteField()">&#128465; Delete Field</button>`:''}
+        <button class="btn btn-g btn-xs" onclick="ddRenameField()">✏️ Rename</button>
+        ${!isBuiltin?`<button class="btn btn-r btn-xs" onclick="ddDeleteField()">🗑 Delete Field</button>`:''}
       </div>
     </div>
     <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:12px">
       ${opts.length?opts.map((p,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.03)">
         <div style="display:flex;flex-direction:column;gap:1px">
-          <button class="pod-del-btn" style="padding:1px 5px;font-size:9px;line-height:1.2" onclick="ddMoveOpt(${i},-1)" ${i===0?'disabled':''}>&#9650;</button>
-          <button class="pod-del-btn" style="padding:1px 5px;font-size:9px;line-height:1.2" onclick="ddMoveOpt(${i},1)" ${i===opts.length-1?'disabled':''}>&#9660;</button>
+          <button class="pod-del-btn" style="padding:1px 5px;font-size:9px;line-height:1.2" onclick="ddMoveOpt(${i},-1)" ${i===0?'disabled':''}>▲</button>
+          <button class="pod-del-btn" style="padding:1px 5px;font-size:9px;line-height:1.2" onclick="ddMoveOpt(${i},1)" ${i===opts.length-1?'disabled':''}>▼</button>
         </div>
         <span style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${esc(p)}</span>
-        <button class="pod-del-btn" onclick="ddRemoveOpt(${i})">&#10005; Remove</button>
-      </div>`).join(''):`<div style="padding:14px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">No options yet &#8212; add below</div>`}
+        <button class="pod-del-btn" onclick="ddRemoveOpt(${i})">✕ Remove</button>
+      </div>`).join(''):`<div style="padding:14px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim)">No options yet — add below</div>`}
     </div>
     <div class="fg" style="display:flex;gap:8px;align-items:flex-end">
       <div style="flex:1"><label class="fl">Add option to ${esc(lbl)}</label>
-        <input class="fi2" id="dd-new-input" placeholder="New option&#8230;" onkeydown="if(event.key==='Enter')ddAddOpt()">
+        <input class="fi2" id="dd-new-input" placeholder="New option…" onkeydown="if(event.key==='Enter')ddAddOpt()">
       </div>
       <button class="btn btn-v" onclick="ddAddOpt()" style="flex-shrink:0">+ Add</button>
     </div>`;
   }
 
   document.getElementById('panelBody').innerHTML=`
-    <div class="info-banner" style="margin-bottom:12px">&#128450;&#65039; Changes sync to all users. Add/remove options, rename fields, reorder, delete entire fields, manage features.</div>
+    <div class="info-banner" style="margin-bottom:12px">🗂️ Changes sync to all users. Add/remove options, rename fields, reorder, delete entire fields, manage features.</div>
     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--bd)">${tabs}</div>
     ${content}`;
   setTimeout(()=>document.getElementById('dd-new-input')?.focus(),80);
@@ -4120,7 +4120,7 @@ function buildMultiAssigneePicker(bug){
   return`<div class="map-parent">
     <div class="map-wrap" id="mapWrap" onclick="document.getElementById('map-q')?.focus()">
       <div class="map-tags" id="mapTags"></div>
-      <input class="map-input" id="map-q" autocomplete="off" placeholder="Search team&#8230;"
+      <input class="map-input" id="map-q" autocomplete="off" placeholder="Search team…"
         oninput="mapSearch(this.value)" onfocus="mapOpen()" onkeydown="mapKey(event)">
     </div>
     <div class="map-dropdown" id="mapDrop"></div>
@@ -4129,7 +4129,7 @@ function buildMultiAssigneePicker(bug){
 function renderMapTags(){
   const c=document.getElementById('mapTags');if(!c)return;
   c.innerHTML=_mapAssignees.map((a,i)=>`<span class="map-tag">${avEl(a.name,a.picture,16)}<span>${esc(a.name)}</span><button class="map-tag-remove" onclick="mapRemove(${i})">✕</button></span>`).join('');
-  const q=document.getElementById('map-q');if(q)q.placeholder=_mapAssignees.length?'Add more&#8230;':'Search team&#8230;';
+  const q=document.getElementById('map-q');if(q)q.placeholder=_mapAssignees.length?'Add more…':'Search team…';
 }
 function mapRemove(i){_mapAssignees.splice(i,1);renderMapTags();}
 function mapOpen(){mapSearch(document.getElementById('map-q')?.value||'');}
@@ -4142,7 +4142,7 @@ function mapSearch(q){
     <div class="map-option${sel.has(m.email)?' selected':''}" data-i="${i}" data-name="${esc(m.name)}" data-email="${esc(m.email)}" data-pic="${esc(m.picture||'')}"
       onmousedown="mapSelect('${esc(m.name)}','${esc(m.email)}','${esc(m.picture||'')}')">
       ${avEl(m.name,m.picture,24)}
-      <div><div class="map-option-name">${esc(m.name)}${sel.has(m.email)?' &#10003;':''}</div><div class="map-option-email">${esc(m.email)}</div></div>
+      <div><div class="map-option-name">${esc(m.name)}${sel.has(m.email)?' ✓':''}</div><div class="map-option-email">${esc(m.email)}</div></div>
     </div>`).join('');}
   dd.classList.add('on');
   document.addEventListener('click',e=>{if(!document.getElementById('mapDrop')?.contains(e.target)&&!document.getElementById('mapWrap')?.contains(e.target))document.getElementById('mapDrop')?.classList.remove('on');},{once:true,capture:true});
@@ -4175,16 +4175,16 @@ function openDetail(id){
   document.getElementById('panelFooter').innerHTML=`
     <button class="btn btn-g" onclick="closePanel()">Close</button>
     <div style="position:relative">
-      <button class="btn btn-g" onclick="toggleShareMenu(event,'${bug.id}','${esc(bug.title||'').replace(/'/g,"\\'")}')">&#128279; Share</button>
+      <button class="btn btn-g" onclick="toggleShareMenu(event,'${bug.id}','${esc(bug.title||'').replace(/'/g,"\\'")}')">🔗 Share</button>
       <div class="share-menu" id="shareMenu-${bug.id}">
-        <div class="share-item" onclick="copyBugLink('${bug.id}')">&#128203; Copy Link</div>
-        <div class="share-item" onclick="shareBugWhatsApp('${bug.id}','${esc(bug.title||'').replace(/'/g,"\\'")}','${bug.priority||''}')">&#128172; WhatsApp</div>
-        <div class="share-item" onclick="shareBugSlack('${bug.id}','${esc(bug.title||'').replace(/'/g,"\\'")}')">&#128995; Copy Slack Msg</div>
-        <div class="share-item" onclick="copyBugSummary('${bug.id}')">&#128196; Copy Summary</div>
+        <div class="share-item" onclick="copyBugLink('${bug.id}')">📋 Copy Link</div>
+        <div class="share-item" onclick="shareBugWhatsApp('${bug.id}','${esc(bug.title||'').replace(/'/g,"\\'")}','${bug.priority||''}')">💬 WhatsApp</div>
+        <div class="share-item" onclick="shareBugSlack('${bug.id}','${esc(bug.title||'').replace(/'/g,"\\'")}')">🟣 Copy Slack Msg</div>
+        <div class="share-item" onclick="copyBugSummary('${bug.id}')">📄 Copy Summary</div>
       </div>
     </div>
-    <button class="btn btn-g" onclick="openEdit('${bug.id}')">&#9999;&#65039; Edit</button>
-    ${S.user?.role==='admin'?`<button class="btn btn-r" onclick="delBug('${bug.id}');closePanel()">&#128465; Delete</button>`:''}`;
+    <button class="btn btn-g" onclick="openEdit('${bug.id}')">✏️ Edit</button>
+    ${S.user?.role==='admin'?`<button class="btn btn-r" onclick="delBug('${bug.id}');closePanel()">🗑 Delete</button>`:''}`;
   document.getElementById('panelBody').innerHTML=`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
       ${pChip(bug.priority)} ${svrChip(bug.severity)} ${stChip(bug.status)} ${ageChip(bug)}
@@ -4197,16 +4197,16 @@ function openDetail(id){
           ${assignees.length?assignees.map(a=>`<div style="display:flex;align-items:center;gap:7px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:24px;padding:5px 12px 5px 5px">${avEl(a.name,a.picture,24)}<div><div style="font-size:12px;font-weight:700;color:var(--text)">${esc(a.name)}</div><div style="font-family:var(--mono);font-size:10px;color:var(--mute)">${esc(a.email)}</div></div></div>`).join(''):'<span style="font-size:12px;color:var(--dim);font-family:var(--mono)">Unassigned</span>'}
         </div>
       </div>
-      <div class="dgi"><div class="dgi-l">Reporter</div><div style="display:flex;align-items:center;gap:7px;margin-top:5px">${avEl(bug.reporter,bug.reporter_picture,24)}<div><div class="dgi-v">${esc(bug.reporter||'&#8212;')}</div><div style="font-family:var(--mono);font-size:10px;color:var(--mute)">${esc(bug.reporter_email||'')}</div></div></div></div>
-      <div class="dgi"><div class="dgi-l">Feature</div><div class="dgi-v">${esc(bug.feature||'&#8212;')}</div></div>
-      <div class="dgi"><div class="dgi-l">Sprint</div><div class="dgi-v">${esc(bug.sprint||'&#8212;')}</div></div>
+      <div class="dgi"><div class="dgi-l">Reporter</div><div style="display:flex;align-items:center;gap:7px;margin-top:5px">${avEl(bug.reporter,bug.reporter_picture,24)}<div><div class="dgi-v">${esc(bug.reporter||'—')}</div><div style="font-family:var(--mono);font-size:10px;color:var(--mute)">${esc(bug.reporter_email||'')}</div></div></div></div>
+      <div class="dgi"><div class="dgi-l">Feature</div><div class="dgi-v">${esc(bug.feature||'—')}</div></div>
+      <div class="dgi"><div class="dgi-l">Sprint</div><div class="dgi-v">${esc(bug.sprint||'—')}</div></div>
       ${DD_FIELDS.filter(f=>bug[f.key]).map(f=>`<div class="dgi"><div class="dgi-l">${esc(f.label)}</div><div class="dgi-v">${esc(bug[f.key])}</div></div>`).join("")}
-      <div class="dgi"><div class="dgi-l">Build</div><div class="dgi-v" style="font-family:var(--mono);font-size:11px">${esc(bug.build||'&#8212;')}</div></div>
-      ${bug.build_link?`<div class="dgi"><div class="dgi-l">Build Link</div><div class="dgi-v"><a href="${esc(bug.build_link)}" target="_blank" rel="noopener" style="color:var(--g2);text-decoration:none;font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:4px">&#128230; Download / Open &#8599;</a></div></div>`:''}
-      ${bug.clickup_task_id?`<div class="dgi"><div class="dgi-l">ClickUp Task</div><div class="dgi-v"><a href="https://app.clickup.com/t/${esc(bug.clickup_task_id)}" target="_blank" rel="noopener" style="color:var(--g1);font-family:var(--mono);font-size:11px;text-decoration:none">${esc(bug.clickup_task_id)} &#8599;</a></div></div>`:''}
-      <div class="dgi"><div class="dgi-l">Device / UID</div><div class="dgi-v">${esc(bug.device||'&#8212;')}</div></div>
-      <div class="dgi"><div class="dgi-l">Created</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.created_at||'&#8212;')}</div></div>
-      <div class="dgi"><div class="dgi-l">Updated</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.updated_at||'&#8212;')}</div></div>
+      <div class="dgi"><div class="dgi-l">Build</div><div class="dgi-v" style="font-family:var(--mono);font-size:11px">${esc(bug.build||'—')}</div></div>
+      ${bug.build_link?`<div class="dgi"><div class="dgi-l">Build Link</div><div class="dgi-v"><a href="${esc(bug.build_link)}" target="_blank" rel="noopener" style="color:var(--g2);text-decoration:none;font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:4px">📦 Download / Open ↗</a></div></div>`:''}
+      ${bug.clickup_task_id?`<div class="dgi"><div class="dgi-l">ClickUp Task</div><div class="dgi-v"><a href="https://app.clickup.com/t/${esc(bug.clickup_task_id)}" target="_blank" rel="noopener" style="color:var(--g1);font-family:var(--mono);font-size:11px;text-decoration:none">${esc(bug.clickup_task_id)} ↗</a></div></div>`:''}
+      <div class="dgi"><div class="dgi-l">Device / UID</div><div class="dgi-v">${esc(bug.device||'—')}</div></div>
+      <div class="dgi"><div class="dgi-l">Created</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.created_at||'—')}</div></div>
+      <div class="dgi"><div class="dgi-l">Updated</div><div class="dgi-v" style="font-family:var(--mono);font-size:10px">${esc(bug.updated_at||'—')}</div></div>
     </div>
     ${dsec('Description',bug.title||bug.description)}
     ${dsec('Steps to Reproduce',bug.steps)}
@@ -4221,9 +4221,9 @@ function openDetail(id){
             style="max-width:100%;max-height:300px;border-radius:8px;border:1px solid var(--bd);cursor:pointer"
             onclick="window.open('${esc(bug.attachment)}','_blank')"
             title="Click to open full size">
-          <div style="display:none"><a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">&#128279; ${esc(bug.attachment)}</a></div>
+          <div style="display:none"><a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">🔗 ${esc(bug.attachment)}</a></div>
         </div>` :
-        `<div class="dtext"><a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">&#128279; ${esc(bug.attachment)}</a></div>`
+        `<div class="dtext"><a href="${esc(bug.attachment)}" target="_blank" style="color:var(--g2)">🔗 ${esc(bug.attachment)}</a></div>`
       }
     </div>` : ''}
     ${renderLinks(bug)}
@@ -4235,12 +4235,12 @@ function openDetail(id){
         <div class="comment-input-wrap">
           <div class="comment-mention-drop" id="mentionDrop"></div>
           <textarea class="fi2" id="cInput" rows="2"
-            placeholder="Add a comment&#8230; type @ to mention someone"
+            placeholder="Add a comment… type @ to mention someone"
             style="flex:1;min-height:64px;width:100%"
             oninput="onCommentInput(this,event)"
             onkeydown="onCommentKey(event,'${bug.id}')"></textarea>
           <div style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">&#128161; Type <b style="color:var(--g2)">@name</b> to notify someone</span>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">💡 Type <b style="color:var(--g2)">@name</b> to notify someone</span>
             <button class="btn btn-v btn-sm" onclick="postComment('${bug.id}')">POST</button>
           </div>
         </div>
@@ -4340,16 +4340,16 @@ async function postComment(bugId){
   const bug=S.bugs.find(b=>b.id===bugId);
   mentions.forEach(m=>{
     if(m.email!==S.user?.email)
-      addNotif(`&#128172; ${S.user?.name||'Someone'} mentioned you`,`"${txt.slice(0,50)}"`,bugId);
+      addNotif(`💬 ${S.user?.name||'Someone'} mentioned you`,`"${txt.slice(0,50)}"`,bugId);
   });
   if(bug){
     const mentionedEmails=new Set(mentions.map(m=>m.email));
     (bug.assignees||[]).forEach(a=>{
       if(a.email&&a.email!==S.user?.email&&!mentionedEmails.has(a.email))
-        addNotif(`&#128172; New comment on ${bugId}`,`${S.user?.name||'Someone'}: "${txt.slice(0,50)}"`,bugId);
+        addNotif(`💬 New comment on ${bugId}`,`${S.user?.name||'Someone'}: "${txt.slice(0,50)}"`,bugId);
     });
     if(bug.reporter_email&&bug.reporter_email!==S.user?.email&&!mentionedEmails.has(bug.reporter_email))
-      addNotif(`&#128172; New comment on ${bugId}`,`${S.user?.name||'Someone'}: "${txt.slice(0,50)}"`,bugId);
+      addNotif(`💬 New comment on ${bugId}`,`${S.user?.name||'Someone'}: "${txt.slice(0,50)}"`,bugId);
   }
   try{
     await api(`/bugs/${bugId}/comment`,'POST',{text:txt,mentions:mentions.map(m=>({name:m.name,email:m.email}))});
@@ -4423,7 +4423,7 @@ function toggleProfileMenu(e){
 }
 function closeProfileMenu(){document.getElementById('profileMenu')?.classList.remove('on');}
 
-const NATASHA_MSGS=['Welcome back! Ready to squash some bugs today? &#127951;','New bugs spotted! Let\'s smash them out of the park! &#127951;','Hey! Don\'t forget to check your assigned issues! &#128064;','Great work team! Keep the quality high! &#11088;','Remember: a bug fixed today is a player happy tomorrow! &#127918;'];
+const NATASHA_MSGS=['Welcome back! Ready to squash some bugs today? 🏏','New bugs spotted! Let\'s smash them out of the park! 🏏','Hey! Don\'t forget to check your assigned issues! 👀','Great work team! Keep the quality high! ⭐','Remember: a bug fixed today is a player happy tomorrow! 🎮'];
 const NATASHA_IMGS={
   happy:    ['natasha_happy.png',   'center'],
   cool:     ['natasha1.png',        'center'],
@@ -4457,7 +4457,7 @@ function toggleNatashaPref() {
 
 function showNatasha(msg, mood='default'){
   const intro=document.getElementById('natashaIntro');
-  if(!intro) return; // guard &#8212; DOM not ready yet
+  if(!intro) return; // guard — DOM not ready yet
   // Respect user pref
   if(S.user && localStorage.getItem(NATASHA_PREF_KEY(S.user?.email)) === 'off') return;
   const wrap=intro.querySelector('.natasha-wrap');
@@ -4522,7 +4522,7 @@ const BUG_TEMPLATES_KEY = 'hwt_bug_templates_v2';
 
 const DEFAULT_TEMPLATES = [
   {
-    id: 'iap', name: '&#128176; IAP Payment', icon: '&#128176;',
+    id: 'iap', name: '💰 IAP Payment', icon: '💰',
     data: {
       priority: 'Critical', severity: 'S1 - Blocker', feature: 'IAP',
       steps: '1. Open Store\n2. Select offer\n3. Tap Buy\n4. Complete payment',
@@ -4532,17 +4532,17 @@ const DEFAULT_TEMPLATES = [
     }
   },
   {
-    id: 'crash', name: '&#128165; Crash / Force Close', icon: '&#128165;',
+    id: 'crash', name: '💥 Crash / Force Close', icon: '💥',
     data: {
       priority: 'Critical', severity: 'S1 - Blocker',
       steps: '1. Open app\n2. Navigate to [screen]\n3. Tap [action]\n4. App crashes',
       expected: 'App stays stable',
       actual: 'App force closes / crashes to home screen',
-      repro: '100% &#8212; Always',
+      repro: '100% — Always',
     }
   },
   {
-    id: 'ui', name: '&#127912; UI / Visual Bug', icon: '&#127912;',
+    id: 'ui', name: '🎨 UI / Visual Bug', icon: '🎨',
     data: {
       priority: 'Medium', severity: 'S4 - Minor',
       steps: '1. Open [screen]\n2. Observe [element]',
@@ -4551,7 +4551,7 @@ const DEFAULT_TEMPLATES = [
     }
   },
   {
-    id: 'match', name: '&#127951; Match Engine', icon: '&#127951;',
+    id: 'match', name: '🏏 Match Engine', icon: '🏏',
     data: {
       priority: 'High', severity: 'S2 - Critical', feature: 'Match Flow',
       steps: '1. Set up match\n2. Play [shot type]\n3. Observe outcome',
@@ -4560,17 +4560,17 @@ const DEFAULT_TEMPLATES = [
     }
   },
   {
-    id: 'network', name: '&#127760; Network / API', icon: '&#127760;',
+    id: 'network', name: '🌐 Network / API', icon: '🌐',
     data: {
       priority: 'High', severity: 'S2 - Critical',
       steps: '1. [Action that triggers API call]\n2. Check response / behaviour',
       expected: 'API responds correctly, data saved/loaded',
       actual: 'Error / timeout / wrong data returned',
-      repro: '~50% &#8212; Sometimes',
+      repro: '~50% — Sometimes',
     }
   },
   {
-    id: 'regression', name: '&#128257; Regression', icon: '&#128257;',
+    id: 'regression', name: '🔁 Regression', icon: '🔁',
     data: {
       priority: 'High', severity: 'S2 - Critical',
       steps: '1. Test previously fixed flow\n2. Observe behaviour',
@@ -4597,7 +4597,7 @@ function openTemplateSelector(onSelect) {
   document.getElementById('panelId').textContent = 'SELECT TEMPLATE';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-g" onclick="openManageTemplates()">&#9881; Manage</button>`;
+    <button class="btn btn-g" onclick="openManageTemplates()">⚙ Manage</button>`;
   document.getElementById('panelBody').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:4px">Select a template to pre-fill the bug form</div>
@@ -4605,11 +4605,11 @@ function openTemplateSelector(onSelect) {
         <div onclick="${onSelect ? `(${onSelect.toString()})('${t.id}')` : `applyTemplate('${t.id}')`}"
           style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:13px 15px;cursor:pointer;transition:border-color .15s"
           onmouseenter="this.style.borderColor='var(--g1)'" onmouseleave="this.style.borderColor='var(--bd)'">
-          <div style="font-size:16px;margin-bottom:5px">${t.icon||'&#128203;'}</div>
+          <div style="font-size:16px;margin-bottom:5px">${t.icon||'📋'}</div>
           <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(t.name)}</div>
           ${t.data?.feature ? `<div style="font-family:var(--mono);font-size:9px;color:var(--g2);margin-top:3px">${esc(t.data.feature)}</div>` : ''}
           <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">
-            ${t.data?.priority||'Medium'} &#183; ${t.data?.severity||'&#8212;'}
+            ${t.data?.priority||'Medium'} · ${t.data?.severity||'—'}
           </div>
         </div>`).join('')}
     </div>`;
@@ -4651,11 +4651,11 @@ function openManageTemplates() {
     <div style="display:flex;flex-direction:column;gap:8px">
       ${tmpl.map((t,i) => `
         <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px">
-          <span style="font-size:20px">${t.icon||'&#128203;'}</span>
+          <span style="font-size:20px">${t.icon||'📋'}</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:13px;font-weight:700;color:var(--text)">${esc(t.name)}</div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">
-              ${t.data?.priority||'Medium'} ${t.data?.feature?'&#183; '+esc(t.data.feature):''} ${t.data?.severity?'&#183; '+esc(t.data.severity):''}
+              ${t.data?.priority||'Medium'} ${t.data?.feature?'· '+esc(t.data.feature):''} ${t.data?.severity?'· '+esc(t.data.severity):''}
             </div>
           </div>
           <div style="display:flex;gap:5px">
@@ -4686,7 +4686,7 @@ function openEditTemplate(id) {
         <input class="fi2" id="tmpl-name" value="${esc(t?.name||'')}" placeholder="e.g. Crash Bug, UI Bug">
       </div>
       <div class="fg"><label class="fl">Icon Emoji</label>
-        <input class="fi2" id="tmpl-icon" value="${esc(t?.icon||'&#128203;')}" placeholder="&#128203;" style="width:80px">
+        <input class="fi2" id="tmpl-icon" value="${esc(t?.icon||'📋')}" placeholder="📋" style="width:80px">
       </div>
       <div class="fg"><label class="fl">Default Title Prefix</label>
         <input class="fi2" id="tmpl-title" value="${esc(t?.data?.title||'')}" placeholder="e.g. [Crash] ">
@@ -4698,22 +4698,23 @@ function openEditTemplate(id) {
       </div>
       <div class="fg"><label class="fl">Severity</label>
         <select class="fi2" id="tmpl-severity">
-          <option value="">&#8212;</option>
+          <option value="">—</option>
           ${['S1 - Blocker','S2 - Critical','S3 - Major','S4 - Minor'].map(s=>`<option ${t?.data?.severity===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </div>
       <div class="fg"><label class="fl">Default Feature</label>
         <select class="fi2" id="tmpl-feature">
-          <option value="">&#8212;</option>${featOpts}
+          <option value="">—</option>${featOpts}
         </select>
       </div>
       <div class="fg"><label class="fl">Default Sprint</label>
         <select class="fi2" id="tmpl-sprint">
-          <option value="">&#8212;</option>${spOpts}
+          <option value="">—</option>${spOpts}
         </select>
       </div>
       <div class="fg"><label class="fl">Default Steps to Reproduce</label>
-        <textarea class="fi2" id="tmpl-steps" rows="4" placeholder="1. Open app&#10;2. Navigate to...">${esc(t?.data?.steps||'')}</textarea>
+        <textarea class="fi2" id="tmpl-steps" rows="4" placeholder="1. Open app
+2. Navigate to...">${esc(t?.data?.steps||'')}</textarea>
       </div>
       <div class="fg"><label class="fl">Default Expected Result</label>
         <textarea class="fi2" id="tmpl-expected" rows="2" placeholder="Expected behavior...">${esc(t?.data?.expected||'')}</textarea>
@@ -4735,7 +4736,7 @@ function saveEditedTemplate(id) {
     steps:    document.getElementById('tmpl-steps')?.value||'',
     expected: document.getElementById('tmpl-expected')?.value||'',
   };
-  const icon = document.getElementById('tmpl-icon')?.value||'&#128203;';
+  const icon = document.getElementById('tmpl-icon')?.value||'📋';
   if(id) {
     const idx = tmpl.findIndex(t=>t.id===id);
     if(idx>=0) tmpl[idx] = {...tmpl[idx], name, icon, data};
@@ -4781,7 +4782,7 @@ function openFeatureKanban() {
       <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:10px;min-width:220px;max-width:260px;flex-shrink:0;display:flex;flex-direction:column">
         <div style="padding:9px 12px;border-bottom:1px solid var(--bd);background:var(--bg3);border-radius:10px 10px 0 0">
           <div style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${c}">${esc(feat)}</div>
-          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${bugs.length} open${crit?' &#183; '+`<span style="color:var(--g5)">${crit} crit</span>`:''}
+          <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${bugs.length} open${crit?' · '+`<span style="color:var(--g5)">${crit} crit</span>`:''}
           </div>
         </div>
         <div style="padding:6px;display:flex;flex-direction:column;gap:5px;flex:1;overflow-y:auto;max-height:380px">
@@ -4816,38 +4817,38 @@ function buildBugForm(bug,full){
 
   if(bug&&!full){
     document.getElementById('panelBody').innerHTML=`
-      <div class="info-banner">&#8505; You can update Status, POD and Assignees. Only the reporter or you can edit all fields.</div>
+      <div class="info-banner">ℹ You can update Status, POD and Assignees. Only the reporter or you can edit all fields.</div>
       <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:7px;letter-spacing:.2px">${esc(bug.title||'')}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap">${pChip(bug.priority)}${stChip(bug.status)}</div>
       </div>
       <div class="fg"><label class="fl">Status</label><select class="fi2" id="f-st">${stOpts}</select></div>
-      ${DD_FIELDS.map(f=>{const opts=getDropOpts(f.key);return`<div class="fg"><label class="fl">${esc(f.label)}</label><select class="fi2" id="f-dd-${f.key}"><option value="">&#8212; None &#8212;</option>${opts.map(o=>`<option value="${esc(o)}"${(bug?.[f.key]||"")===o?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;}).join("")}
+      ${DD_FIELDS.map(f=>{const opts=getDropOpts(f.key);return`<div class="fg"><label class="fl">${esc(f.label)}</label><select class="fi2" id="f-dd-${f.key}"><option value="">— None —</option>${opts.map(o=>`<option value="${esc(o)}"${(bug?.[f.key]||"")===o?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;}).join("")}
       <div class="fg"><label class="fl">Assignees</label>${buildMultiAssigneePicker(bug)}</div>
-      <div class="fg"><label class="fl">Comment (optional)</label><textarea class="fi2" id="f-qc" rows="2" placeholder="Note about this update&#8230;"></textarea></div>`;
+      <div class="fg"><label class="fl">Comment (optional)</label><textarea class="fi2" id="f-qc" rows="2" placeholder="Note about this update…"></textarea></div>`;
     setTimeout(renderMapTags,0);return;
   }
 
   document.getElementById('panelBody').innerHTML=`
-    <div class="dup-box" id="dupBox"><div class="dup-title">&#9888; SIMILAR BUGS FOUND</div><div id="dupList"></div></div>
-    <div id="recurBox" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:11px 14px;margin-bottom:14px"><span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:#f87171;font-weight:700">&#128257; RECURRENCE DETECTED</span><div id="recurDetail" style="font-size:12px;color:var(--mist);margin-top:5px;line-height:1.6"></div></div>
+    <div class="dup-box" id="dupBox"><div class="dup-title">⚠ SIMILAR BUGS FOUND</div><div id="dupList"></div></div>
+    <div id="recurBox" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:11px 14px;margin-bottom:14px"><span style="font-family:var(--mono);font-size:9px;letter-spacing:1px;color:#f87171;font-weight:700">🔁 RECURRENCE DETECTED</span><div id="recurDetail" style="font-size:12px;color:var(--mist);margin-top:5px;line-height:1.6"></div></div>
     <div class="fg2">
       <div class="fg fc2"><label class="fl">Title / Issue *</label>
-        <textarea class="fi2" id="f-title" rows="2" placeholder="Describe the bug clearly&#8230;" oninput="checkDup(this.value,'${bug?.id||''}');checkRecurrenceUI(this.value,document.getElementById('f-feat')?.value||''))">${esc(bug?.title||'')}</textarea>
+        <textarea class="fi2" id="f-title" rows="2" placeholder="Describe the bug clearly…" oninput="checkDup(this.value,'${bug?.id||''}');checkRecurrenceUI(this.value,document.getElementById('f-feat')?.value||''))">${esc(bug?.title||'')}</textarea>
       </div>
       <div class="fg"><label class="fl">Priority</label>
         <select class="fi2" id="f-p">${['Low','Medium','High','Critical','Urgent'].map(v=>`<option value="${v}"${(bug?.priority||'Medium')===v?' selected':''}>${v}</option>`).join('')}</select>
       </div>
       <div class="fg"><label class="fl">Severity (QA)</label>
-        <select class="fi2" id="f-sv">${['','S1 - Blocker','S2 - Critical','S3 - Major','S4 - Minor'].map(v=>`<option value="${v}"${(bug?.severity||'')===v?' selected':''}>${v||'&#8212; None &#8212;'}</option>`).join('')}</select>
+        <select class="fi2" id="f-sv">${['','S1 - Blocker','S2 - Critical','S3 - Major','S4 - Minor'].map(v=>`<option value="${v}"${(bug?.severity||'')===v?' selected':''}>${v||'— None —'}</option>`).join('')}</select>
       </div>
-      <div class="fg"><label class="fl">Issue Type <span style="color:var(--g1);font-weight:400;font-size:9px;letter-spacing:0;text-transform:none">&#8212; for trend analysis</span></label>
+      <div class="fg"><label class="fl">Issue Type <span style="color:var(--g1);font-weight:400;font-size:9px;letter-spacing:0;text-transform:none">— for trend analysis</span></label>
         <select class="fi2" id="f-issue-type">
-          ${['','Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration','Security'].map(v=>`<option value="${v}"${(bug?.issue_type||'')===v?' selected':''}>${v||'&#8212; Select type &#8212;'}</option>`).join('')}
+          ${['','Happy Flow','Edge Case','Regression','UI/Visual','Performance','Crash','Data Issue','Integration','Security'].map(v=>`<option value="${v}"${(bug?.issue_type||'')===v?' selected':''}>${v||'— Select type —'}</option>`).join('')}
         </select>
       </div>
       <div class="fg"><label class="fl">Status</label><select class="fi2" id="f-st">${stOpts}</select></div>
-      ${DD_FIELDS.map(f=>{const opts=getDropOpts(f.key);return`<div class="fg"><label class="fl">${esc(f.label)}</label><select class="fi2" id="f-dd-${f.key}"><option value="">&#8212; None &#8212;</option>${opts.map(o=>`<option value="${esc(o)}"${(bug?.[f.key]||"")===o?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;}).join("")}
+      ${DD_FIELDS.map(f=>{const opts=getDropOpts(f.key);return`<div class="fg"><label class="fl">${esc(f.label)}</label><select class="fi2" id="f-dd-${f.key}"><option value="">— None —</option>${opts.map(o=>`<option value="${esc(o)}"${(bug?.[f.key]||"")===o?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;}).join("")}
       <div class="fg fc2"><label class="fl">Assignees</label>${buildMultiAssigneePicker(bug)}</div>
       <div class="fg"><label class="fl">Reporter</label><input class="fi2" id="f-rep" value="${esc(bug?.reporter||S.user?.name||'')}" placeholder="Your name"></div>
       <div class="fg"><label class="fl">Feature</label>
@@ -4859,21 +4860,21 @@ function buildBugForm(bug,full){
             autocomplete="off">
           <div id="featDropdown" style="position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:9999;background:var(--bg2);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh2);display:none;max-height:220px;overflow-y:auto">
             <div style="padding:6px 10px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--bd)">RECENTLY USED</div>
-            ${(()=>{const fu={};S.bugs.forEach(b=>{if(b.feature)fu[b.feature]=Math.max(fu[b.feature]||0,b.created_ts||0);});const sf=Object.entries(fu).sort((a,b2)=>b2[1]-a[1]).map(([f])=>f);return sf.slice(0,6).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.1)'" onmouseleave="this.style.background=''"><span style="font-size:14px">&#128336;</span><span>${esc(f)}</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>b.feature===f).length} bugs</span></div>`).join('')+sf.slice(6).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mist);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.08)'" onmouseleave="this.style.background=''"><span>${esc(f)}</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>b.feature===f).length} bugs</span></div>`).join('');})()}
+            ${(()=>{const fu={};S.bugs.forEach(b=>{if(b.feature)fu[b.feature]=Math.max(fu[b.feature]||0,b.created_ts||0);});const sf=Object.entries(fu).sort((a,b2)=>b2[1]-a[1]).map(([f])=>f);return sf.slice(0,6).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.1)'" onmouseleave="this.style.background=''"><span style="font-size:14px">🕐</span><span>${esc(f)}</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>b.feature===f).length} bugs</span></div>`).join('')+sf.slice(6).map(f=>`<div onclick="selectFeature('${esc(f)}')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mist);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background='rgba(124,58,237,.08)'" onmouseleave="this.style.background=''"><span>${esc(f)}</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>b.feature===f).length} bugs</span></div>`).join('');})()}
           </div>
         </div>
       </div>
-      <div class="fg"><label class="fl">Sub-feature / Screen <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional &#8212; e.g. "Login Flow", "Icon Issue")</span></label>
-        <input class="fi2" id="f-sub-feat" value="${esc(bug?.sub_feature||'')}" placeholder="e.g. Dashboard &#8594; Stats, Match &#8594; Shot Selection">
+      <div class="fg"><label class="fl">Sub-feature / Screen <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — e.g. "Login Flow", "Icon Issue")</span></label>
+        <input class="fi2" id="f-sub-feat" value="${esc(bug?.sub_feature||'')}" placeholder="e.g. Dashboard → Stats, Match → Shot Selection">
       </div>
       <div class="fg"><label class="fl">Sprint</label><select class="fi2" id="f-sp"><option value="">No Sprint</option>${spOpts}</select></div>
       <div class="fg"><label class="fl">Build Version</label><input class="fi2" id="f-build" value="${esc(bug?.build||'')}" placeholder="e.g. v3.2.1" list="buildHistoryList" oninput="onBuildInput(this.value)"><datalist id="buildHistoryList">${getRecentBuilds().map(b=>`<option value="${esc(b)}">`).join('')}</datalist></div>
-      <div class="fg"><label class="fl">Build Link / APK URL <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input class="fi2" id="f-build-link" value="${esc(bug?.build_link||'')}" placeholder="https://drive.google.com/&#8230; or https://appdistribution/&#8230;"></div>
-      <div class="fg"><label class="fl">ClickUp Task ID <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional &#8212; enables 2-way status sync)</span></label><input class="fi2" id="f-cu-id" value="${esc(bug?.clickup_task_id||'')}" placeholder="e.g. 86a1234bc or paste full ClickUp task URL"></div>
+      <div class="fg"><label class="fl">Build Link / APK URL <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input class="fi2" id="f-build-link" value="${esc(bug?.build_link||'')}" placeholder="https://drive.google.com/… or https://appdistribution/…"></div>
+      <div class="fg"><label class="fl">ClickUp Task ID <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — enables 2-way status sync)</span></label><input class="fi2" id="f-cu-id" value="${esc(bug?.clickup_task_id||'')}" placeholder="e.g. 86a1234bc or paste full ClickUp task URL"></div>
       <div class="build-notif-section">
-        <div class="build-notif-title">&#128276; NOTIFY TEAM ABOUT THIS BUG</div>
+        <div class="build-notif-title">🔔 NOTIFY TEAM ABOUT THIS BUG</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:8px" id="notifChannelStatus">
-          ${(()=>{const cfg=getWebhookConfig();const ch=[];if(cfg.gchat_url&&cfg.notif_new_bug!==false)ch.push('&#128226; GChat');if(cfg.slack_url&&cfg.notif_new_bug!==false)ch.push('&#128172; Slack');ch.push('&#128276; In-app');return ch.join(' &#183; ')||'&#128276; In-app only';})()}
+          ${(()=>{const cfg=getWebhookConfig();const ch=[];if(cfg.gchat_url&&cfg.notif_new_bug!==false)ch.push('📢 GChat');if(cfg.slack_url&&cfg.notif_new_bug!==false)ch.push('💬 Slack');ch.push('🔔 In-app');return ch.join(' · ')||'🔔 In-app only';})()}
         </div>
         <div class="notif-toggle-row">
           <button class="notif-toggle${bug?'':' on'}" id="notifToggle" onclick="toggleNotif(this)"></button>
@@ -4881,16 +4882,18 @@ function buildBugForm(bug,full){
         </div>
         <div style="margin-top:8px" id="notifMsgWrap">
           <label class="fl" style="margin-top:6px">Custom notification message <span style="color:var(--dim);font-weight:400;text-transform:none">(optional)</span></label>
-          <input class="fi2" id="f-notif-msg" placeholder="e.g. Regression found in build v3.2.1 &#8212; please retest">
+          <input class="fi2" id="f-notif-msg" placeholder="e.g. Regression found in build v3.2.1 — please retest">
         </div>
       </div>
       <div class="fg"><label class="fl">Device / User ID</label><input class="fi2" id="f-dev" value="${esc(bug?.device||'')}" placeholder="e.g. Pixel 8 / UID 12345"></div>
       <div class="fg fc2"><label class="fl">Steps to Reproduce</label>
-        <textarea class="fi2" id="f-steps" rows="3" placeholder="1. Open app&#10;2. Tap X&#10;3. Observe Y">${esc(bug?.steps||'')}</textarea>
+        <textarea class="fi2" id="f-steps" rows="3" placeholder="1. Open app
+2. Tap X
+3. Observe Y">${esc(bug?.steps||'')}</textarea>
       </div>
       <div class="fg"><label class="fl">Repro Rate</label>
         <select class="fi2" id="f-repro">
-          ${['','100% &#8212; Always','~80% &#8212; Often','~50% &#8212; Sometimes','~20% &#8212; Rarely','<5% &#8212; Very Rare','Once &#8212; Not Reproduced'].map(v=>`<option value="${v}"${(bug?.repro||'')===v?' selected':''}>${v||'&#8212; Select Repro Rate &#8212;'}</option>`).join('')}
+          ${['','100% — Always','~80% — Often','~50% — Sometimes','~20% — Rarely','<5% — Very Rare','Once — Not Reproduced'].map(v=>`<option value="${v}"${(bug?.repro||'')===v?' selected':''}>${v||'— Select Repro Rate —'}</option>`).join('')}
         </select>
       </div>
       <div class="fg"><label class="fl">Expected Result</label>
@@ -4903,8 +4906,8 @@ function buildBugForm(bug,full){
         ${buildAttachmentSection(bug?.attachment||'')}
       </div>
       <div class="fg fc2">
-        <label class="fl">Initial Note / Comment <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional &#8212; saved with bug)</span></label>
-        <textarea class="fi2" id="f-init-comment" rows="2" placeholder="Any additional context, workaround, or note for the team&#8230;"></textarea>
+        <label class="fl">Initial Note / Comment <span style="color:var(--dim);font-weight:400;text-transform:none;letter-spacing:0">(optional — saved with bug)</span></label>
+        <textarea class="fi2" id="f-init-comment" rows="2" placeholder="Any additional context, workaround, or note for the team…"></textarea>
       </div>
     </div>`;
   setTimeout(renderMapTags,0);
@@ -4935,7 +4938,7 @@ function openSLASettings() {
   document.getElementById('panelId').textContent = 'SETTINGS';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-v" onclick="saveSLASettings()">&#128190; Save SLA Rules</button>`;
+    <button class="btn btn-v" onclick="saveSLASettings()">💾 Save SLA Rules</button>`;
 
   const priorities = ['critical','urgent','high','medium','low'];
   const defaults   = {critical:1,urgent:1,high:2,medium:3,low:5};
@@ -4959,7 +4962,7 @@ function openSLASettings() {
         </div>
       </div>`).join('')}
     <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:8px;line-height:1.8">
-      &#9889; Critical &amp; Urgent share the tightest SLAs. Adjust to match your team's commitments.
+      ⚡ Critical &amp; Urgent share the tightest SLAs. Adjust to match your team's commitments.
     </div>`;
   openPanel();
 }
@@ -5100,23 +5103,23 @@ function natashaMoodForStatus(status, title){
   switch(status){
     case 'Dev Fixed':
     case 'Done':
-      return {mood:'happy', msg:`&#127881; ${t} is FIXED! The team delivers! &#127942;`};
+      return {mood:'happy', msg:`🎉 ${t} is FIXED! The team delivers! 🏆`};
     case 'QA Pass':
-      return {mood:'happy', msg:`&#9989; QA passed on ${t}! Shipping time! &#128640;`};
+      return {mood:'happy', msg:`✅ QA passed on ${t}! Shipping time! 🚀`};
     case 'Not a bug':
-      return {mood:'angry', msg:`&#128548; Not a bug?! Double-check before closing ${t}! &#128269;`};
+      return {mood:'angry', msg:`😤 Not a bug?! Double-check before closing ${t}! 🔍`};
     case 'Non-Recreatable':
-      return {mood:'angry', msg:`&#128544; Can't reproduce ${t}? Keep the ticket open! &#128064;`};
+      return {mood:'angry', msg:`😠 Can't reproduce ${t}? Keep the ticket open! 👀`};
     case 'Closed':
-      return {mood:'cool', msg:`&#128274; ${t} closed. Good riddance! &#128526;`};
+      return {mood:'cool', msg:`🔒 ${t} closed. Good riddance! 😎`};
     case 'Bugged':
-      return {mood:'sad', msg:`&#128546; Regression on ${t}! Squash it again! &#127951;`};
+      return {mood:'sad', msg:`😢 Regression on ${t}! Squash it again! 🏏`};
     case 'In Progress':
-      return {mood:'cool', msg:`&#128170; Someone's on ${t}. Go go go! &#127939;`};
+      return {mood:'cool', msg:`💪 Someone's on ${t}. Go go go! 🏃`};
     case 'In Review':
-      return {mood:'cool', msg:`&#128270; ${t} in review. Almost there! &#129310;`};
+      return {mood:'cool', msg:`🔎 ${t} in review. Almost there! 🤞`};
     default:
-      return {mood:'default', msg:`&#128203; ${t} &#8594; ${status}. Keep the momentum! &#127951;`};
+      return {mood:'default', msg:`📋 ${t} → ${status}. Keep the momentum! 🏏`};
   }
 }
 
@@ -5137,8 +5140,8 @@ async function saveBug(){
       if(qc)await api(`/bugs/${S.editing}/comment`,'POST',{text:qc});
       if(assignees.length)addNotif('Assignees updated',prev.title,S.editing);
       if(data.status!==prev.status){
-        addNotif(`Status: ${prev.title}`,`${prev.status} &#8594; ${data.status}`,S.editing);
-        logActivity('status_changed', S.editing, prev.status + ' &#8594; ' + data.status + ' | ' + (prev?.title||'').slice(0,60));
+        addNotif(`Status: ${prev.title}`,`${prev.status} → ${data.status}`,S.editing);
+        logActivity('status_changed', S.editing, prev.status + ' → ' + data.status + ' | ' + (prev?.title||'').slice(0,60));
         setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,prev.title);showNatasha(msg,mood);},800);
       }
       toast('Updated ✓','ok');
@@ -5178,8 +5181,8 @@ async function saveBug(){
         res=await api(`/bugs/${S.editing}`,'PUT',data);
         if(assignees.length)addNotif('Assignees updated',data.title,S.editing);
         if(prev&&data.status!==prev.status){
-          addNotif(`Status: ${res.bug?.id||S.editing}`,`${data.title} &#8594; ${data.status}`,S.editing);
-          logActivity('status_changed', S.editing, (prev.status||'') + ' &#8594; ' + data.status + ' | ' + (data.title||'').slice(0,60));
+          addNotif(`Status: ${res.bug?.id||S.editing}`,`${data.title} → ${data.status}`,S.editing);
+          logActivity('status_changed', S.editing, (prev.status||'') + ' → ' + data.status + ' | ' + (data.title||'').slice(0,60));
           syncStatusToClickUp(res.bug||{...prev,...data}, data.status);
           setTimeout(()=>{const {mood,msg}=natashaMoodForStatus(data.status,data.title);showNatasha(msg,mood);},800);
         } else if(S.editing) {
@@ -5209,7 +5212,7 @@ async function saveBug(){
         if(assignees.length)addNotif('New bug assigned',data.title,res.bug?.id);
         toast(`Created: ${res.bug?.id} ✓`,'ok');
         const _nid=res.bug?.id||'';
-        const _nm=[`Nice catch! ${_nid} is on the radar &#128269; Go find more!`,`${_nid} filed! &#127951; One down &#8212; how many more are hiding?`,`Bug logged &#10003; ${_nid} &#8212; keep hunting, the pitch is full of them!`,`${_nid} trapped! &#127919; Your team will thank you. Spot another?`,`Good eye! ${_nid} queued up. More bugs won't escape you! &#128064;`];const _createMood='celebrate';
+        const _nm=[`Nice catch! ${_nid} is on the radar 🔍 Go find more!`,`${_nid} filed! 🏏 One down — how many more are hiding?`,`Bug logged ✓ ${_nid} — keep hunting, the pitch is full of them!`,`${_nid} trapped! 🎯 Your team will thank you. Spot another?`,`Good eye! ${_nid} queued up. More bugs won't escape you! 👀`];const _createMood='celebrate';
 
         btn.disabled=false;btn.innerHTML='💾 SAVE';
         closePanel();
@@ -5349,7 +5352,7 @@ function exportCSV(scope) {
     // Auto row height &#8212; cap steps rows at 80pt
     ws['!rows'] = [{ hpt: 24 }]; // header row height
     for(let r = 1; r <= dataRows.length; r++) {
-      ws['!rows'].push({ hpt: 15 }); // data rows &#8212; fixed height, no auto expand
+      ws['!rows'].push({ hpt: 15 }); // data rows — fixed height, no auto expand
     }
 
     const nowLabel = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'short',timeStyle:'short'}).replace(/[,:/\s]+/g,'-');
@@ -5382,7 +5385,7 @@ function exportCSV(scope) {
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
 // CHIPS
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
-function pChip(p){const m={Critical:'chip-critical',High:'chip-high',Medium:'chip-medium',Low:'chip-low',Urgent:'chip-urgent'};const d={Critical:'&#128308;',High:'&#128992;',Medium:'&#128993;',Low:'&#128994;',Urgent:'&#128680;'};return`<span class="chip ${m[p]||'chip-gray'}">${d[p]||'&#9898;'} ${p||'&#8212;'}</span>`;}
+function pChip(p){const m={Critical:'chip-critical',High:'chip-high',Medium:'chip-medium',Low:'chip-low',Urgent:'chip-urgent'};const d={Critical:'🔴',High:'🟠',Medium:'🟡',Low:'🟢',Urgent:'🚨'};return`<span class="chip ${m[p]||'chip-gray'}">${d[p]||'⚪'} ${p||'—'}</span>`;}
 function svrChip(s){const m={'S1 - Blocker':'chip-critical','S2 - Critical':'chip-high','S3 - Major':'chip-medium','S4 - Minor':'chip-low'};return s?`<span class="chip ${m[s]||'chip-gray'}">${esc(s)}</span>`:'';}
 function stChip(s){
   const m={
@@ -5391,7 +5394,7 @@ function stChip(s){
     Bugged:'chip-bugged','QA Pass':'chip-qa',
     'Non-Recreatable':'chip-review','Not a bug':'chip-wont'
   };
-  return`<span class="chip ${m[s]||'chip-gray'}">${esc(s||'&#8212;')}</span>`;
+  return`<span class="chip ${m[s]||'chip-gray'}">${esc(s||'—')}</span>`;
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -5462,8 +5465,8 @@ function ageChip(bug) {
   const breach = slaCfg['p_'+pKey+'_breach'] ?? slaCfg.breach ?? 7;
   if(days <= 1)       return `<span class="age-badge age-fresh">NEW</span>`;
   if(days < warn)     return `<span class="age-badge age-normal">${days}d</span>`;
-  if(days < breach)   return `<span class="age-badge age-warn" title="Approaching SLA (${breach}d limit)">${days}d &#9888;</span>`;
-  return `<span class="age-badge age-sla" title="SLA BREACHED &#8212; ${days}d (limit: ${breach}d)">&#128308; ${days}d</span>`;
+  if(days < breach)   return `<span class="age-badge age-warn" title="Approaching SLA (${breach}d limit)">${days}d ⚠</span>`;
+  return `<span class="age-badge age-sla" title="SLA BREACHED — ${days}d (limit: ${breach}d)">🔴 ${days}d</span>`;
 }
 
 // &#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;&#9552;
@@ -5590,22 +5593,22 @@ function copyBulkReport() {
   if(!_bulkSelected.size) { toast('Select bugs first','err'); return; }
   const bugs = S.bugs.filter(b => _bulkSelected.has(b.id));
   const bugLink = id => `${APP_URL}?bug=${id}`;
-  const lines = ['&#128203; BUG REPORT &#8212; ' + bugs.length + ' issue' + (bugs.length!==1?'s':''),
-    '&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;',
+  const lines = ['📋 BUG REPORT — ' + bugs.length + ' issue' + (bugs.length!==1?'s':''),
+    '━━━━━━━━━━━━━━━━━━━━━━━━',
     'Generated: ' + new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),
     ''];
   bugs.forEach(b => {
     const assignees = (b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
     lines.push(`[${b.id}] ${b.title||''}`);
-    lines.push(`  Priority : ${b.priority||'&#8212;'} | Status: ${b.status||'&#8212;'} | Severity: ${b.severity||'&#8212;'}`);
-    lines.push(`  Feature  : ${b.feature||'&#8212;'} | Sprint: ${b.sprint||'&#8212;'} | Build: ${b.build||'&#8212;'}`);
+    lines.push(`  Priority : ${b.priority||'—'} | Status: ${b.status||'—'} | Severity: ${b.severity||'—'}`);
+    lines.push(`  Feature  : ${b.feature||'—'} | Sprint: ${b.sprint||'—'} | Build: ${b.build||'—'}`);
     lines.push(`  Assignee : ${assignees}`);
     if(b.steps)   lines.push(`  Steps    : ${b.steps.slice(0,120)}`);
     if(b.actual)  lines.push(`  Actual   : ${b.actual.slice(0,120)}`);
-    lines.push(`  &#128279; ${bugLink(b.id)}`);
+    lines.push(`  🔗 ${bugLink(b.id)}`);
     lines.push('');
   });
-  lines.push('&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;');
+  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━');
   lines.push(`Shared link: ${APP_URL}?bugs=${encodeURIComponent([..._bulkSelected].join(','))}`);
   navigator.clipboard.writeText(lines.join('\n'))
     .then(() => toast(`Report for ${bugs.length} bugs copied ✓`,'ok'));
@@ -5642,7 +5645,7 @@ function clearBulk() {
 
 function renderLinks(bug) {
   const links = bug.links || [];
-  const typeLabel = {blocks:'&#128683; Blocks', blocked_by:'&#9940; Blocked by', related:'&#128279; Related'};
+  const typeLabel = {blocks:'🚫 Blocks', blocked_by:'⛔ Blocked by', related:'🔗 Related'};
   const typeClass = {blocks:'link-blocks', blocked_by:'link-blockedby', related:'link-related'};
 
   let h = `<div class="dsec"><div class="dsec-title">Linked Issues</div>`;
@@ -5652,17 +5655,17 @@ function renderLinks(bug) {
     const target = S.bugs.find(b=>b.id===lk.targetId);
     const label = target ? `${lk.targetId}: ${(target.title||'').slice(0,30)}` : lk.targetId;
     h += `<span class="link-chip ${typeClass[lk.type]||'link-related'}" onclick="openDetail('${esc(lk.targetId)}')" title="${esc(label)}">
-      ${typeLabel[lk.type]||'&#128279;'} ${esc(lk.targetId)}
-      <span onclick="removeLink(event,'${esc(bug.id)}',${i})" style="opacity:.6;margin-left:3px;font-size:11px">&#10005;</span>
+      ${typeLabel[lk.type]||'🔗'} ${esc(lk.targetId)}
+      <span onclick="removeLink(event,'${esc(bug.id)}',${i})" style="opacity:.6;margin-left:3px;font-size:11px">✕</span>
     </span>`;
   });
 
   h += `</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <select class="fi" id="link-type-sel" style="width:auto;padding:4px 8px;font-size:11px">
-        <option value="blocks">&#128683; Blocks</option>
-        <option value="blocked_by">&#9940; Blocked by</option>
-        <option value="related">&#128279; Related to</option>
+        <option value="blocks">🚫 Blocks</option>
+        <option value="blocked_by">⛔ Blocked by</option>
+        <option value="related">🔗 Related to</option>
       </select>
       <input class="fi" id="link-id-input" placeholder="BUG-XXXXX" style="width:130px;padding:4px 8px;font-size:11px" list="bugIdList">
       <datalist id="bugIdList">${S.bugs.filter(b=>b.id!==bug.id).map(b=>`<option value="${esc(b.id)}">${esc(b.id)}: ${esc((b.title||'').slice(0,40))}`).join('')}</datalist>
@@ -6039,7 +6042,7 @@ async function loadClickUp(force) {
       } catch(e){}
       try {
         const fld = await cuFetch(`/space/${sp.id}/list?archived=false`);
-        (fld.lists||[]).forEach(l => _cuLists.push({id:l.id,name:l.name,folder:'&#8212;',folderId:null,space:sp.name,spaceId:sp.id,taskCount:l.task_count||0}));
+        (fld.lists||[]).forEach(l => _cuLists.push({id:l.id,name:l.name,folder:'—',folderId:null,space:sp.name,spaceId:sp.id,taskCount:l.task_count||0}));
       } catch(e){}
     }
 
@@ -6073,7 +6076,7 @@ async function loadClickUp(force) {
     document.getElementById('cu-sub').textContent = `${_cuTasks.length} tasks · ${_cuLists.length} lists · ${teams[0].name}`;
     cuRender();
     toast(`ClickUp synced — ${_cuTasks.length} tasks ✓`, 'ok');
-    syncStatusFromClickUp(); // pull CU status &#8594; BugPulse for linked bugs
+    syncStatusFromClickUp(); // pull CU status → BugPulse for linked bugs
   } catch(e) {
     document.getElementById('cuBody').innerHTML = `<div class="empty"><div class="empty-icon">🟣</div><h3>CLICKUP ERROR</h3><p>${esc(e.message)}</p></div>`;
     toast('ClickUp: '+e.message,'err');
@@ -6206,10 +6209,10 @@ function cuRender(){
 // &#9472;&#9472; CHIP helpers &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
 function cuStatusChip(s){
   const c=cuStatusColor(s);
-  return `<span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid ${c};color:${c};background:${c}18;white-space:nowrap">${esc(s||'&#8212;')}</span>`;
+  return `<span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;border:1px solid ${c};color:${c};background:${c}18;white-space:nowrap">${esc(s||'—')}</span>`;
 }
 function cuPrioChip(p){
-  const label=(p?.priority||'&#8212;');const c=cuPrioColor(label);
+  const label=(p?.priority||'—');const c=cuPrioColor(label);
   return `<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:20px;border:1px solid ${c};color:${c}">${esc(label)}</span>`;
 }
 function cuAvatar(a,sz=20){
@@ -6217,7 +6220,7 @@ function cuAvatar(a,sz=20){
   return `<div class="av" title="${esc(a.username||a.email||'?')}" style="width:${sz}px;height:${sz}px;font-size:${sz<22?7:9}px;background:${avc(a.username||a.email||'?')}">${avi(a.username||a.email||'?')}</div>`;
 }
 function cuAvatarStack(assignees,sz=20){
-  if(!assignees||!assignees.length) return '<span style="font-size:11px;color:var(--dim)">&#8212;</span>';
+  if(!assignees||!assignees.length) return '<span style="font-size:11px;color:var(--dim)">—</span>';
   const show=assignees.slice(0,3),extra=assignees.length-3;
   let h=`<div class="av-stack">`;
   h+=show.map(a=>cuAvatar(a,sz)).join('');
@@ -6225,7 +6228,7 @@ function cuAvatarStack(assignees,sz=20){
   return h+'</div>';
 }
 function cuDue(t){
-  if(!t.due_date) return '&#8212;';
+  if(!t.due_date) return '—';
   const d=new Date(parseInt(t.due_date));
   const overdue=Date.now()>parseInt(t.due_date);
   const str=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
@@ -6243,30 +6246,30 @@ function cuRenderList(){
   </tr></thead><tbody>`;
   tasks.slice(0,400).forEach(t=>{
     const tags=(t.tags||[]).map(tag=>`<span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:8px;background:rgba(124,58,237,.15);color:var(--g2);border:1px solid rgba(124,58,237,.25)">${esc(tag.name)}</span>`).join(' ');
-    const time=t.time_spent?`${Math.floor(parseInt(t.time_spent)/3600000)}h ${Math.floor((parseInt(t.time_spent)%3600000)/60000)}m`:'&#8212;';
+    const time=t.time_spent?`${Math.floor(parseInt(t.time_spent)/3600000)}h ${Math.floor((parseInt(t.time_spent)%3600000)/60000)}m`:'—';
     const _dueOverdue=t.due_date&&Date.now()>parseInt(t.due_date);
-    const due=t.due_date?`<span style="color:${_dueOverdue?'var(--g5)':'var(--mute)'};font-family:var(--mono);font-size:10px">${new Date(parseInt(t.due_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span>`:'&#8212;';
+    const due=t.due_date?`<span style="color:${_dueOverdue?'var(--g5)':'var(--mute)'};font-family:var(--mono);font-size:10px">${new Date(parseInt(t.due_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span>`:'—';
     const hasDesc=!!(t.description&&t.description.trim());
     const cc=t.comment_count||0;
     h+=`<tr onclick="openCuTask('${esc(t.id)}')" style="cursor:pointer">
       <td class="tc-id" style="white-space:nowrap">
-        ${esc(t.custom_id||t.id?.slice(-6)||'&#8212;')}
-        ${cc?`<div style="font-family:var(--mono);font-size:8px;color:var(--mute);margin-top:1px">&#128172;${cc}</div>`:''}
+        ${esc(t.custom_id||t.id?.slice(-6)||'—')}
+        ${cc?`<div style="font-family:var(--mono);font-size:8px;color:var(--mute);margin-top:1px">💬${cc}</div>`:''}
       </td>
       <td class="tc-title" title="${esc(t.name||'')}">
-        ${esc(t.name||'&#8212;')}${hasDesc?' <span style="opacity:.4;font-size:10px">&#128196;</span>':''}
+        ${esc(t.name||'—')}${hasDesc?' <span style="opacity:.4;font-size:10px">📄</span>':''}
       </td>
       <td>${cuStatusChip(t.status?.status)}</td>
       <td>${cuPrioChip(t.priority)}</td>
       <td>${cuAvatarStack(t.assignees||[])}</td>
-      <td><span style="font-size:11px;color:var(--fog)">${esc(t._listName||'&#8212;')}</span></td>
+      <td><span style="font-size:11px;color:var(--fog)">${esc(t._listName||'—')}</span></td>
       <td>${due}</td>
       <td>${tags}</td>
       <td style="font-family:var(--mono);font-size:10px;color:var(--dim)">${time}</td>
     </tr>`;
   });
   h+='</tbody></table>';
-  if(tasks.length>400) h+=`<div style="padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--dim)">Showing 400 of ${tasks.length} &#8212; use filters</div>`;
+  if(tasks.length>400) h+=`<div style="padding:10px 16px;font-family:var(--mono);font-size:10px;color:var(--dim)">Showing 400 of ${tasks.length} — use filters</div>`;
   body.innerHTML=`<div class="tscroll">${h}</div>`;
 }
 
@@ -6305,11 +6308,11 @@ function cuRenderBoard(){
               ${cuPrioChip(t.priority)}
               ${cuAvatarStack(t.assignees||[],18)}
             </div>
-            ${due?`<div style="font-family:var(--mono);font-size:9px;color:${overdue?'var(--g5)':'var(--dim)'};margin-top:5px">&#128197; ${due}</div>`:''}
-            ${t._listName?`<div style="font-family:var(--mono);font-size:8px;color:var(--dim);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">&#128203; ${esc(t._listName)}</div>`:''}
+            ${due?`<div style="font-family:var(--mono);font-size:9px;color:${overdue?'var(--g5)':'var(--dim)'};margin-top:5px">📅 ${due}</div>`:''}
+            ${t._listName?`<div style="font-family:var(--mono);font-size:8px;color:var(--dim);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📋 ${esc(t._listName)}</div>`:''}
           </div>`;
         }).join('')}
-        ${col.length>20?`<div style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding:8px">+${col.length-20} more &#8212; filter to narrow</div>`:''}
+        ${col.length>20?`<div style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding:8px">+${col.length-20} more — filter to narrow</div>`:''}
       </div>
     </div>`;
   });
@@ -6352,7 +6355,7 @@ function cuRenderGroup(){
         <div style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0;box-shadow:0 0 8px ${c}"></div>
         <div style="flex:1;min-width:0">
           <div style="font-family:var(--disp);font-size:13px;font-weight:700;letter-spacing:1px;color:var(--text)">${esc(group.name)}</div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:1px">${esc(group.folder||'')}${group.folder&&group.folder!=='&#8212;'?' &#183; ':''}${esc(group.space||'')}</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:1px">${esc(group.folder||'')}${group.folder&&group.folder!=='—'?' · ':''}${esc(group.space||'')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:120px">
           <div class="sprint-prog" style="flex:1"><div class="sprint-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${c},${c}aa)"></div></div>
@@ -6370,11 +6373,11 @@ function cuRenderGroup(){
         </tr></thead><tbody>`;
 
     listTasks.forEach(t=>{
-      const due=t.due_date?`<span style="color:${Date.now()>parseInt(t.due_date)?'var(--g5)':'var(--mute)'};font-family:var(--mono);font-size:10px">${new Date(parseInt(t.due_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span>`:'&#8212;';
+      const due=t.due_date?`<span style="color:${Date.now()>parseInt(t.due_date)?'var(--g5)':'var(--mute)'};font-family:var(--mono);font-size:10px">${new Date(parseInt(t.due_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span>`:'—';
       const tags=(t.tags||[]).map(tag=>`<span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:8px;background:rgba(124,58,237,.15);color:var(--g2);border:1px solid rgba(124,58,237,.25)">${esc(tag.name)}</span>`).join(' ');
       h+=`<tr onclick="openCuTask('${esc(t.id)}')" style="cursor:pointer">
-        <td class="tc-id">${esc(t.custom_id||t.id?.slice(-6)||'&#8212;')}</td>
-        <td class="tc-title" title="${esc(t.name||'')}">${esc(t.name||'&#8212;')}</td>
+        <td class="tc-id">${esc(t.custom_id||t.id?.slice(-6)||'—')}</td>
+        <td class="tc-title" title="${esc(t.name||'')}">${esc(t.name||'—')}</td>
         <td>${cuStatusChip(t.status?.status)}</td>
         <td>${cuPrioChip(t.priority)}</td>
         <td>${cuAvatarStack(t.assignees||[])}</td>
@@ -6397,7 +6400,7 @@ async function openCuTask(taskId){
   const _cuUrl=task.url||'';
   document.getElementById('cuPanelFooter').innerHTML=`
     <button class="btn btn-g" onclick="closeCuPanel()">Close</button>
-    ${_cuUrl?`<a href="${_cuUrl}" target="_blank" rel="noopener" class="btn btn-v" style="text-decoration:none">&#128995; Open in ClickUp &#8599;</a>`:''}`;
+    ${_cuUrl?`<a href="${_cuUrl}" target="_blank" rel="noopener" class="btn btn-v" style="text-decoration:none">🟣 Open in ClickUp ↗</a>`:''}`;
   document.getElementById('cuOverlay').classList.add('on');
   document.getElementById('cuPanel').classList.add('on');
 
@@ -6408,12 +6411,12 @@ async function openCuTask(taskId){
     comments=cd.comments||[];
   } catch(e){ console.warn('[cu detail]',e.message); }
 
-  const due=fullTask.due_date?new Date(parseInt(fullTask.due_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'&#8212;';
-  const start=fullTask.start_date?new Date(parseInt(fullTask.start_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'&#8212;';
-  const created=fullTask.date_created?new Date(parseInt(fullTask.date_created)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'&#8212;';
-  const updated=fullTask.date_updated?new Date(parseInt(fullTask.date_updated)).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'&#8212;';
-  const timeTracked=fullTask.time_spent?`${Math.floor(parseInt(fullTask.time_spent)/3600000)}h ${Math.floor((parseInt(fullTask.time_spent)%3600000)/60000)}m`:'&#8212;';
-  const timeEst=fullTask.time_estimate?`${Math.floor(parseInt(fullTask.time_estimate)/3600000)}h ${Math.floor((parseInt(fullTask.time_estimate)%3600000)/60000)}m`:'&#8212;';
+  const due=fullTask.due_date?new Date(parseInt(fullTask.due_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  const start=fullTask.start_date?new Date(parseInt(fullTask.start_date)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  const created=fullTask.date_created?new Date(parseInt(fullTask.date_created)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+  const updated=fullTask.date_updated?new Date(parseInt(fullTask.date_updated)).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+  const timeTracked=fullTask.time_spent?`${Math.floor(parseInt(fullTask.time_spent)/3600000)}h ${Math.floor((parseInt(fullTask.time_spent)%3600000)/60000)}m`:'—';
+  const timeEst=fullTask.time_estimate?`${Math.floor(parseInt(fullTask.time_estimate)/3600000)}h ${Math.floor((parseInt(fullTask.time_estimate)%3600000)/60000)}m`:'—';
 
   const assigneeHtml=(fullTask.assignees||[]).length
     ?(fullTask.assignees||[]).map(a=>`
@@ -6443,7 +6446,7 @@ async function openCuTask(taskId){
       <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mute);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--bd)">${esc(cl.name||'Checklist')}</div>
       ${(cl.items||[]).map(item=>`
         <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px;margin-bottom:3px;background:rgba(0,0,0,.2)">
-          <span style="font-size:14px;flex-shrink:0">${item.resolved?'&#9989;':'&#11036;'}</span>
+          <span style="font-size:14px;flex-shrink:0">${item.resolved?'✅':'⬜'}</span>
           <span style="font-size:12px;color:${item.resolved?'var(--mute)':'var(--text)'};${item.resolved?'text-decoration:line-through':''};line-height:1.4">${esc(item.name||'')}</span>
           ${item.assignee?`<span style="margin-left:auto">${cuAvatar(item.assignee,16)}</span>`:''}
         </div>`).join('')}
@@ -6460,7 +6463,7 @@ async function openCuTask(taskId){
   // Dependencies
   const depHtml=(fullTask.dependencies||[]).map(d=>`
     <div style="font-family:var(--mono);font-size:10px;color:var(--mute);padding:4px 0">
-      ${d.depends_on?'&#11014; Blocked by: ':'&#11015; Blocking: '}<span style="color:var(--g1)">${esc(d.depends_on||d.task_id||'')}</span>
+      ${d.depends_on?'⬆ Blocked by: ':'⬇ Blocking: '}<span style="color:var(--g1)">${esc(d.depends_on||d.task_id||'')}</span>
     </div>`).join('');
 
   // Comments
@@ -6492,11 +6495,11 @@ async function openCuTask(taskId){
         <div class="dgi-l">Assignees</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:7px">${assigneeHtml}</div>
       </div>
-      ${fullTask.creator?`<div class="dgi"><div class="dgi-l">Created By</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px">${cuAvatar(fullTask.creator,20)}<div class="dgi-v">${esc(fullTask.creator.username||fullTask.creator.email||'&#8212;')}</div></div></div>`:''}
-      <div class="dgi"><div class="dgi-l">List</div><div class="dgi-v">${esc(fullTask._listName||'&#8212;')}</div></div>
-      <div class="dgi"><div class="dgi-l">Folder / Space</div><div class="dgi-v" style="font-size:11px">${esc(fullTask._folderName||'&#8212;')} / ${esc(fullTask._spaceName||'&#8212;')}</div></div>
+      ${fullTask.creator?`<div class="dgi"><div class="dgi-l">Created By</div><div style="display:flex;align-items:center;gap:7px;margin-top:4px">${cuAvatar(fullTask.creator,20)}<div class="dgi-v">${esc(fullTask.creator.username||fullTask.creator.email||'—')}</div></div></div>`:''}
+      <div class="dgi"><div class="dgi-l">List</div><div class="dgi-v">${esc(fullTask._listName||'—')}</div></div>
+      <div class="dgi"><div class="dgi-l">Folder / Space</div><div class="dgi-v" style="font-size:11px">${esc(fullTask._folderName||'—')} / ${esc(fullTask._spaceName||'—')}</div></div>
       <div class="dgi"><div class="dgi-l">Start Date</div><div class="dgi-v">${start}</div></div>
-      <div class="dgi"><div class="dgi-l">Due Date</div><div class="dgi-v" style="color:${fullTask.due_date&&Date.now()>parseInt(fullTask.due_date)?'var(--g5)':'var(--text)'}">${due}${fullTask.due_date&&Date.now()>parseInt(fullTask.due_date)?' &#9888; Overdue':''}</div></div>
+      <div class="dgi"><div class="dgi-l">Due Date</div><div class="dgi-v" style="color:${fullTask.due_date&&Date.now()>parseInt(fullTask.due_date)?'var(--g5)':'var(--text)'}">${due}${fullTask.due_date&&Date.now()>parseInt(fullTask.due_date)?' ⚠ Overdue':''}</div></div>
       <div class="dgi"><div class="dgi-l">Time Tracked</div><div class="dgi-v" style="font-family:var(--mono)">${timeTracked}</div></div>
       <div class="dgi"><div class="dgi-l">Time Estimate</div><div class="dgi-v" style="font-family:var(--mono)">${timeEst}</div></div>
       <div class="dgi"><div class="dgi-l">Created</div><div class="dgi-v" style="font-family:var(--mono);font-size:11px">${created}</div></div>
@@ -6621,7 +6624,7 @@ function importHandleFile(file) {
         if (title.length > 150 || title.includes('\n')) {
           const lines = title.split('\n').map(l => l.trim()).filter(Boolean);
           // First line that isn't a step (no leading number/bullet) = title
-          const firstDesc = lines.findIndex(l => /^\d+[.)\s]/.test(l) || /^[-&#8226;*]/.test(l));
+          const firstDesc = lines.findIndex(l => /^\d+[.)\s]/.test(l) || /^[-•*]/.test(l));
           if (firstDesc > 0) {
             cleanTitle = lines.slice(0, firstDesc).join(' ').slice(0, 200);
             if (!extractedSteps) extractedSteps = lines.slice(firstDesc).join('\n');
@@ -6665,9 +6668,9 @@ function importShowPreview() {
   _importRows.slice(0,10).forEach((row,i) => {
     const fullTitle = row.title||'';
     const displayTitle = fullTitle.replace(/\n/g,' ').replace(/\r/g,'');
-    h += `<tr><td class="tc-id">${i+1}</td><td class="tc-title" title="${esc(fullTitle)}">${esc(displayTitle.slice(0,120))}${displayTitle.length>120?'&#8230;':''}</td><td>${pChip(row.priority||'Medium')}</td><td>${stChip(row.status||'Open')}</td><td>${esc(row.feature||'&#8212;')}</td><td>${esc(row.sprint||'&#8212;')}</td></tr>`;
+    h += `<tr><td class="tc-id">${i+1}</td><td class="tc-title" title="${esc(fullTitle)}">${esc(displayTitle.slice(0,120))}${displayTitle.length>120?'…':''}</td><td>${pChip(row.priority||'Medium')}</td><td>${stChip(row.status||'Open')}</td><td>${esc(row.feature||'—')}</td><td>${esc(row.sprint||'—')}</td></tr>`;
   });
-  if(_importRows.length>10) h+=`<tr><td colspan="6" style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding:10px">&#8230;and ${_importRows.length-10} more</td></tr>`;
+  if(_importRows.length>10) h+=`<tr><td colspan="6" style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--dim);padding:10px">…and ${_importRows.length-10} more</td></tr>`;
   h += '</tbody></table>';
   document.getElementById('importPreviewTable').innerHTML = h;
   document.getElementById('importPreview').style.display = 'block';
@@ -6804,9 +6807,9 @@ async function renderBuildsPage() {
   if (!builds.length) {
     if(banner) banner.innerHTML = '';
     wrap.innerHTML = `<div style="text-align:center;padding:60px 20px">
-      <div style="font-size:48px;opacity:.15;margin-bottom:16px">&#128230;</div>
+      <div style="font-size:48px;opacity:.15;margin-bottom:16px">📦</div>
       <div style="font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:20px">No builds logged yet.<br>Click <b style="color:var(--g2)">+ LOG BUILD</b> to add the first one,<br>or tag bugs with a Build version to auto-discover builds.</div>
-      <button class="btn btn-v" onclick="openNewBuild()">&#65291; LOG BUILD</button>
+      <button class="btn btn-v" onclick="openNewBuild()">＋ LOG BUILD</button>
     </div>`;
     return;
   }
@@ -6817,7 +6820,7 @@ async function renderBuildsPage() {
     const curCrit = cur.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).length;
     banner.innerHTML = `
       <div style="background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.25);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <div style="font-size:28px">&#128230;</div>
+        <div style="font-size:28px">📦</div>
         <div style="flex:1">
           <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--g2);text-transform:uppercase;margin-bottom:3px">CURRENT BUILD IN TESTING</div>
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text)">${esc(cur.version)}</div>
@@ -6828,7 +6831,7 @@ async function renderBuildsPage() {
           <div style="text-align:center"><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--g3)">${curOpen}</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">OPEN</div></div>
           <div style="text-align:center"><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:${curCrit>0?'var(--g5)':'var(--g4)'}">${curCrit}</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">CRITICAL</div></div>
         </div>
-        ${cur.link?`<a href="${esc(cur.link)}" target="_blank" rel="noopener" class="btn btn-g btn-sm" style="text-decoration:none">&#128230; Download</a>`:''}
+        ${cur.link?`<a href="${esc(cur.link)}" target="_blank" rel="noopener" class="btn btn-g btn-sm" style="text-decoration:none">📦 Download</a>`:''}
       </div>`;
   } else if (banner) { banner.innerHTML = ''; }
 
@@ -6860,14 +6863,14 @@ function buildPageCard(b) {
     <div class="build-page-card${b.is_current?' is-current':''}">
       <div class="bpc-header">
         <div>
-          <div class="bpc-version">&#127959; ${vEsc}${b.is_current?'<span class="bpc-current-pill">&#9679; CURRENT</span>':''}</div>
-          <div class="bpc-meta">${b.platform?platformIcon(b.platform)+' '+esc(b.platform)+' &#183; ':''}${b.logged_by?'by '+esc(b.logged_by):''}${b.logged_at?' &#183; '+esc(b.logged_at):''}</div>
+          <div class="bpc-version">🏗 ${vEsc}${b.is_current?'<span class="bpc-current-pill">● CURRENT</span>':''}</div>
+          <div class="bpc-meta">${b.platform?platformIcon(b.platform)+' '+esc(b.platform)+' · ':''}${b.logged_by?'by '+esc(b.logged_by):''}${b.logged_at?' · '+esc(b.logged_at):''}</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${!b.is_current?`<button class="btn btn-g btn-xs" onclick="setCurrentBuild('${vEsc}')">&#128205; Set Current</button>`:''}
-          <button class="btn btn-g btn-xs" onclick="openReleaseNotes('${vEsc}')">&#128640; Notes</button>
-          <button class="btn btn-g btn-xs" onclick="editBuildEntry('${vEsc}')">&#9999;&#65039;</button>
-          ${S.user?.role==='admin' ? `<button class="btn btn-r btn-xs" onclick="deleteBuildEntry('${vEsc}')">&#128465; Delete</button>` : `<button class="btn btn-r btn-xs" onclick="deleteBuildEntryAuth('${vEsc}')">&#128465; Delete</button>`}
+          ${!b.is_current?`<button class="btn btn-g btn-xs" onclick="setCurrentBuild('${vEsc}')">📍 Set Current</button>`:''}
+          <button class="btn btn-g btn-xs" onclick="openReleaseNotes('${vEsc}')">🚀 Notes</button>
+          <button class="btn btn-g btn-xs" onclick="editBuildEntry('${vEsc}')">✏️</button>
+          ${S.user?.role==='admin' ? `<button class="btn btn-r btn-xs" onclick="deleteBuildEntry('${vEsc}')">🗑 Delete</button>` : `<button class="btn btn-r btn-xs" onclick="deleteBuildEntryAuth('${vEsc}')">🗑 Delete</button>`}
         </div>
       </div>
       <div class="bpc-stats">
@@ -6879,23 +6882,23 @@ function buildPageCard(b) {
       <div class="bpc-body">
         ${b.notes?`<div class="bpc-notes" style="white-space:pre-wrap;word-break:break-word">${esc(b.notes)}</div>`:''}
         ${b.tasks?`<div style="margin-bottom:10px;padding:10px 12px;background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:8px">
-          <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:6px">&#128736; TASKS DONE</div>
+          <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:6px">🛠 TASKS DONE</div>
           <div style="font-size:11px;color:var(--mist);line-height:1.8;white-space:pre-wrap;word-break:break-word">${esc(b.tasks)}</div>
-          ${b.assignee_name?`<div style="margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--dim)">&#128100; Dev: <span style="color:var(--mist);font-weight:700">${esc(b.assignee_name)}</span></div>`:''}
+          ${b.assignee_name?`<div style="margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--dim)">👤 Dev: <span style="color:var(--mist);font-weight:700">${esc(b.assignee_name)}</span></div>`:''}
         </div>`:''}
-        ${(!b.tasks && b.assignee_name)?`<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:10px">&#128100; Dev: <span style="color:var(--mist);font-weight:700">${esc(b.assignee_name)}</span></div>`:''}
-        ${b.link?`<div class="bpc-link-row"><a href="${esc(b.link)}" target="_blank" rel="noopener" class="bpc-link-btn">&#128230; Download / Install &#8599;</a></div>`:''}
+        ${(!b.tasks && b.assignee_name)?`<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:10px">👤 Dev: <span style="color:var(--mist);font-weight:700">${esc(b.assignee_name)}</span></div>`:''}
+        ${b.link?`<div class="bpc-link-row"><a href="${esc(b.link)}" target="_blank" rel="noopener" class="bpc-link-btn">📦 Download / Install ↗</a></div>`:''}
         ${total?`
           <div class="bpc-bugs-label">Bugs in this build (${total})</div>
           <div class="bpc-bug-list">
             ${bugRows}
-            ${moreCount>0?`<div style="padding:6px 8px;font-family:var(--mono);font-size:9px;color:var(--g2);cursor:pointer" onclick="filterBugsByBuild('${vEsc}')">+${moreCount} more &#8212; click to view all &#8594;</div>`:''}
+            ${moreCount>0?`<div style="padding:6px 8px;font-family:var(--mono);font-size:9px;color:var(--g2);cursor:pointer" onclick="filterBugsByBuild('${vEsc}')">+${moreCount} more — click to view all →</div>`:''}
           </div>`
         :`<div style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:8px 0">No bugs tagged yet.<br><span style="font-size:10px">Tag bugs by setting Build = <b>${vEsc}</b></span></div>`}
       </div>
       <div class="bpc-footer">
-        <button class="btn btn-g btn-xs" onclick="filterBugsByBuild('${vEsc}')">&#128203; All Bugs</button>
-        <button class="btn btn-g btn-xs" onclick="copyBuildReport('${vEsc}')">&#128203; Copy Report</button>
+        <button class="btn btn-g btn-xs" onclick="filterBugsByBuild('${vEsc}')">📋 All Bugs</button>
+        <button class="btn btn-g btn-xs" onclick="copyBuildReport('${vEsc}')">📋 Copy Report</button>
       </div>
     </div>`;
 }
@@ -6910,8 +6913,8 @@ function renderHomeBuildsStrip() {
   el.innerHTML = `
     <div class="home-builds-strip">
       <div class="hbs-header">
-        <span class="hbs-title">&#128230; Builds Overview</span>
-        <button class="btn btn-g btn-xs" onclick="goTab('builds')">Full Tracker &#8594;</button>
+        <span class="hbs-title">📦 Builds Overview</span>
+        <button class="btn btn-g btn-xs" onclick="goTab('builds')">Full Tracker →</button>
       </div>
       <div class="hbs-builds">
         ${builds.map(([ver, bugs]) => {
@@ -6919,11 +6922,11 @@ function renderHomeBuildsStrip() {
           const crit  = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&statusOpen(b.status)).length;
           const fixed = bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
           return `<div class="hbs-build" onclick="goTab('builds')">
-            <div class="hbs-build-ver">&#127959; ${esc(ver)}</div>
+            <div class="hbs-build-ver">🏗 ${esc(ver)}</div>
             <div class="hbs-build-chips">
               <span style="font-family:var(--mono);font-size:9px;color:var(--g3)">${open} open</span>
-              ${crit>0?`<span style="font-family:var(--mono);font-size:9px;color:var(--g5)"> &#183; ${crit} crit</span>`:''}
-              <span style="font-family:var(--mono);font-size:9px;color:var(--g4)"> &#183; ${fixed} fixed</span>
+              ${crit>0?`<span style="font-family:var(--mono);font-size:9px;color:var(--g5)"> · ${crit} crit</span>`:''}
+              <span style="font-family:var(--mono);font-size:9px;color:var(--g4)"> · ${fixed} fixed</span>
             </div>
           </div>`;
         }).join('')}
@@ -6934,12 +6937,12 @@ function renderHomeBuildsStrip() {
 
 function platformIcon(platform) {
   const p = (platform||'').toLowerCase();
-  if(p.includes('android')) return '&#129302;';
-  if(p.includes('ios') || p.includes('iphone') || p.includes('ipad')) return '&#127822;';
-  if(p.includes('web')) return '&#127760;';
-  if(p.includes('pc') || p.includes('windows')) return '&#128187;';
-  if(p.includes('console')) return '&#127918;';
-  return '&#128241;';
+  if(p.includes('android')) return '🤖';
+  if(p.includes('ios') || p.includes('iphone') || p.includes('ipad')) return '🍎';
+  if(p.includes('web')) return '🌐';
+  if(p.includes('pc') || p.includes('windows')) return '💻';
+  if(p.includes('console')) return '🎮';
+  return '📱';
 }
 
 function openNewBuild() { _openBuildForm(null); }
@@ -6953,30 +6956,30 @@ async function _openBuildForm(editVersion) {
   document.getElementById('panelId').textContent = editVersion || 'NEW';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-v" onclick="saveBuildEntry('${esc(editVersion||'')}')">&#128190; Save Build</button>`;
+    <button class="btn btn-v" onclick="saveBuildEntry('${esc(editVersion||'')}')">💾 Save Build</button>`;
   document.getElementById('panelBody').innerHTML = `
     <div class="build-log-form">
       <div class="fg"><label class="fl">Build Version *</label>
         <input class="fi2" id="bf-version" value="${esc(existing?.version||editVersion||'')}" placeholder="e.g. v3.2.1 or build-204"${editVersion?' readonly style="opacity:.6"':''}>
       </div>
       <div class="fg"><label class="fl">Platform / Environment</label>
-        <input class="fi2" id="bf-platform" value="${esc(existing?.platform||'')}" placeholder="Android &#183; iOS &#183; Staging &#183; Production">
+        <input class="fi2" id="bf-platform" value="${esc(existing?.platform||'')}" placeholder="Android · iOS · Staging · Production">
       </div>
       <div class="fg"><label class="fl">Download Link / APK URL</label>
-        <input class="fi2" id="bf-link" value="${esc(existing?.link||'')}" placeholder="https://drive.google.com/&#8230; or Firebase App Distribution">
+        <input class="fi2" id="bf-link" value="${esc(existing?.link||'')}" placeholder="https://drive.google.com/… or Firebase App Distribution">
       </div>
       <div class="fg"><label class="fl">Release Notes / What changed</label>
-        <textarea class="fi2" id="bf-notes" rows="3" placeholder="What's new or fixed in this build&#8230;">${esc(existing?.notes||'')}</textarea>
+        <textarea class="fi2" id="bf-notes" rows="3" placeholder="What's new or fixed in this build…">${esc(existing?.notes||'')}</textarea>
       </div>
 
       <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px 16px;margin-bottom:14px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">&#128736; TASKS DONE IN THIS BUILD</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">🛠 TASKS DONE IN THIS BUILD</div>
         <div class="fg" style="margin-bottom:10px"><label class="fl">Tasks / Changes done (one per line)</label>
           <textarea class="fi2" id="bf-tasks" rows="3" placeholder="- Fixed login crash\n- Integrated Adjust SDK\n- Refactored match engine">${esc(existing?.tasks||'')}</textarea>
         </div>
         <div class="fg" style="margin-bottom:0"><label class="fl">Primary Dev / Assignee for this build</label>
           <select class="fi2" id="bf-assignee">
-            <option value="">&#8212; Not specified &#8212;</option>
+            <option value="">— Not specified —</option>
             ${S.teamMembers.map(m=>`<option value="${esc(m.email)}"${(existing?.assignee_email===m.email)?' selected':''}>${esc(m.name)} (${esc(m.email)})</option>`).join('')}
           </select>
         </div>
@@ -6985,7 +6988,7 @@ async function _openBuildForm(editVersion) {
       <div class="fg">
         <label class="fl">Pod / Team <span style="color:var(--dim);font-weight:400">(for pod-specific GChat &amp; email notifications)</span></label>
         <select class="fi2" id="bf-pod">
-          <option value="">&#8212; All teams (global notification) &#8212;</option>
+          <option value="">— All teams (global notification) —</option>
           ${getDropOpts('pod').map(p=>`<option value="${esc(p)}"${existing?.pod===p?' selected':''}>${esc(p)}</option>`).join('')}
         </select>
       </div>
@@ -7028,25 +7031,25 @@ async function saveBuildEntry(editVersion) {
     if (idx >= 0) registry[idx] = entry; else registry.unshift(entry);
     await saveBuildsRegistry(registry);
     if (notifyTeam) {
-      addNotif(`&#128230; Build: ${version}`, `${entry.platform?entry.platform+' &#183; ':''}${entry.notes?entry.notes.slice(0,80):'New build available'}`, null);
+      addNotif(`📦 Build: ${version}`, `${entry.platform?entry.platform+' · ':''}${entry.notes?entry.notes.slice(0,80):'New build available'}`, null);
       // GChat webhook notification for build
       const cfg = getWebhookConfig();
       if(cfg.notif_build_available !== false) {
         const buildTrackerUrl = APP_URL + '#builds';
-        const downloadLine = entry.link ? '\n&#128229; Download: ' + entry.link : '';
+        const downloadLine = entry.link ? '\n📥 Download: ' + entry.link : '';
         const podLine = entry.pod ? '\nPod: ' + entry.pod : '';
-        const gchatText = '&#128230; *New Build Available &#8212; ' + version + '*\n' +
+        const gchatText = '📦 *New Build Available — ' + version + '*\n' +
           (entry.platform ? 'Platform: ' + entry.platform + '\n' : '') +
           podLine +
           (entry.notes ? 'Notes: ' + entry.notes.slice(0,120) + '\n' : '') +
-          downloadLine + '\n&#128279; Build Tracker: ' + buildTrackerUrl;
+          downloadLine + '\n🔗 Build Tracker: ' + buildTrackerUrl;
         // Send to pod-specific GChat URL if pod selected, else global
         await sendGChatWebhook(gchatText, entry.pod||'');
       }
       if(cfg.slack_url && cfg.notif_build_available !== false) {
         const btu = APP_URL + '#builds';
         await sendSlackWebhook(null, [
-          { type:'section', text:{ type:'mrkdwn', text:`&#128230; *New Build Available &#8212; ${version}*${entry.platform?' ('+entry.platform+')':''}` } },
+          { type:'section', text:{ type:'mrkdwn', text:`📦 *New Build Available — ${version}*${entry.platform?' ('+entry.platform+')':''}` } },
           { type:'section', fields:[
             ...(entry.notes?[{ type:'mrkdwn', text:`*Notes:* ${entry.notes.slice(0,120)}` }]:[]),
             ...(entry.link?[{ type:'mrkdwn', text:`*Download:* <${entry.link}|Install Build>` }]:[]),
@@ -7073,17 +7076,17 @@ async function saveBuildEntry(editVersion) {
           ? '<p style="font-size:14px;line-height:1.7;color:#c0c0e0">' + esc(entry.notes) + '</p>'
           : '';
         const tasksLine = entry.tasks
-          ? '<div style="margin-top:12px;padding:12px 14px;background:rgba(6,182,212,.1);border-radius:8px;border-left:3px solid #06b6d4"><div style="font-size:10px;letter-spacing:2px;color:#06b6d4;text-transform:uppercase;margin-bottom:6px">&#128736; TASKS DONE</div><pre style="margin:0;font-size:12px;color:#c0e0e8;line-height:1.8;white-space:pre-wrap;font-family:monospace">' + esc(entry.tasks) + '</pre></div>'
+          ? '<div style="margin-top:12px;padding:12px 14px;background:rgba(6,182,212,.1);border-radius:8px;border-left:3px solid #06b6d4"><div style="font-size:10px;letter-spacing:2px;color:#06b6d4;text-transform:uppercase;margin-bottom:6px">🛠 TASKS DONE</div><pre style="margin:0;font-size:12px;color:#c0e0e8;line-height:1.8;white-space:pre-wrap;font-family:monospace">' + esc(entry.tasks) + '</pre></div>'
           : '';
         const assigneeLine = entry.assignee_name
-          ? '<p style="margin-top:10px;font-size:12px;color:#9090c0">&#128100; Dev: <b style="color:#c0c0e0">' + esc(entry.assignee_name) + '</b></p>'
+          ? '<p style="margin-top:10px;font-size:12px;color:#9090c0">👤 Dev: <b style="color:#c0c0e0">' + esc(entry.assignee_name) + '</b></p>'
           : '';
         const emailHtml = '<div style="font-family:sans-serif;max-width:520px;margin:0 auto;background:#0d0d20;color:#eeeef8;border-radius:12px;overflow:hidden">'
           + '<div style="background:linear-gradient(135deg,#7c3aed,#06b6d4);padding:20px 24px;display:flex;align-items:center;gap:14px">'
           + '<img src="https://cdn.octathorpeweb.com/v1/webstore/hitwicket-logo.png" width="40" height="40" style="border-radius:8px;flex-shrink:0">'
           + '<div>'
-          + '<div style="font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:3px">BugPulse &#183; Hitwicket</div>'
-          + '<h2 style="margin:0;font-size:20px;letter-spacing:1px;color:#fff">&#128230; New Build: ' + esc(entry.version) + '</h2>'
+          + '<div style="font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:3px">BugPulse · Hitwicket</div>'
+          + '<h2 style="margin:0;font-size:20px;letter-spacing:1px;color:#fff">📦 New Build: ' + esc(entry.version) + '</h2>'
           + platformLine
           + '</div>'
           + '</div>'
@@ -7093,7 +7096,7 @@ async function saveBuildEntry(editVersion) {
           + assigneeLine
           + downloadSection
           + '<p style="margin-top:16px"><a href="' + esc(buildUrl) + '" style="display:inline-block;background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px">View Build Tracker in BugPulse</a></p>'
-          + '<p style="margin-top:20px;font-size:11px;color:#484880">Logged by ' + esc(S.user&&S.user.name||'Team') + ' &#183; BugPulse &#183; Hitwicket</p>'
+          + '<p style="margin-top:20px;font-size:11px;color:#484880">Logged by ' + esc(S.user&&S.user.name||'Team') + ' · BugPulse · Hitwicket</p>'
           + '</div></div>';
         const emailText = 'New build: ' + entry.version
           + (entry.platform ? '\nPlatform: ' + entry.platform : '')
@@ -7138,8 +7141,8 @@ function openReleaseNotes(version) {
   document.getElementById('panelId').textContent = version;
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Close</button>
-    <button class="btn btn-g" onclick="copyReleaseNotes('${version}')">&#128203; Copy</button>
-    <button class="btn btn-v" onclick="sendReleaseNotesToGChat('${version}')">&#128226; Send to GChat</button>`;
+    <button class="btn btn-g" onclick="copyReleaseNotes('${version}')">📋 Copy</button>
+    <button class="btn btn-v" onclick="sendReleaseNotesToGChat('${version}')">📢 Send to GChat</button>`;
 
   const groupBy = (bugs, key) => bugs.reduce((acc, b) => {
     const k = b[key] || 'General'; (acc[k]=acc[k]||[]).push(b); return acc;
@@ -7152,27 +7155,27 @@ function openReleaseNotes(version) {
       <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:6px">${esc(feat)}</div>
       ${bugs.map(b => `
         <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:7px;margin-bottom:4px">
-          <span style="font-family:var(--mono);font-size:9px;color:var(--g4);flex-shrink:0;padding-top:2px">&#10003;</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--g4);flex-shrink:0;padding-top:2px">✓</span>
           <div style="flex:1;min-width:0">
             <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(b.title||'')}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${esc(b.id)} &#183; ${pChip(b.priority)}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${esc(b.id)} · ${pChip(b.priority)}</div>
           </div>
         </div>`).join('')}
     </div>`).join('') || '<div style="color:var(--dim);font-family:var(--mono);font-size:11px">No fixed bugs tagged to this build yet</div>';
 
   const openHtml = open.length ? `
     <div style="margin-top:16px;padding:12px 14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171;margin-bottom:8px">&#9888; ${open.length} KNOWN ISSUE${open.length!==1?'S':''}</div>
-      ${open.map(b=>`<div style="font-size:12px;color:var(--mist);padding:3px 0">${esc(b.id)} &#8212; ${esc(b.title||'')}</div>`).join('')}
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171;margin-bottom:8px">⚠ ${open.length} KNOWN ISSUE${open.length!==1?'S':''}</div>
+      ${open.map(b=>`<div style="font-size:12px;color:var(--mist);padding:3px 0">${esc(b.id)} — ${esc(b.title||'')}</div>`).join('')}
     </div>` : '';
 
   document.getElementById('panelBody').innerHTML = `
     <div style="margin-bottom:14px">
       <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px">Build ${esc(version)}</div>
-      <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">${fixed.length} fix${fixed.length!==1?'es':''} &#183; ${open.length} known issue${open.length!==1?'s':''}</div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">${fixed.length} fix${fixed.length!==1?'es':''} · ${open.length} known issue${open.length!==1?'s':''}</div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:16px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">&#9989; FIXED IN THIS BUILD</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">✅ FIXED IN THIS BUILD</div>
       ${fixedHtml}
     </div>
     ${openHtml}`;
@@ -7190,21 +7193,21 @@ function buildReleaseNotesText(version) {
   }, {});
   const byFeature = groupBy(fixed, 'feature');
 
-  let txt = `&#128640; *Release Notes &#8212; Build ${version}*\n`;
+  let txt = `🚀 *Release Notes — Build ${version}*\n`;
   txt += `${new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium'})}\n\n`;
 
   if(fixed.length) {
-    txt += `&#9989; *Fixed (${fixed.length})*\n`;
+    txt += `✅ *Fixed (${fixed.length})*\n`;
     Object.entries(byFeature).forEach(([feat, bugs]) => {
       txt += `\n*${feat}*\n`;
-      bugs.forEach(b => { txt += `&#8226; ${b.title||''} _(${b.id})_\n`; });
+      bugs.forEach(b => { txt += `• ${b.title||''} _(${b.id})_\n`; });
     });
   }
   if(open.length) {
-    txt += `\n&#9888; *Known Issues (${open.length})*\n`;
-    open.forEach(b => { txt += `&#8226; ${b.title||''} _(${b.id} &#183; ${b.priority})_\n`; });
+    txt += `\n⚠ *Known Issues (${open.length})*\n`;
+    open.forEach(b => { txt += `• ${b.title||''} _(${b.id} · ${b.priority})_\n`; });
   }
-  txt += `\n&#128279; ${APP_URL}#builds`;
+  txt += `\n🔗 ${APP_URL}#builds`;
   return txt;
 }
 
@@ -7268,31 +7271,31 @@ function renderTestRuns() {
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div>
             <div style="font-size:15px;font-weight:700;color:var(--text)">${esc(run.name||'Unnamed Run')}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">Build: ${esc(run.build||'&#8212;')} &#183; ${esc(run.date||'')} &#183; ${total} cases</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:3px">Build: ${esc(run.build||'—')} · ${esc(run.date||'')} · ${total} cases</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <div style="font-family:var(--mono);font-size:18px;font-weight:800;color:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'}">${pct}%</div>
             <button class="btn btn-g btn-sm" onclick="openTestRun(${ri})">Open</button>
-            <button class="btn btn-r btn-sm" onclick="deleteTestRun(${ri})">&#10005;</button>
+            <button class="btn btn-r btn-sm" onclick="deleteTestRun(${ri})">✕</button>
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(16,185,129,.15);color:#34d399">&#10003; ${passed} pass</span>
-          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">&#10005; ${failed} fail</span>
-          ${blocked?`<span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,.15);color:#fbbf24">&#8856; ${blocked} blocked</span>`:''}
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(16,185,129,.15);color:#34d399">✓ ${passed} pass</span>
+          <span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">✕ ${failed} fail</span>
+          ${blocked?`<span style="font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,.15);color:#fbbf24">⊘ ${blocked} blocked</span>`:''}
         </div>
         <div style="height:6px;background:var(--bg3);border-radius:4px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'};transition:width .4s"></div>
         </div>
       </div>`;
-  }).join('') : `<div class="empty"><div class="empty-icon">&#129514;</div><h3>NO TEST RUNS</h3><p>Create a test run to track pass/fail for a build</p></div>`;
+  }).join('') : `<div class="empty"><div class="empty-icon">🧪</div><h3>NO TEST RUNS</h3><p>Create a test run to track pass/fail for a build</p></div>`;
 
   wrap.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g2)">&#129514; TEST RUNS</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g2)">🧪 TEST RUNS</div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-g btn-sm" onclick="goTestRuns()">&#8592; Builds</button>
-        <button class="btn btn-v btn-sm" onclick="openNewTestRun()">&#65291; New Run</button>
+        <button class="btn btn-g btn-sm" onclick="goTestRuns()">← Builds</button>
+        <button class="btn btn-v btn-sm" onclick="openNewTestRun()">＋ New Run</button>
       </div>
     </div>
     ${runsHtml}`;
@@ -7310,7 +7313,7 @@ function openNewTestRun() {
   document.getElementById('panelId').textContent = 'TEST RUN';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-v" onclick="createTestRun()">&#65291; Create Run</button>`;
+    <button class="btn btn-v" onclick="createTestRun()">＋ Create Run</button>`;
   document.getElementById('panelBody').innerHTML = `
     <div class="fg"><label class="fl">Run Name</label>
       <input class="fi2" id="tr-name" placeholder="e.g. Sprint 14 Regression" value="">
@@ -7320,15 +7323,15 @@ function openNewTestRun() {
       <datalist id="tr-build-list">${builds.map(v=>`<option value="${esc(v)}">`).join('')}</datalist>
     </div>
     <div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-bottom:14px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">&#128203; IMPORT TEST CASES</div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">📋 IMPORT TEST CASES</div>
       <div style="display:flex;gap:8px;margin-bottom:10px">
         <button class="btn ${!document.getElementById('tr-source-csv')?.checked?'btn-v':'btn-g'} btn-sm" id="tr-src-bugs" onclick="trSetSource('bugs')">From BugPulse Bugs</button>
-        <button class="btn btn-g btn-sm" id="tr-src-csv" onclick="trSetSource('csv')">&#128196; Upload CSV</button>
+        <button class="btn btn-g btn-sm" id="tr-src-csv" onclick="trSetSource('csv')">📄 Upload CSV</button>
       </div>
       <div id="tr-source-bugs-panel">
         <div class="fg" style="margin:0"><label class="fl">Filter bugs to import</label>
           <select class="fi2" id="tr-filter">
-            <option value="">&#8212; All active bugs &#8212;</option>
+            <option value="">— All active bugs —</option>
             ${S.sprints.map(s=>`<option value="sprint:${esc(s.name)}">Sprint: ${esc(s.name)}</option>`).join('')}
             ${[...new Set(S.bugs.map(b=>b.feature).filter(Boolean))].map(f=>`<option value="feature:${esc(f)}">Feature: ${esc(f)}</option>`).join('')}
           </select>
@@ -7341,11 +7344,11 @@ function openNewTestRun() {
             Optional: <b>steps</b>, <b>expected</b>, <b>section</b>, <b>priority</b>, <b>notes</b>
           </div>
           <button class="btn btn-g btn-sm" onclick="downloadTestCaseTemplate()" style="flex-shrink:0">
-            &#128229; Download Template
+            📥 Download Template
           </button>
         </div>
         <div style="border:2px dashed var(--bd2);border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:rgba(124,58,237,.03)" onclick="document.getElementById('tr-csv-input').click()" id="tr-csv-drop" ondragover="event.preventDefault();this.style.borderColor='var(--g1)'" ondragleave="this.style.borderColor='var(--bd2)'" ondrop="trHandleCsvDrop(event)">
-          <div style="font-size:24px;margin-bottom:6px">&#128196;</div>
+          <div style="font-size:24px;margin-bottom:6px">📄</div>
           <div style="font-family:var(--mono);font-size:10px;color:var(--dim)">Drop CSV here or click to browse</div>
           <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:4px">Supports BugPulse template + TestRail CSV export</div>
           <div id="tr-csv-preview" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--g4)"></div>
@@ -7377,7 +7380,7 @@ function downloadTestCaseTemplate() {
      'Player card added to squad', ''],
     ['TC-005', 'Verify build upload notification', 'Builds', 'Low',
      '1. Upload new build\n2. Check GChat',
-     'GChat receives build notification', 'Edge case &#8212; test with no internet then reconnect'],
+     'GChat receives build notification', 'Edge case — test with no internet then reconnect'],
   ];
 
   const escape = v => '"' + String(v||'').replace(/"/g,'""') + '"';
@@ -7484,14 +7487,14 @@ function openTestRun(idx) {
   const run = runs[idx];
   if(!run) return;
 
-  const RESULTS = { pass:'&#10003; Pass', fail:'&#10005; Fail', blocked:'&#8856; Blocked', pending:'&#8212; Pending' };
+  const RESULTS = { pass:'✓ Pass', fail:'✕ Fail', blocked:'⊘ Blocked', pending:'— Pending' };
   const COLORS  = { pass:'#34d399', fail:'#f87171', blocked:'#fbbf24', pending:'var(--dim)' };
 
   document.getElementById('panelTitle').textContent = '🧪 ' + (run.name||'Test Run');
   document.getElementById('panelId').textContent = run.build || '';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel();renderTestRuns()">Close</button>
-    <button class="btn btn-v" onclick="exportTestRun(${idx})">&#128229; Export</button>`;
+    <button class="btn btn-v" onclick="exportTestRun(${idx})">📥 Export</button>`;
 
   const renderCases = () => {
     document.getElementById('tr-cases').innerHTML = run.cases.map((c, ci) => `
@@ -7499,7 +7502,7 @@ function openTestRun(idx) {
         <div style="display:flex;align-items:flex-start;gap:10px">
           <div style="flex:1;min-width:0">
             <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(c.title)}</div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${esc(c.bugId)}${c.section?' &#183; '+esc(c.section):''}</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:2px">${esc(c.bugId)}${c.section?' · '+esc(c.section):''}</div>
             ${c.steps?`<div style="margin-top:5px;font-family:var(--mono);font-size:9px;color:var(--mute);line-height:1.6"><b style="color:var(--dim)">Steps:</b> ${esc(c.steps.slice(0,120))}</div>`:''}
             ${c.expected?`<div style="font-family:var(--mono);font-size:9px;color:var(--mute)"><b style="color:var(--dim)">Expected:</b> ${esc(c.expected.slice(0,100))}</div>`:''}
           </div>
@@ -7533,10 +7536,10 @@ function updateTestSummary(idx) {
   const el = document.getElementById('tr-summary');
   if(el) el.innerHTML = `
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(16,185,129,.15);color:#34d399">&#10003; ${passed}</span>
-      <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">&#10005; ${failed}</span>
-      ${blocked?`<span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(245,158,11,.15);color:#fbbf24">&#8856; ${blocked}</span>`:''}
-      ${pending?`<span style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:4px 12px;border-radius:20px;background:var(--bg3)">&#8212; ${pending} pending</span>`:''}
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(16,185,129,.15);color:#34d399">✓ ${passed}</span>
+      <span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(239,68,68,.15);color:#f87171">✕ ${failed}</span>
+      ${blocked?`<span style="font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:rgba(245,158,11,.15);color:#fbbf24">⊘ ${blocked}</span>`:''}
+      ${pending?`<span style="font-family:var(--mono);font-size:11px;color:var(--dim);padding:4px 12px;border-radius:20px;background:var(--bg3)">— ${pending} pending</span>`:''}
       <span style="font-family:var(--mono);font-size:18px;font-weight:800;color:${pct>=80?'var(--g4)':pct>=50?'var(--g3)':'var(--g5)'};margin-left:auto">${pct}%</span>
     </div>
     <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:14px">
@@ -7663,17 +7666,17 @@ function copyBuildReport(version) {
   const fixed = bugs.filter(b=>!statusOpen(b.status));
   const crit  = open.filter(b=>['Critical','Urgent'].includes(b.priority));
   const bugLink = id => `${APP_URL}?bug=${id}`;
-  const report = `&#128230; BUILD REPORT &#8212; ${version}
-&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;
+  const report = `📦 BUILD REPORT — ${version}
+━━━━━━━━━━━━━━━━━━━━━━━━
 Total bugs : ${bugs.length}
 Open       : ${open.length}
 Fixed      : ${fixed.length}
 Critical   : ${crit.length}
-${crit.length?'\n&#128680; CRITICAL OPEN:\n'+crit.map(b=>`  &#8226; [${b.id}] ${b.title} &#8212; ${(b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned'}\n    &#128279; ${bugLink(b.id)}`).join('\n'):''}
-${open.filter(b=>!['Critical','Urgent'].includes(b.priority)).length?'\n&#128308; OTHER OPEN:\n'+open.filter(b=>!['Critical','Urgent'].includes(b.priority)).map(b=>`  &#8226; [${b.id}] ${b.title} (${b.priority})\n    &#128279; ${bugLink(b.id)}`).join('\n'):''}
-${fixed.length?'\n&#9989; FIXED:\n'+fixed.map(b=>`  &#8226; [${b.id}] ${b.title}\n    &#128279; ${bugLink(b.id)}`).join('\n'):''}
+${crit.length?'\n🚨 CRITICAL OPEN:\n'+crit.map(b=>`  • [${b.id}] ${b.title} — ${(b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned'}\n    🔗 ${bugLink(b.id)}`).join('\n'):''}
+${open.filter(b=>!['Critical','Urgent'].includes(b.priority)).length?'\n🔴 OTHER OPEN:\n'+open.filter(b=>!['Critical','Urgent'].includes(b.priority)).map(b=>`  • [${b.id}] ${b.title} (${b.priority})\n    🔗 ${bugLink(b.id)}`).join('\n'):''}
+${fixed.length?'\n✅ FIXED:\n'+fixed.map(b=>`  • [${b.id}] ${b.title}\n    🔗 ${bugLink(b.id)}`).join('\n'):''}
 
-Generated by BugPulse &#183; ${new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})}`;
+Generated by BugPulse · ${new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})}`;
   navigator.clipboard.writeText(report).then(()=>toast('Build report copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 
@@ -7739,17 +7742,17 @@ function renderBuildSection() {
       </div>`).join('');
 
     const overflowMore = sorted.length > 6
-      ? `<div style="padding:5px 8px;font-family:var(--mono);font-size:9px;color:var(--dim);cursor:pointer" onclick="dashDrillDown('build','${esc(version)}')">+${sorted.length-6} more bugs &#8594;</div>`
+      ? `<div style="padding:5px 8px;font-family:var(--mono);font-size:9px;color:var(--dim);cursor:pointer" onclick="dashDrillDown('build','${esc(version)}')">+${sorted.length-6} more bugs →</div>`
       : '';
 
     const linkHtml = link
-      ? `<a href="${esc(link)}" target="_blank" rel="noopener" class="build-card-link" title="Open build">&#128230; Download &#8599;</a>`
+      ? `<a href="${esc(link)}" target="_blank" rel="noopener" class="build-card-link" title="Open build">📦 Download ↗</a>`
       : `<span class="build-no-link">no link</span>`;
 
     return `
       <div class="build-card" onclick="toggleBuildCardExpand(this,'${esc(version)}')">
         <div class="build-card-header">
-          <span class="build-card-version">&#127959; ${esc(version)}</span>
+          <span class="build-card-version">🏗 ${esc(version)}</span>
           ${linkHtml}
         </div>
         <div class="build-card-stats">
@@ -7771,7 +7774,7 @@ function renderBuildSection() {
           </div>
         </div>
         <div id="bcd-notes-${esc(version)}" style="display:none;padding:8px 10px;margin-bottom:8px;background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);border-radius:8px;font-size:11px;color:var(--mist);line-height:1.7;white-space:pre-wrap;max-height:120px;overflow-y:auto;word-break:break-word">
-          ${(() => { const reg = _buildsDashRegistry ? _buildsDashRegistry.find(r=>r.version===version) : null; const parts=[]; if(reg && reg.notes) parts.push('&#128203; ' + esc(reg.notes)); if(reg && reg.tasks) parts.push('&#128736; Tasks:\n' + esc(reg.tasks)); return parts.join('\n\n') || '<span style="color:var(--dim);font-size:10px">No release notes added.</span>'; })()}
+          ${(() => { const reg = _buildsDashRegistry ? _buildsDashRegistry.find(r=>r.version===version) : null; const parts=[]; if(reg && reg.notes) parts.push('📋 ' + esc(reg.notes)); if(reg && reg.tasks) parts.push('🛠 Tasks:\n' + esc(reg.tasks)); return parts.join('\n\n') || '<span style="color:var(--dim);font-size:10px">No release notes added.</span>'; })()}
         </div>
         <div class="build-bugs-list">
           ${bugRows}
@@ -7783,7 +7786,7 @@ function renderBuildSection() {
   el.innerHTML = `
     <div class="builds-section">
       <div class="builds-section-header">
-        <div class="builds-section-title">&#128230; BUGS BY BUILD (${builds.length} builds)</div>
+        <div class="builds-section-title">📦 BUGS BY BUILD (${builds.length} builds)</div>
         <span style="font-family:var(--mono);font-size:9px;color:var(--dim)">${S.bugs.filter(b=>!b.build).length} bugs with no build tagged</span>
       </div>
       <div class="build-cards-grid">${cards}</div>
@@ -7865,7 +7868,7 @@ function buildAttachmentSection(bug) {
   const att = bug?.attachment || '';
   return `<div class="fg">
     <label class="fl">Attachment (Google Drive URL)</label>
-    <input class="fi2" id="f-attachment" value="${esc(att)}" placeholder="https://drive.google.com/file/d/&#8230;">
+    <input class="fi2" id="f-attachment" value="${esc(att)}" placeholder="https://drive.google.com/file/d/…">
     ${att && isImageUrl && isImageUrl(att) ? `<div style="margin-top:8px"><img src="${isDriveUrl && isDriveUrl(att) ? getDriveThumbnailUrl(att) : esc(att)}" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--bd)" onerror="this.style.display='none'"></div>` : ''}
   </div>`;
 }
@@ -7939,20 +7942,20 @@ function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedT
   closedToday = closedToday || [];
   const bugLink = id => (S.cfg?.app_url || window.location.origin) + '?bug=' + id;
   const lines = [
-    '&#128203; QA DAY-END REPORT &#8212; ' + dateStr,
-    '&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;&#9473;',
+    '📋 QA DAY-END REPORT — ' + dateStr,
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     '',
-    '&#128027; BUGS FILED TODAY (' + todayBugs.length + ')',
+    '🐛 BUGS FILED TODAY (' + todayBugs.length + ')',
   ];
-  todayBugs.forEach(b => lines.push('  &#8226; [' + (b.id||'') + '] ' + (b.title||'') + ' &#8212; ' + (b.priority||'') + ' | ' + (b.status||'')));
+  todayBugs.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.priority||'') + ' | ' + (b.status||'')));
   lines.push('');
-  lines.push('&#9989; RESOLVED TODAY (' + resolvedToday.length + ')');
-  resolvedToday.forEach(b => lines.push('  &#8226; [' + (b.id||'') + '] ' + (b.title||'') + ' &#8212; ' + (b.status||'')));
+  lines.push('✅ RESOLVED TODAY (' + resolvedToday.length + ')');
+  resolvedToday.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.status||'')));
   lines.push('');
-  lines.push('&#128680; CRITICAL/URGENT OPEN (' + critOpen.length + ')');
-  critOpen.slice(0,10).forEach(b => lines.push('  &#8226; [' + (b.id||'') + '] ' + (b.title||'') + ' &#8212; ' + (b.priority||'')));
+  lines.push('🚨 CRITICAL/URGENT OPEN (' + critOpen.length + ')');
+  critOpen.slice(0,10).forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.priority||'')));
   lines.push('');
-  lines.push('&#128202; SUMMARY');
+  lines.push('📊 SUMMARY');
   lines.push('  Filed Today: ' + todayBugs.length);
   lines.push('  Resolved Today: ' + resolvedToday.length);
   lines.push('  Closed Today: ' + closedToday.length);
@@ -7976,8 +7979,8 @@ function openDayEndReport() {
   const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Close</button>
-    <button class="btn btn-g" onclick="copyDayEndReport()">&#128203; Copy</button>
-    ${S.user?.role==='admin'?'<button class="btn btn-v" onclick="sendEODToGChat()" style="background:linear-gradient(135deg,var(--g4),var(--g2))">&#128226; Send to GChat</button>':''}`;
+    <button class="btn btn-g" onclick="copyDayEndReport()">📋 Copy</button>
+    ${S.user?.role==='admin'?'<button class="btn btn-v" onclick="sendEODToGChat()" style="background:linear-gradient(135deg,var(--g4),var(--g2))">📢 Send to GChat</button>':''}`;
   document.getElementById('panelBody').innerHTML = `
     <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <label style="font-family:var(--mono);font-size:11px;color:var(--mist)">Filter by Pod:</label>
@@ -8062,20 +8065,20 @@ async function sendEODToGChat() {
 async function testWebhook() {
   const url = document.getElementById('wh-gchat')?.value?.trim();
   if (!url) { toast('Enter a GChat webhook URL first','err'); return; }
-  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'&#129514; BugPulse webhook test &#10003;'}) }).then(r=>r.ok).catch(()=>false);
+  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'🧪 BugPulse webhook test ✓'}) }).then(r=>r.ok).catch(()=>false);
   toast(ok ? 'Test sent to GChat ✓' : 'GChat test failed','ok');
 }
 
 async function testSlackWebhook() {
   const url = document.getElementById('wh-slack')?.value?.trim();
   if (!url) { toast('Enter a Slack webhook URL first','err'); return; }
-  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'&#129514; BugPulse Slack webhook test &#10003;'}) }).then(r=>r.ok).catch(()=>false);
+  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'🧪 BugPulse Slack webhook test ✓'}) }).then(r=>r.ok).catch(()=>false);
   toast(ok ? 'Test sent to Slack ✓' : 'Slack test failed','err');
 }
 
 function buildPodGChatFields(cfg) {
   const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
-  if (!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured &#8212; add pods in Manage Dropdowns first.</div>';
+  if (!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured — add pods in Manage Dropdowns first.</div>';
   return pods.map(pod => {
     const safeId = pod.replace(/[^a-z0-9]/gi,'_');
     const gchatKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
@@ -8085,11 +8088,11 @@ function buildPodGChatFields(cfg) {
     return '<div style="background:rgba(124,58,237,.05);border-radius:8px;padding:10px 12px;margin-bottom:10px">' +
       '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g2);margin-bottom:8px">' + esc(pod) + '</div>' +
       '<div class="fg" style="margin-bottom:6px">' +
-        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">&#128172; GChat Webhook URL</label>' +
-        '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + gchatVal + '" placeholder="https://chat.googleapis.com/v1/spaces/&#8230;">' +
+        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">💬 GChat Webhook URL</label>' +
+        '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + gchatVal + '" placeholder="https://chat.googleapis.com/v1/spaces/…">' +
       '</div>' +
       '<div class="fg" style="margin-bottom:0">' +
-        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">&#128231; Email Recipients (comma-separated)</label>' +
+        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">📧 Email Recipients (comma-separated)</label>' +
         '<input class="fi2" id="wh-pod-emails-' + safeId + '" value="' + emailVal + '" placeholder="dev@hitwicket.com, qa@hitwicket.com">' +
       '</div>' +
     '</div>';
@@ -8105,34 +8108,34 @@ async function openWebhookSettings() {
   document.getElementById('panelId').textContent = 'WEBHOOKS';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
-    <button class="btn btn-v" onclick="saveWebhookSettings()">&#128190; Save Settings</button>`;
+    <button class="btn btn-v" onclick="saveWebhookSettings()">💾 Save Settings</button>`;
   document.getElementById('panelBody').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:18px">
       <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:4px">&#128994; GOOGLE CHAT WEBHOOKS</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">Get URL: GChat Space &#8594; Apps & Integrations &#8594; Manage Webhooks &#8594; Add</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:4px">🟢 GOOGLE CHAT WEBHOOKS</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">Get URL: GChat Space → Apps & Integrations → Manage Webhooks → Add</div>
         <div class="fg"><label class="fl">Global GChat URL <span style="color:var(--dim);font-weight:400">(fallback)</span></label>
-          <input class="fi2" id="wh-gchat" value="${esc(cfg.gchat_url||'')}" placeholder="https://chat.googleapis.com/v1/spaces/&#8230;/messages?key=&#8230;">
+          <input class="fi2" id="wh-gchat" value="${esc(cfg.gchat_url||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…/messages?key=…">
         </div>
         <div style="margin-top:14px;border-top:1px solid rgba(6,182,212,.15);padding-top:12px">
           <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">PER-POD GCHAT URLS</div>
           ${buildPodGChatFields(cfg)}
         </div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-g btn-sm" onclick="testWebhook()">&#129514; Test GChat</button>
+          <button class="btn btn-g btn-sm" onclick="testWebhook()">🧪 Test GChat</button>
         </div>
       </div>
       <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;margin-bottom:12px">&#128172; SLACK WEBHOOK</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;margin-bottom:12px">💬 SLACK WEBHOOK</div>
         <div class="fg"><label class="fl">Slack Incoming Webhook URL</label>
-          <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/&#8230;">
+          <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/…">
         </div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-g btn-sm" onclick="testSlackWebhook()">&#129514; Test Slack</button>
+          <button class="btn btn-g btn-sm" onclick="testSlackWebhook()">🧪 Test Slack</button>
         </div>
       </div>
       <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">&#128276; NOTIFY ON EVENTS</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">🔔 NOTIFY ON EVENTS</div>
         ${['new_bug','build_available','day_end_report'].map(ev => {
           const labels = {new_bug:'New Bug Filed / Assigned', build_available:'New Build Available', day_end_report:'Day-End Report'};
           return `<div class="notif-toggle-row" style="margin-bottom:10px">
@@ -8142,15 +8145,15 @@ async function openWebhookSettings() {
         }).join('')}
       </div>
       <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">&#128231; EMAIL RECIPIENTS</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">📧 EMAIL RECIPIENTS</div>
         <div class="fg"><label class="fl">Team Emails (comma-separated)</label>
           <textarea class="fi2" id="wh-emails" rows="2" placeholder="dev@hitwicket.com, qa@hitwicket.com">${esc(cfg.team_emails||'')}</textarea>
         </div>
       </div>
       <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">&#9200; EOD REPORT SCHEDULE</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">⏰ EOD REPORT SCHEDULE</div>
         <div class="fg" style="margin-bottom:10px">
-          <label class="fl">Auto-send time (Mon&#8211;Fri, IST)</label>
+          <label class="fl">Auto-send time (Mon–Fri, IST)</label>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <input type="time" class="fi2" id="wh-eod-time" value="${cfg.eod_time||'21:00'}" style="width:130px">
             <div class="notif-toggle-row" style="margin:0">
@@ -8320,9 +8323,9 @@ async function sendBugNotification(bug, customMsg) {
 
   // In-app notifications
   assignees.forEach(a => {
-    if(a.email && a.email !== S.user?.email) addNotif('&#128027; Bug assigned: ' + (bug.id||''), msg, bug.id);
+    if(a.email && a.email !== S.user?.email) addNotif('🐛 Bug assigned: ' + (bug.id||''), msg, bug.id);
   });
-  addNotif('&#128226; Bug filed: ' + (bug.id||''), msg + ' &#183; Build: ' + (bug.build||'&#8212;'), bug.id);
+  addNotif('📢 Bug filed: ' + (bug.id||''), msg + ' · Build: ' + (bug.build||'—'), bug.id);
 
   // GChat webhook &#8212; pod-specific or global
   if(cfg.notif_new_bug !== false) {
@@ -8331,9 +8334,9 @@ async function sendBugNotification(bug, customMsg) {
     const imgUrl = hasImage ? (isDriveUrl && isDriveUrl(bug.attachment) ? getDriveThumbnailUrl(bug.attachment) : bug.attachment) : null;
     if(hasImage && imgUrl) {
       const card = { cardsV2: [{ cardId: bug.id, card: {
-        header: { title: '&#128027; ' + (bug.id||'') + ' &#8212; ' + (bug.priority||'Medium'), subtitle: (bug.title||'').slice(0,80) },
+        header: { title: '🐛 ' + (bug.id||'') + ' — ' + (bug.priority||'Medium'), subtitle: (bug.title||'').slice(0,80) },
         sections: [{ widgets: [
-          { textParagraph: { text: '<b>Status:</b> '+(bug.status||'Open')+' | <b>Pod:</b> '+(bug.pod||'&#8212;')+' | <b>Build:</b> '+(bug.build||'&#8212;') } },
+          { textParagraph: { text: '<b>Status:</b> '+(bug.status||'Open')+' | <b>Pod:</b> '+(bug.pod||'—')+' | <b>Build:</b> '+(bug.build||'—') } },
           { textParagraph: { text: '<b>Assignee:</b> '+assigneeNames } },
           { image: { imageUrl: imgUrl, onClick: { openLink: { url: bug.attachment } } } },
           { buttonList: { buttons: [{ text: 'View Bug', onClick: { openLink: { url: bugUrl } } }] } }
@@ -8354,11 +8357,11 @@ async function sendBugNotification(bug, customMsg) {
       { type:'section', fields:[
         { type:'mrkdwn', text:'*Priority:* '+(bug.priority||'Medium') },
         { type:'mrkdwn', text:'*Status:* '+(bug.status||'Open') },
-        { type:'mrkdwn', text:'*Build:* '+(bug.build||'&#8212;') },
+        { type:'mrkdwn', text:'*Build:* '+(bug.build||'—') },
         { type:'mrkdwn', text:'*Assignee:* '+aNames },
       ]},
     ];
-    await sendSlackWebhook('&#128027; New Bug: '+bug.id+' &#8212; '+(bug.title||''), blocks);
+    await sendSlackWebhook('🐛 New Bug: '+bug.id+' — '+(bug.title||''), blocks);
   }
 
   toast('Team notified ✓', 'ok');
@@ -8483,7 +8486,7 @@ function openManageDropdowns() {
       <div id="dd-opts-${fi}">
         ${f.options.map((o,oi) => `<div style="display:flex;gap:6px;margin-bottom:4px">
           <input class="fi2" value="${esc(o)}" style="flex:1" data-fi="${fi}" data-oi="${oi}" onchange="updateDDOpt(this)">
-          <button class="btn btn-g btn-sm" onclick="removeDDOpt(${fi},${oi})">&#10005;</button>
+          <button class="btn btn-g btn-sm" onclick="removeDDOpt(${fi},${oi})">✕</button>
         </div>`).join('')}
       </div>
       <button class="btn btn-g btn-sm" style="margin-top:6px" onclick="addDDOpt(${fi})">+ Add Option</button>
@@ -8527,7 +8530,7 @@ async function logActivity(action, bugId, detail) {
       user_email: S.user?.email || '',
       user_picture: S.user?.picture || '',
     });
-  } catch(e) {} // fail silently &#8212; activity log is best-effort
+  } catch(e) {} // fail silently — activity log is best-effort
 }
 
 async function loadActivity() {
@@ -8577,76 +8580,76 @@ const TAB_TIPS = {
     title: 'Bug Backlog',
     speech: 'Log bugs with + NEW BUG. Use the multi-select filters to find anything instantly. Select multiple bugs for bulk actions!',
     features: [
-      {icon:'&#10133;', text:'+ NEW BUG &#8212; templates, Drive screenshots, notify team'},
-      {icon:'&#9745;&#65039;', text:'Multi-select filters &#8212; Status, Priority, Pod, Assignee'},
-      {icon:'&#128203;', text:'Select bugs &#8594; bulk status change, export, copy report'},
+      {icon:'➕', text:'+ NEW BUG — templates, Drive screenshots, notify team'},
+      {icon:'☑️', text:'Multi-select filters — Status, Priority, Pod, Assignee'},
+      {icon:'📋', text:'Select bugs → bulk status change, export, copy report'},
     ]
   },
   board: {
     title: 'Kanban Board',
     speech: 'Drag and drop bugs between columns to update status. Filter by Sprint, Pod or Assignee!',
     features: [
-      {icon:'&#127924;', text:'Drag cards to change status &#8212; syncs instantly'},
-      {icon:'&#128317;', text:'Filter by Sprint, Pod, Priority, Assignee'},
+      {icon:'🎴', text:'Drag cards to change status — syncs instantly'},
+      {icon:'🔽', text:'Filter by Sprint, Pod, Priority, Assignee'},
     ]
   },
   sprints: {
     title: 'Sprints',
     speech: 'Group bugs into sprints with dates and goals. Track progress and generate release notes!',
     features: [
-      {icon:'&#128197;', text:'Create sprints with start/end dates'},
-      {icon:'&#128202;', text:'Progress bars &#8212; open, fixed, closed counts'},
-      {icon:'&#128203;', text:'Release notes generator &#8212; send to GChat'},
+      {icon:'📅', text:'Create sprints with start/end dates'},
+      {icon:'📊', text:'Progress bars — open, fixed, closed counts'},
+      {icon:'📋', text:'Release notes generator — send to GChat'},
     ]
   },
   features: {
     title: 'Features View',
     speech: 'Bugs grouped by feature and sub-feature. See completion rates per feature at a glance!',
     features: [
-      {icon:'&#127918;', text:'Feature groups with progress bars'},
-      {icon:'&#8627;', text:'Sub-features &#8212; nested grouping'},
+      {icon:'🎮', text:'Feature groups with progress bars'},
+      {icon:'↳', text:'Sub-features — nested grouping'},
     ]
   },
   builds: {
     title: 'Builds & Test Runs',
     speech: 'Log every build and run test cases against it. Mark Pass/Fail and log bugs inline!',
     features: [
-      {icon:'&#128230;', text:'Log builds &#8212; notify team via GChat & email'},
-      {icon:'&#129514;', text:'Test Runs &#8212; upload CSV, mark Pass/Fail/Blocked'},
-      {icon:'&#128027;', text:'Log bug directly from a failing test case'},
+      {icon:'📦', text:'Log builds — notify team via GChat & email'},
+      {icon:'🧪', text:'Test Runs — upload CSV, mark Pass/Fail/Blocked'},
+      {icon:'🐛', text:'Log bug directly from a failing test case'},
     ]
   },
   dashboard: {
     title: 'Dashboard',
     speech: 'Charts and trends for your QA presentations. Compare pods across months!',
     features: [
-      {icon:'&#129383;', text:'Pie charts &#8212; Status, Priority, Pod'},
-      {icon:'&#128200;', text:'Timeline + month-wise stats'},
-      {icon:'&#127951;', text:'Pod comparison &#8212; IMPROVING/REGRESSING/STABLE'},
+      {icon:'🥧', text:'Pie charts — Status, Priority, Pod'},
+      {icon:'📈', text:'Timeline + month-wise stats'},
+      {icon:'🏏', text:'Pod comparison — IMPROVING/REGRESSING/STABLE'},
     ]
   },
   notifs: {
     title: 'Alerts & Activity',
-    speech: 'Your watchlist, personal notifications and the team activity feed &#8212; all in one place.',
+    speech: 'Your watchlist, personal notifications and the team activity feed — all in one place.',
     features: [
-      {icon:'&#128065;', text:'Watchlist &#8212; tap &#128065; on any bug to watch it'},
-      {icon:'&#128203;', text:'Team Activity &#8212; who did what in real time'},
+      {icon:'👁', text:'Watchlist — tap 👁 on any bug to watch it'},
+      {icon:'📋', text:'Team Activity — who did what in real time'},
     ]
   },
   clickup: {
     title: 'ClickUp Integration',
     speech: 'Sync your ClickUp tasks and filter by Space or Pod. Link tasks to BugPulse bugs!',
     features: [
-      {icon:'&#128995;', text:'Sync all tasks &#8212; filter by Space/Pod/Tags'},
-      {icon:'&#128279;', text:'Link ClickUp tasks to BugPulse bugs'},
+      {icon:'🟣', text:'Sync all tasks — filter by Space/Pod/Tags'},
+      {icon:'🔗', text:'Link ClickUp tasks to BugPulse bugs'},
     ]
   },
   import: {
     title: 'Import & Google Sheets',
-    speech: 'Import bugs from CSV or connect a Google Sheet &#8212; rows sync to BugPulse instantly!',
+    speech: 'Import bugs from CSV or connect a Google Sheet — rows sync to BugPulse instantly!',
     features: [
-      {icon:'&#128229;', text:'CSV import with smart field mapping'},
-      {icon:'&#128202;', text:'Google Sheets &#8212; fill a row &#8594; appears in seconds'},
+      {icon:'📥', text:'CSV import with smart field mapping'},
+      {icon:'📊', text:'Google Sheets — fill a row → appears in seconds'},
     ]
   },
 };
@@ -8884,9 +8887,9 @@ function _showTourCard() {
       '<div class="tour-progress">' + dots + '</div>' +
       '<div class="tour-btns">' +
         '<span class="tour-step-num">' + (_tourStep+1) + ' / ' + TOUR_STEPS.length + '</span>' +
-        (_tourStep > 0 ? '<button class="btn btn-g btn-sm" onclick="prevTour()">&#8592; Back</button>' : '') +
+        (_tourStep > 0 ? '<button class="btn btn-g btn-sm" onclick="prevTour()">← Back</button>' : '') +
         '<button class="btn btn-g btn-sm" onclick="endTour()">Skip</button>' +
-        '<button class="btn btn-v btn-sm" onclick="advanceTour()">' + (_tourStep===TOUR_STEPS.length-1?'Done!':'Next &#8594;') + '</button>' +
+        '<button class="btn btn-v btn-sm" onclick="advanceTour()">' + (_tourStep===TOUR_STEPS.length-1?'Done!':'Next →') + '</button>' +
       '</div>' +
     '</div>';
 
@@ -8940,7 +8943,7 @@ function endTour() {
   // Re-show Natasha with welcome message after tour
   const nIntro = document.getElementById('natashaIntro');
   if(nIntro) nIntro.style.display = '';
-  setTimeout(() => showNatasha("You know everything now! Come back via Profile menu &#8594; Feature Tour anytime. Let's catch some bugs!", 'happy'), 500);
+  setTimeout(() => showNatasha("You know everything now! Come back via Profile menu → Feature Tour anytime. Let's catch some bugs!", 'happy'), 500);
 }
 
 function closeTourUI() {
@@ -9268,11 +9271,11 @@ function copyMonthReport() {
     bugs.forEach(b => {
       const assignees = (b.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
       text += '[' + b.id + '] ' + (b.title||'').slice(0,80) + '\n';
-      text += '  ' + (b.priority||'&#8212;') + ' | ' + (b.status||'&#8212;') + (b.issue_type?' | '+b.issue_type:'') + ' | ' + assignees + '\n';
+      text += '  ' + (b.priority||'—') + ' | ' + (b.status||'—') + (b.issue_type?' | '+b.issue_type:'') + ' | ' + assignees + '\n';
       text += '  ' + APP_URL + '?bug=' + b.id + '\n';
     });
   } else if(bugs.length > 50) {
-    text += '\n('+bugs.length+' bugs total &#8212; narrow filter to see bug list)\n';
+    text += '\n('+bugs.length+' bugs total — narrow filter to see bug list)\n';
   }
 
   navigator.clipboard.writeText(text).then(()=>toast('Report copied with ' + bugs.length + ' bugs','ok'));
@@ -9383,19 +9386,19 @@ function copyBugLink(bugId) {
 }
 function shareBugWhatsApp(bugId, title, priority) {
   const url = `${APP_URL}?bug=${bugId}`;
-  const msg = `&#128027; *BugPulse &#8212; ${bugId}*\n*${title}*\nPriority: ${priority}\n\nView: ${url}`;
+  const msg = `🐛 *BugPulse — ${bugId}*\n*${title}*\nPriority: ${priority}\n\nView: ${url}`;
   window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
 }
 function shareBugSlack(bugId, title) {
   const url = `${APP_URL}?bug=${bugId}`;
-  const msg = `:bug: *${bugId}* &#8212; ${title}\n<${url}|View in BugPulse>`;
+  const msg = `:bug: *${bugId}* — ${title}\n<${url}|View in BugPulse>`;
   navigator.clipboard.writeText(msg).then(()=>toast('Slack message copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 function copyBugSummary(bugId) {
   const bug = S.bugs.find(b=>b.id===bugId);
   if(!bug) return;
   const assignees = (bug.assignees||[]).map(a=>a.name).join(', ')||'Unassigned';
-  const summary = `Bug: ${bug.id}\nTitle: ${bug.title||''}\nPriority: ${bug.priority||''} | Status: ${bug.status||''}\nAssignee: ${assignees}\nFeature: ${bug.feature||'&#8212;'}\nBuild: ${bug.build||'&#8212;'}\nSteps: ${bug.steps||'&#8212;'}\nActual: ${bug.actual||'&#8212;'}`;
+  const summary = `Bug: ${bug.id}\nTitle: ${bug.title||''}\nPriority: ${bug.priority||''} | Status: ${bug.status||''}\nAssignee: ${assignees}\nFeature: ${bug.feature||'—'}\nBuild: ${bug.build||'—'}\nSteps: ${bug.steps||'—'}\nActual: ${bug.actual||'—'}`;
   navigator.clipboard.writeText(summary).then(()=>toast('Summary copied ✓','ok')).catch(()=>toast('Copy failed','err'));
 }
 
@@ -9423,7 +9426,7 @@ function renderCommentsV2(comments, bugId) {
                </div>
              </div>
              ${isOwn ? `<div style="margin-top:4px;display:flex;gap:5px">
-               <button onclick="startEditComment(${idx})" style="background:none;border:none;font-family:var(--mono);font-size:9px;color:var(--dim);cursor:pointer;padding:0;transition:color .1s" onmouseenter="this.style.color='var(--g2)'" onmouseleave="this.style.color='var(--dim)'">&#9999;&#65039; edit</button>
+               <button onclick="startEditComment(${idx})" style="background:none;border:none;font-family:var(--mono);font-size:9px;color:var(--dim);cursor:pointer;padding:0;transition:color .1s" onmouseenter="this.style.color='var(--g2)'" onmouseleave="this.style.color='var(--dim)'">✏️ edit</button>
              </div>` : ''}`}
       </div>
     </div>`;
