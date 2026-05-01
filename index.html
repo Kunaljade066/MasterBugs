@@ -1211,7 +1211,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
             <div class="ph-r">
               <button class="btn btn-g btn-sm" onclick="exportCSV('filtered')">📥 CSV</button>
               <button class="btn btn-g btn-sm" onclick="openFeatureKanban()" title="Feature / System view">🎮 Features</button>
-              <button class="btn btn-v" onclick="openNew()">＋ NEW BUG</button>
+              <button class="btn btn-v" id="newBugBtn" onclick="openNew()">＋ NEW BUG</button>
             </div>
           </div>
           <div class="stats" id="statsRow"></div>
@@ -7956,6 +7956,103 @@ async function saveWebhookSettings() {
 }
 
 
+
+// ── Missing utility functions ─────────────────────────────────────────────────
+
+function onLogout() {
+  try { google?.accounts?.id?.disableAutoSelect(); } catch(e) {}
+  S.user = null;
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = '';
+  document.getElementById('natashaIntro').classList.add('gone');
+}
+
+function initApp() {
+  // Called after login — sets up the app shell
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = '';
+}
+
+async function saveDDConfig() {
+  const payload = DD_FIELDS.map(f => ({ key: f.key, label: f.label, options: f.options || [] }));
+  try {
+    const existing = await api('/sprints');
+    const cfgSprint = (existing.sprints || []).find(s => s.name === DD_CONFIG_KEY);
+    if (cfgSprint) {
+      await api('/sprints/' + cfgSprint.id, 'PUT', { goal: JSON.stringify(payload) });
+    } else {
+      await api('/sprints', 'POST', { name: DD_CONFIG_KEY, start: '', end: '', goal: JSON.stringify(payload) });
+    }
+    try { localStorage.setItem(DD_LS_KEY, JSON.stringify(payload)); } catch(e) {}
+  } catch(e) { console.error('[saveDDConfig]', e.message); }
+}
+
+async function deleteSprint(id) {
+  if(!id) return;
+  if(!confirm('Delete this sprint? Bugs in it will be unassigned from this sprint.')) return;
+  try {
+    await api('/sprints/' + id, 'DELETE');
+    S.sprints = S.sprints.filter(s => s.id !== id);
+    renderSprints();
+    toast('Sprint deleted', 'ok');
+  } catch(e) { toast('Delete failed: ' + e.message, 'err'); }
+}
+
+async function unregisterPush() {
+  try {
+    const sw = await navigator.serviceWorker.ready;
+    const sub = await sw.pushManager.getSubscription();
+    if(sub) {
+      await sub.unsubscribe();
+      await api('/push/unsubscribe', 'POST', { endpoint: sub.endpoint }).catch(() => {});
+    }
+    toast('Push notifications disabled', 'ok');
+    updatePushMenuLabel();
+  } catch(e) { toast('Could not disable push: ' + e.message, 'err'); }
+}
+
+function populateCUFilters() {
+  // Populate ClickUp filter dropdowns — called after tasks load
+  if(!window._cuTasks || !_cuTasks.length) return;
+  const spaces = [...new Set(_cuTasks.map(t => t._spaceName).filter(Boolean))].sort();
+  const spSel = document.getElementById('cu-space-sel');
+  if(spSel) spSel.innerHTML = '<option value="">All Spaces/Pods</option>' +
+    spaces.map(s => '<option value="' + esc(s) + '">' + esc(s) + '</option>').join('');
+  const tags = [...new Set(_cuTasks.flatMap(t => (t.tags||[]).map(tg => tg.name)).filter(Boolean))].sort();
+  const tgSel = document.getElementById('cu-tag-sel');
+  if(tgSel) tgSel.innerHTML = '<option value="">All Tags</option>' +
+    tags.map(t => '<option value="' + esc(t) + '">' + esc(t) + '</option>').join('');
+}
+
+function exportBugsXLSX(ids) {
+  const bugs = ids ? S.bugs.filter(b => ids.includes(b.id)) : S.filtered;
+  if(!bugs.length) { toast('No bugs to export', 'err'); return; }
+  const headers = ['ID','Title','Priority','Severity','Status','Feature','Sprint','Build','Platform','Device','Pod','Assignee','Reporter','Steps','Actual','Expected','Issue Type','Created'];
+  const rows = bugs.map(b => [
+    b.id||'', b.title||'', b.priority||'', b.severity||'', b.status||'',
+    b.feature||'', b.sprint||'', b.build||'', b.platform||'', b.device||'',
+    b.pod||'', (b.assignees||[]).map(a=>a.name).join(', ')||b.assignee||'',
+    b.reporter||'', b.steps||'', b.actual||'', b.expected||'',
+    b.issue_type||'',
+    b.created_at ? new Date(b.created_at).toLocaleDateString('en-IN') : ''
+  ]);
+  // Build CSV as fallback if XLSX library not available
+  const csvRows = [headers, ...rows].map(r =>
+    r.map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',')
+  );
+  const csv = csvRows.join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bugpulse_export_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('Exported ' + bugs.length + ' bugs ✓', 'ok');
+}
+
 // ── Restored missing functions ────────────────────────────────────────────────
 
 function genId(prefix) {
@@ -8201,7 +8298,7 @@ const TOUR_STEPS = [
     speech:'Welcome to BugPulse — your QA command centre! I will walk you through every feature. Click Next to explore each screen!',
     features:[] },
 
-  { tab:'home', target:'#homePieRow',
+  { tab:'home', target:'#homePieRow', spotPad:16,
     title:'Home — Pie Charts',
     speech:'Your home screen shows 3 live pie charts — bugs by Status, Priority and Pod. They update instantly when bugs are added!',
     features:[
@@ -8229,7 +8326,7 @@ const TOUR_STEPS = [
       {icon:'⚡',text:'Auto-refreshes every 5 seconds — always up to date'},
     ]},
 
-  { tab:'backlog', target:'.btn-v',
+  { tab:'backlog', target:'#newBugBtn',
     title:'Log a Bug — ＋ NEW BUG',
     speech:'Click this button to open the bug form! Fill in the details and save — it appears for the whole team instantly.',
     features:[
@@ -8492,7 +8589,7 @@ function _showTourCard() {
         const spot = document.createElement('div');
         spot.className = 'tour-spotlight';
         spot.id = 'tourSpotlight';
-        const pad = 5;
+        const pad = step.spotPad || 5;
         const cs = window.getComputedStyle(el);
         spot.style.borderRadius = cs.borderRadius || '8px';
         spot.style.top    = (r.top   - pad + window.scrollY) + 'px';
