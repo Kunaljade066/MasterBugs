@@ -7056,7 +7056,7 @@ async function saveBuildEntry(editVersion) {
       // Email via Resend through worker
       // Pod-specific email &#8212; check pod_emails_<podname> first, fallback to global team_emails
       const podEmailKey = entry.pod ? 'pod_emails_' + entry.pod.toLowerCase().replace(/[^a-z0-9]/g,'_') : '';
-      const podEmails = podEmailKey ? cfg[podEmailKey] : '';
+      const podEmails = (podEmailKey && cfg[podEmailKey]) || (legacyEmailKey && cfg[legacyEmailKey]) || '';
       const emailList = podEmails || cfg.team_emails || '';
       if(emailList && emailList.trim()) {
         const recipients = emailList.split(',').map(function(e){return e.trim();}).filter(Boolean);
@@ -8029,11 +8029,11 @@ async function sendEODToGChat() {
   const team = getEODTeamFilter();
   let gchatUrl = cfg.gchat_url;
   if (team) {
-    const teamKey = 'pod_gchat_' + team.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    if (cfg[teamKey]) gchatUrl = cfg[teamKey];
-    // Also try without special chars
-    const teamKey2 = 'pod_gchat_' + team.toLowerCase().replace(/\s+/g,'_');
-    if (!cfg[teamKey] && cfg[teamKey2]) gchatUrl = cfg[teamKey2];
+    // Try multiple key formats to match however the pod was saved
+    const k1 = 'pod_gchat_' + team.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const k2 = 'pod_gchat_' + team.toLowerCase().replace(/\s+/g,'_');
+    const k3 = 'jenkins_' + team.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_gchat';
+    gchatUrl = cfg[k1] || cfg[k2] || cfg[k3] || cfg.gchat_url || '';
   }
   if (!gchatUrl) { toast('No GChat webhook configured','err'); return; }
   const MAX = 3800;
