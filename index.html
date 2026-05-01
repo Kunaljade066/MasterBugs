@@ -4374,7 +4374,7 @@ function openNew(){
 function openEdit(id){
   const bug=S.bugs.find(b=>b.id===id);if(!bug)return;
   S.editing=id;initMapAssignees(bug);
-  const full=S.user?.role==='admin'||bug.reporter_email===S.user?.email;
+  const full=true; // all team members can fully edit bugs
   const isOpen=document.getElementById('panel').classList.contains('on');
   const go=()=>{document.getElementById('panelBody').innerHTML='';document.getElementById('panelId').textContent='';buildBugForm(bug,full);openPanel();};
   if(isOpen){document.getElementById('overlay').classList.remove('on');document.getElementById('panel').classList.remove('on');setTimeout(go,280);}else go();
@@ -4990,7 +4990,7 @@ async function saveBug(){
   btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
   try{
     const prev=S.editing?S.bugs.find(b=>b.id===S.editing):null;
-    const full=!S.editing||S.user?.role==='admin'||prev?.reporter_email===S.user?.email;
+    const full=true; // all team members can fully edit bugs
     const assignees=[..._mapAssignees];
     const ddVals={};DD_FIELDS.forEach(f=>{ddVals[f.key]=document.getElementById(`f-dd-${f.key}`)?.value||'';});
 
@@ -7634,6 +7634,549 @@ function isImageUrl(url) {
 // ══════════════════════════════════════════
 // FEATURE TOUR / FTUE
 // ══════════════════════════════════════════
+
+
+// ══════════════════════════════════════════
+// RESTORED MISSING FUNCTIONS
+// ══════════════════════════════════════════
+
+function buildAttachmentSection(bug) {
+  const att = bug?.attachment || '';
+  return `<div class="fg">
+    <label class="fl">Attachment (Google Drive URL)</label>
+    <input class="fi2" id="f-attachment" value="${esc(att)}" placeholder="https://drive.google.com/file/d/…">
+    ${att && isImageUrl && isImageUrl(att) ? `<div style="margin-top:8px"><img src="${isDriveUrl && isDriveUrl(att) ? getDriveThumbnailUrl(att) : esc(att)}" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--bd)" onerror="this.style.display='none'"></div>` : ''}
+  </div>`;
+}
+
+function getTodayBugs() {
+  const now = Date.now();
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  return S.bugs.filter(b => {
+    const ts = b.created_ts || (b.created_at ? new Date(b.created_at).getTime() : 0);
+    return ts >= startOfDay.getTime();
+  });
+}
+
+function getClosedTodayBugs() {
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  return S.bugs.filter(b => {
+    const ts = b.updated_ts || (b.updated_at ? new Date(b.updated_at).getTime() : 0);
+    return ts >= startOfDay.getTime() && ['Closed','Done','QA Pass'].includes(b.status);
+  });
+}
+
+function getUpdatedTodayBugs() {
+  const startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
+  return S.bugs.filter(b => {
+    const ts = b.updated_ts || (b.updated_at ? new Date(b.updated_at).getTime() : 0);
+    return ts >= startOfDay.getTime();
+  });
+}
+
+async function sendGChatCard(card, pod) {
+  const cfg = getWebhookConfig();
+  let url = cfg.gchat_url;
+  if (pod) {
+    const podKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    if (cfg[podKey]) url = cfg[podKey];
+  }
+  if (!url) return false;
+  try {
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(card) });
+    if (!r.ok) { const t = await r.text(); console.error('[gchat card]', r.status, t); return false; }
+    return true;
+  } catch(e) { console.warn('[gchat card]', e); return false; }
+}
+
+async function sendGChatWebhook(text, pod) {
+  const cfg = getWebhookConfig();
+  let url = cfg.gchat_url;
+  if (pod) {
+    const podKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    if (cfg[podKey]) url = cfg[podKey];
+  }
+  if (!url) return false;
+  try {
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text.slice(0,3800)}) });
+    if (!r.ok) { const t = await r.text(); console.error('[gchat]', r.status, t); return false; }
+    return true;
+  } catch(e) { console.warn('[gchat webhook]', e.message); return false; }
+}
+
+async function sendSlackWebhook(text, blocks) {
+  const cfg = getWebhookConfig();
+  if (!cfg.slack_url) return false;
+  try {
+    const body = blocks ? { text, blocks } : { text };
+    const r = await fetch(cfg.slack_url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    return r.ok;
+  } catch(e) { console.warn('[slack webhook]', e.message); return false; }
+}
+
+function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday) {
+  closedToday = closedToday || [];
+  const bugLink = id => (S.cfg?.app_url || window.location.origin) + '?bug=' + id;
+  const lines = [
+    '📋 QA DAY-END REPORT — ' + dateStr,
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '',
+    '🐛 BUGS FILED TODAY (' + todayBugs.length + ')',
+  ];
+  todayBugs.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.priority||'') + ' | ' + (b.status||'')));
+  lines.push('');
+  lines.push('✅ RESOLVED TODAY (' + resolvedToday.length + ')');
+  resolvedToday.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.status||'')));
+  lines.push('');
+  lines.push('🚨 CRITICAL/URGENT OPEN (' + critOpen.length + ')');
+  critOpen.slice(0,10).forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'') + ' — ' + (b.priority||'')));
+  lines.push('');
+  lines.push('📊 SUMMARY');
+  lines.push('  Filed Today: ' + todayBugs.length);
+  lines.push('  Resolved Today: ' + resolvedToday.length);
+  lines.push('  Closed Today: ' + closedToday.length);
+  lines.push('  Critical Open: ' + critOpen.length);
+  lines.push('  Total Open: ' + S.bugs.filter(b=>!['Closed','Done','QA Pass'].includes(b.status)).length);
+  return lines.join('\n');
+}
+
+function getEODTeamFilter() {
+  return document.getElementById('eod-team-filter')?.value || '';
+}
+
+function filterBugsByTeam(bugs, team) {
+  if (!team) return bugs;
+  return bugs.filter(b => b.pod === team || b.feature === team);
+}
+
+function openDayEndReport() {
+  document.getElementById('panelTitle').textContent = '📊 DAY-END REPORT';
+  document.getElementById('panelId').textContent = 'EOD';
+  const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Close</button>
+    <button class="btn btn-g" onclick="copyDayEndReport()">📋 Copy</button>
+    ${S.user?.role==='admin'?'<button class="btn btn-v" onclick="sendEODToGChat()" style="background:linear-gradient(135deg,var(--g4),var(--g2))">📢 Send to GChat</button>':''}`;
+  document.getElementById('panelBody').innerHTML = `
+    <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="font-family:var(--mono);font-size:11px;color:var(--mist)">Filter by Pod:</label>
+      <select class="fi" id="eod-team-filter" style="width:auto;padding:4px 10px;font-size:11px" onchange="refreshEODReport()">
+        <option value="">All Pods</option>
+        ${pods.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="dash-grid" id="eodStatsCards" style="margin-bottom:18px;margin-top:0;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))"></div>
+    <textarea id="dayEndReportText" style="width:100%;height:320px;font-family:var(--mono);font-size:11px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;color:var(--mist);padding:12px;resize:vertical"></textarea>`;
+  openPanel();
+  setTimeout(refreshEODReport, 50);
+}
+
+function copyDayEndReport() {
+  const txt = document.getElementById('dayEndReportText')?.value;
+  if (!txt) return;
+  navigator.clipboard.writeText(txt).then(() => toast('Report copied ✓','ok')).catch(() => toast('Copy failed','err'));
+}
+
+function refreshEODReport() {
+  const team = getEODTeamFilter();
+  const allToday = getTodayBugs();
+  const allClosed = getClosedTodayBugs();
+  const allUpdated = getUpdatedTodayBugs();
+  const todayBugs    = filterBugsByTeam(allToday, team);
+  const closedToday  = filterBugsByTeam(allClosed, team);
+  const resolvedToday= filterBugsByTeam(allUpdated, team).filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
+  const qaPassToday  = resolvedToday.filter(b => b.status === 'QA Pass');
+  const critOpen     = filterBugsByTeam(S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)), team);
+  const totalFiltered= team ? filterBugsByTeam(S.bugs, team).length : S.bugs.length;
+  const cards = document.getElementById('eodStatsCards');
+  if (cards) cards.innerHTML = `
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g5);font-size:32px">${todayBugs.length}</div><div class="sc-l" style="margin-top:6px">FILED TODAY</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#34d399;font-size:32px">${qaPassToday.length}</div><div class="sc-l" style="margin-top:6px">QA PASS</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g4);font-size:32px">${resolvedToday.length}</div><div class="sc-l" style="margin-top:6px">RESOLVED</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:#06b6d4;font-size:32px">${closedToday.length}</div><div class="sc-l" style="margin-top:6px">CLOSED TODAY</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--g3);font-size:32px">${critOpen.length}</div><div class="sc-l" style="margin-top:6px">CRIT OPEN</div></div>
+    <div class="dash-card" style="text-align:center"><div class="sc-n" style="color:var(--text);font-size:32px">${totalFiltered}</div><div class="sc-l" style="margin-top:6px">${team?'POD TOTAL':'TOTAL'}</div></div>`;
+  const dateStr = new Date().toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata',weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const teamLabel = team ? ' [' + team + ']' : '';
+  const txt = generateReportText(todayBugs, resolvedToday, critOpen, dateStr + teamLabel, closedToday);
+  const el = document.getElementById('dayEndReportText');
+  if (el) el.value = txt;
+}
+
+async function sendEODToGChat() {
+  const txt = document.getElementById('dayEndReportText')?.value;
+  if (!txt) return;
+  const cfg = getWebhookConfig();
+  const team = getEODTeamFilter();
+  let gchatUrl = cfg.gchat_url;
+  if (team) {
+    const teamKey = 'pod_gchat_' + team.toLowerCase().replace(/\s+/g,'_');
+    if (cfg[teamKey]) gchatUrl = cfg[teamKey];
+  }
+  if (!gchatUrl) { toast('No GChat webhook configured','err'); return; }
+  const MAX = 3800;
+  const chunks = [];
+  let remaining = txt;
+  while (remaining.length > MAX) {
+    const cut = remaining.lastIndexOf('\n', MAX);
+    chunks.push(remaining.slice(0, cut > 0 ? cut : MAX));
+    remaining = remaining.slice(cut > 0 ? cut + 1 : MAX);
+  }
+  if (remaining.trim()) chunks.push(remaining);
+  let allSent = true;
+  for (const chunk of chunks) {
+    const ok = await fetch(gchatUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:chunk}) })
+      .then(r => { if(!r.ok) r.text().then(t=>console.error('[gchat]',r.status,t)); return r.ok; })
+      .catch(() => false);
+    if (!ok) allSent = false;
+    if (chunks.length > 1) await new Promise(r => setTimeout(r, 500));
+  }
+  if (allSent) toast('EOD report sent to GChat ✓','ok');
+  else toast('GChat send failed','err');
+}
+
+async function testWebhook() {
+  const url = document.getElementById('wh-gchat')?.value?.trim();
+  if (!url) { toast('Enter a GChat webhook URL first','err'); return; }
+  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'🧪 BugPulse webhook test ✓'}) }).then(r=>r.ok).catch(()=>false);
+  toast(ok ? 'Test sent to GChat ✓' : 'GChat test failed','ok');
+}
+
+async function testSlackWebhook() {
+  const url = document.getElementById('wh-slack')?.value?.trim();
+  if (!url) { toast('Enter a Slack webhook URL first','err'); return; }
+  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'🧪 BugPulse Slack webhook test ✓'}) }).then(r=>r.ok).catch(()=>false);
+  toast(ok ? 'Test sent to Slack ✓' : 'Slack test failed','err');
+}
+
+function buildPodGChatFields(cfg) {
+  const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
+  if (!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured — add pods in Manage Dropdowns first.</div>';
+  return pods.map(pod => {
+    const safeId = pod.replace(/[^a-z0-9]/gi,'_');
+    const key = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const val = esc(cfg[key]||'');
+    return '<div class="fg" style="margin-bottom:8px">' +
+      '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">' + esc(pod) + '</label>' +
+      '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + val + '" placeholder="GChat webhook for ' + esc(pod) + '">' +
+      '</div>';
+  }).join('');
+}
+
+async function openWebhookSettings() {
+  const data = await api('/settings').catch(()=>({settings:{}}));
+  const cfg = Object.assign({}, getWebhookConfig(), data?.settings||{});
+  _webhookCfgCache = cfg;
+  const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
+  document.getElementById('panelTitle').textContent = '🔔 WEBHOOK SETTINGS';
+  document.getElementById('panelId').textContent = 'WEBHOOKS';
+  document.getElementById('panelFooter').innerHTML = `
+    <button class="btn btn-g" onclick="closePanel()">Cancel</button>
+    <button class="btn btn-v" onclick="saveWebhookSettings()">💾 Save Settings</button>`;
+  document.getElementById('panelBody').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:4px">🟢 GOOGLE CHAT WEBHOOKS</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">Get URL: GChat Space → Apps & Integrations → Manage Webhooks → Add</div>
+        <div class="fg"><label class="fl">Global GChat URL <span style="color:var(--dim);font-weight:400">(fallback)</span></label>
+          <input class="fi2" id="wh-gchat" value="${esc(cfg.gchat_url||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…/messages?key=…">
+        </div>
+        <div style="margin-top:14px;border-top:1px solid rgba(6,182,212,.15);padding-top:12px">
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">PER-POD GCHAT URLS</div>
+          ${buildPodGChatFields(cfg)}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-g btn-sm" onclick="testWebhook()">🧪 Test GChat</button>
+        </div>
+      </div>
+      <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;margin-bottom:12px">💬 SLACK WEBHOOK</div>
+        <div class="fg"><label class="fl">Slack Incoming Webhook URL</label>
+          <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/…">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn btn-g btn-sm" onclick="testSlackWebhook()">🧪 Test Slack</button>
+        </div>
+      </div>
+      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">🔔 NOTIFY ON EVENTS</div>
+        ${['new_bug','build_available','day_end_report'].map(ev => {
+          const labels = {new_bug:'New Bug Filed / Assigned', build_available:'New Build Available', day_end_report:'Day-End Report'};
+          return `<div class="notif-toggle-row" style="margin-bottom:10px">
+            <button class="notif-toggle${cfg['notif_'+ev]!==false?' on':''}" id="wh-ev-${ev}" onclick="this.classList.toggle('on')"></button>
+            <span class="notif-toggle-label">${labels[ev]}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">📧 EMAIL RECIPIENTS</div>
+        <div class="fg"><label class="fl">Team Emails (comma-separated)</label>
+          <textarea class="fi2" id="wh-emails" rows="2" placeholder="dev@hitwicket.com, qa@hitwicket.com">${esc(cfg.team_emails||'')}</textarea>
+        </div>
+      </div>
+      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">⏰ EOD REPORT SCHEDULE</div>
+        <div class="fg" style="margin-bottom:10px">
+          <label class="fl">Auto-send time (Mon–Fri, IST)</label>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <input type="time" class="fi2" id="wh-eod-time" value="${cfg.eod_time||'21:00'}" style="width:130px">
+            <div class="notif-toggle-row" style="margin:0">
+              <button class="notif-toggle${cfg.eod_schedule_on?' on':''}" id="wh-eod-on" onclick="this.classList.toggle('on')"></button>
+              <span class="notif-toggle-label">Enable auto EOD report</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  openPanel();
+}
+
+async function saveWebhookSettings() {
+  const _podGChatUrls = {};
+  (DD_FIELDS.find(f=>f.key==='pod')?.options || []).forEach(pod => {
+    const elId = 'wh-pod-gchat-' + pod.replace(/[^a-z0-9]/gi,'_');
+    const key  = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    _podGChatUrls[key] = document.getElementById(elId)?.value?.trim()||'';
+  });
+  const cfg = {
+    gchat_url: document.getElementById('wh-gchat')?.value?.trim()||'',
+    ..._podGChatUrls,
+    sheet_webhook_url: '',
+    slack_url: document.getElementById('wh-slack')?.value?.trim()||'',
+    team_emails: document.getElementById('wh-emails')?.value?.trim()||'',
+    notif_new_bug: document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
+    notif_build_available: document.getElementById('wh-ev-build_available')?.classList.contains('on'),
+    notif_day_end_report: document.getElementById('wh-ev-day_end_report')?.classList.contains('on'),
+    eod_time: document.getElementById('wh-eod-time')?.value||'21:00',
+    eod_schedule_on: document.getElementById('wh-eod-on')?.classList.contains('on'),
+  };
+  await saveWebhookConfig(cfg);
+  toast('Webhook settings saved ✓','ok');
+  closePanel();
+}
+
+
+// ── Restored missing functions ────────────────────────────────────────────────
+
+function genId(prefix) {
+  return (prefix||'BUG') + '-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+}
+
+async function deleteBug(id) {
+  if(!id) return;
+  if(!confirm('Delete bug ' + id + '? This cannot be undone.')) return;
+  try {
+    await api('/bugs/' + id, 'DELETE');
+    S.bugs = S.bugs.filter(b => b.id !== id);
+    S.filtered = S.filtered.filter(b => b.id !== id);
+    closePanel();
+    renderTable();
+    toast('Bug deleted', 'ok');
+  } catch(e) { toast('Delete failed: ' + e.message, 'err'); }
+}
+
+async function sendBugNotification(bug, customMsg) {
+  const cfg = getWebhookConfig();
+  const assignees = bug.assignees || [];
+  const msg = customMsg || 'New bug reported: "' + (bug.title||'').slice(0,60) + '"';
+  const bugUrl = (window.APP_URL||window.location.origin) + '?bug=' + (bug.id||'');
+
+  // In-app notifications
+  assignees.forEach(a => {
+    if(a.email && a.email !== S.user?.email) addNotif('🐛 Bug assigned: ' + (bug.id||''), msg, bug.id);
+  });
+  addNotif('📢 Bug filed: ' + (bug.id||''), msg + ' · Build: ' + (bug.build||'—'), bug.id);
+
+  // GChat webhook — pod-specific or global
+  if(cfg.notif_new_bug !== false) {
+    const assigneeNames = assignees.map(a=>a.name).join(', ') || 'Unassigned';
+    const hasImage = isImageUrl && isImageUrl(bug.attachment);
+    const imgUrl = hasImage ? (isDriveUrl && isDriveUrl(bug.attachment) ? getDriveThumbnailUrl(bug.attachment) : bug.attachment) : null;
+    if(hasImage && imgUrl) {
+      const card = { cardsV2: [{ cardId: bug.id, card: {
+        header: { title: '🐛 ' + (bug.id||'') + ' — ' + (bug.priority||'Medium'), subtitle: (bug.title||'').slice(0,80) },
+        sections: [{ widgets: [
+          { textParagraph: { text: '<b>Status:</b> '+(bug.status||'Open')+' | <b>Pod:</b> '+(bug.pod||'—')+' | <b>Build:</b> '+(bug.build||'—') } },
+          { textParagraph: { text: '<b>Assignee:</b> '+assigneeNames } },
+          { image: { imageUrl: imgUrl, onClick: { openLink: { url: bug.attachment } } } },
+          { buttonList: { buttons: [{ text: 'View Bug', onClick: { openLink: { url: bugUrl } } }] } }
+        ]}]
+      }}]};
+      await sendGChatCard(card, bug.pod||'');
+    } else {
+      const gchatText = '\ud83d\udc1b *New Bug Filed \u2014 '+(bug.id||'')+'*\\n*'+(bug.title||'')+'*\\nPriority: '+(bug.priority||'Medium')+' | Status: '+(bug.status||'Open')+'\\nPod: '+(bug.pod||'\u2014')+' | Build: '+(bug.build||'\u2014')+' | Assignee: '+assigneeNames+'\\n\ud83d\udd17 View: '+bugUrl;
+      await sendGChatWebhook(gchatText, bug.pod||'');
+    }
+  }
+
+  // Slack
+  if(cfg.slack_url && cfg.notif_new_bug !== false) {
+    const aNames = assignees.map(a=>a.name).join(', ') || 'Unassigned';
+    const blocks = [
+      { type:'section', text:{ type:'mrkdwn', text:'\ud83d\udc1b *New Bug: <'+bugUrl+'|'+bug.id+'>*\\n'+(bug.title||'') } },
+      { type:'section', fields:[
+        { type:'mrkdwn', text:'*Priority:* '+(bug.priority||'Medium') },
+        { type:'mrkdwn', text:'*Status:* '+(bug.status||'Open') },
+        { type:'mrkdwn', text:'*Build:* '+(bug.build||'—') },
+        { type:'mrkdwn', text:'*Assignee:* '+aNames },
+      ]},
+    ];
+    await sendSlackWebhook('🐛 New Bug: '+bug.id+' — '+(bug.title||''), blocks);
+  }
+
+  toast('Team notified ✓', 'ok');
+}
+
+async function bulkAction(action) {
+  const ids = [...document.querySelectorAll('.bug-cb:checked')].map(cb => cb.dataset.id).filter(Boolean);
+  if(!ids.length) { toast('Select bugs first', 'err'); return; }
+
+  if(action === 'delete') {
+    if(!confirm('Delete ' + ids.length + ' bugs? Cannot be undone.')) return;
+    for(const id of ids) { try { await api('/bugs/'+id,'DELETE'); } catch(e){} }
+    S.bugs = S.bugs.filter(b => !ids.includes(b.id));
+    applyF();
+    toast(ids.length + ' bugs deleted', 'ok');
+    return;
+  }
+
+  let val = '';
+  if(action === 'status')   { val = prompt('New status (Open, Bugged, Dev Fixed, QA Pass, Done, Closed):'); }
+  if(action === 'priority') { val = prompt('New priority (Critical, Urgent, High, Medium, Low):'); }
+  if(action === 'sprint')   { val = prompt('Sprint name:'); }
+  if(action === 'assignee') { val = prompt('Assignee email:'); }
+  if(action === 'export')   { exportBugsXLSX(ids); return; }
+  if(action === 'copy-links') {
+    const links = ids.map(id => (window.APP_URL||window.location.origin)+'?bug='+id).join('\n');
+    navigator.clipboard.writeText(links).catch(()=>{});
+    toast('Links copied', 'ok'); return;
+  }
+  if(action === 'copy-report') {
+    const bugs = S.bugs.filter(b=>ids.includes(b.id));
+    const txt = bugs.map(b=>'['+b.id+'] '+b.title+' ('+b.priority+', '+b.status+')').join('\n');
+    navigator.clipboard.writeText(txt).catch(()=>{});
+    toast('Report copied', 'ok'); return;
+  }
+  if(!val) return;
+
+  for(const id of ids) {
+    const bug = S.bugs.find(b=>b.id===id);
+    if(!bug) continue;
+    const patch = {};
+    if(action==='status')   patch.status   = val;
+    if(action==='priority') patch.priority = val;
+    if(action==='sprint')   patch.sprint   = val;
+    try { await api('/bugs/'+id,'PATCH',patch); Object.assign(bug,patch); } catch(e){}
+  }
+  applyF();
+  toast(ids.length + ' bugs updated', 'ok');
+}
+
+function openNewSprint() {
+  const panel = document.getElementById('panelBody');
+  const title = document.getElementById('panelTitle');
+  if(!panel||!title) return;
+  title.textContent = '🏃 NEW SPRINT';
+  panel.innerHTML = `
+    <div class="fg"><label class="fl">Sprint Name</label><input class="fi2" id="sp-name" placeholder="Sprint 10"></div>
+    <div class="fg"><label class="fl">Start Date</label><input class="fi2" type="date" id="sp-start"></div>
+    <div class="fg"><label class="fl">End Date</label><input class="fi2" type="date" id="sp-end"></div>
+    <div class="fg"><label class="fl">Goal</label><textarea class="fi2" id="sp-goal" rows="2" placeholder="Sprint goal..."></textarea></div>
+    <button class="btn btn-v" onclick="saveSprint()">Save Sprint</button>`;
+  openPanel();
+}
+
+function registerPush() {
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    toast('Push not supported in this browser', 'err'); return;
+  }
+  Notification.requestPermission().then(perm => {
+    if(perm !== 'granted') { toast('Notifications blocked — enable in browser settings', 'err'); return; }
+    navigator.serviceWorker.ready.then(async sw => {
+      try {
+        const cfg = getWebhookConfig();
+        const vapidKey = cfg.vapid_public_key || '';
+        if(!vapidKey) { toast('VAPID key not configured — check Webhook Settings', 'err'); return; }
+        const sub = await sw.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: vapidKey,
+        });
+        await api('/push/subscribe', 'POST', { subscription: sub });
+        toast('Push notifications enabled ✓', 'ok');
+        updatePushMenuLabel();
+      } catch(e) { toast('Push setup failed: ' + e.message, 'err'); }
+    });
+  });
+}
+
+function handleImportCSV(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const text = e.target.result;
+    const lines = text.split('\n');
+lter(l => l.trim());
+    if(lines.length < 2) { toast('CSV is empty or has no data rows', 'err'); return; }
+    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g,'').trim());
+    const bugs = [];
+    for(let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.replace(/^"|"$/g,'').trim());
+      const bug = {};
+      headers.forEach((h,idx) => { bug[h.toLowerCase().replace(/\s+/g,'_')] = vals[idx]||''; });
+      if(bug.title || bug['bug title'] || bug['issue title']) bugs.push(bug);
+    }
+    if(!bugs.length) { toast('No valid rows found', 'err'); return; }
+    try {
+      const res = await api('/bugs/import', 'POST', { bugs });
+      toast('Imported ' + (res.created||bugs.length) + ' bugs ✓', 'ok');
+      refreshAll();
+    } catch(err) { toast('Import failed: ' + err.message, 'err'); }
+  };
+  reader.readAsText(file);
+}
+
+function openManageDropdowns() {
+  const panel = document.getElementById('panelBody');
+  const title = document.getElementById('panelTitle');
+  if(!panel||!title) return;
+  title.textContent = '⚙️ MANAGE DROPDOWNS';
+  const fieldsHtml = DD_FIELDS.map((f,fi) => `
+    <div style="margin-bottom:16px;background:var(--bg3);border-radius:10px;padding:12px">
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g2);margin-bottom:8px">${f.label}</div>
+      <div id="dd-opts-${fi}">
+        ${f.options.map((o,oi) => `<div style="display:flex;gap:6px;margin-bottom:4px">
+          <input class="fi2" value="${esc(o)}" style="flex:1" data-fi="${fi}" data-oi="${oi}" onchange="updateDDOpt(this)">
+          <button class="btn btn-g btn-sm" onclick="removeDDOpt(${fi},${oi})">✕</button>
+        </div>`).join('')}
+      </div>
+      <button class="btn btn-g btn-sm" style="margin-top:6px" onclick="addDDOpt(${fi})">+ Add Option</button>
+    </div>`).join('');
+  panel.innerHTML = fieldsHtml + `<button class="btn btn-v" onclick="saveDropdownChanges()">Save Changes</button>`;
+  openPanel();
+}
+
+function updateDDOpt(input) {
+  const fi = parseInt(input.dataset.fi);
+  const oi = parseInt(input.dataset.oi);
+  DD_FIELDS[fi].options[oi] = input.value.trim();
+}
+
+function addDDOpt(fi) {
+  DD_FIELDS[fi].options.push('New Option');
+  openManageDropdowns();
+}
+
+function removeDDOpt(fi, oi) {
+  DD_FIELDS[fi].options.splice(oi, 1);
+  openManageDropdowns();
+}
+
+async function saveDropdownChanges() {
+  await saveDDConfig();
+  populateDropdowns();
+  closePanel();
+  toast('Dropdowns saved ✓', 'ok');
+}
 
 // ── Webhook config cache ──────────────────────────────────────────────────────
 const WEBHOOK_KEY = 'hwt_webhooks_v2';
