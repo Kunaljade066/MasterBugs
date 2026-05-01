@@ -8027,13 +8027,10 @@ function generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedT
 
   if(closedToday.length) {
     lines.push('🔒 CLOSED TODAY (' + closedToday.length + ')');
-    closedToday.forEach(b => lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70)));
-    lines.push('');
-  }
-
-  if(assigneeLines) {
-    lines.push('👤 BUGS FILED BY DEV/REPORTER');
-    lines.push(assigneeLines);
+    closedToday.forEach(b => {
+      lines.push('  • [' + (b.id||'') + '] ' + (b.title||'').slice(0,70));
+      lines.push('    🔗 ' + bugLink(b.id||''));
+    });
     lines.push('');
   }
 
