@@ -1032,7 +1032,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="pm-item" id="importBugsBtn" onclick="goTab('import');closeProfileMenu()" style="display:none"><span class="pm-icon">📥</span> Import Bugs (CSV)</div>
           <div class="pm-divider" id="managePodDivider" style="display:none"></div>
           <div class="pm-item" onclick="openDayEndReport();closeProfileMenu()"><span class="pm-icon">📊</span> Day-End Report</div>
-          <div class="pm-item" onclick="openWebhookSettings();closeProfileMenu()"><span class="pm-icon">🔔</span> Webhook Settings</div>
+          <div class="pm-item" id="webhookSettingsBtn" onclick="openWebhookSettings();closeProfileMenu()" style="display:none"><span class="pm-icon">🔔</span> Webhook Settings</div>
           <div class="pm-item danger" onclick="signOut()"><span class="pm-icon">🚪</span> Sign Out</div>
         </div>
       </div>
@@ -1175,7 +1175,7 @@ textarea.fi2, input.fi2 { color: var(--text) !important; }
           <div class="ph">
             <div><h1>NOTIFICATIONS</h1><p style="font-family:var(--mono);font-size:10px;color:var(--mute);margin-top:3px">In-app alerts · click any bug ID to open</p></div>
             <div class="ph-r">
-              <button class="btn btn-g btn-sm" onclick="openWebhookSettings()">🔔 Webhook Settings</button>
+              <button class="btn btn-g btn-sm" id="notifWebhookBtn" onclick="openWebhookSettings()" style="display:none">🔔 Webhook Settings</button>
               <button class="btn btn-g btn-sm" onclick="markAllRead()">Mark all read</button>
             </div>
           </div>
@@ -1518,7 +1518,7 @@ function avStack(assignees,sz=22){
 // SESSION
 // ══════════════════════════════════════════
 const saveSession=()=>{try{if(S.user)localStorage.setItem(SK,JSON.stringify({user:S.user,ts:Date.now()}));}catch(e){}};
-const loadSession=()=>{try{const r=JSON.parse(localStorage.getItem(SK)||'null');if(!r||!r.user||Date.now()-r.ts>8*3600*1000){localStorage.removeItem(SK);return null;}return r;}catch{return null;}};
+const loadSession=()=>{try{const r=JSON.parse(localStorage.getItem(SK)||'null');if(!r||!r.user||Date.now()-r.ts>8*24*3600*1000){localStorage.removeItem(SK);return null;}return r;}catch{return null;}};
 const clearSession=()=>localStorage.removeItem(SK);
 
 // ── BUG SYNC — polls every 5 min, only when tab is visible ──────────────
@@ -1671,7 +1671,7 @@ function scheduleTokenRefresh() {
   _refreshTimer = setInterval(() => {
     if (!S.user?.idToken) return;
     doTokenRefresh().catch(() => {});
-  }, 45 * 60 * 1000);
+  }, 55 * 60 * 1000); // 55 min — tokens expire at 60 min
 }
 
 async function ensureFreshToken() {
@@ -1858,6 +1858,8 @@ function onLogin(){
     document.getElementById('managePodBtn').style.display='flex';
     document.getElementById('importBugsBtn').style.display='flex';
     document.getElementById('managePodDivider').style.display='block';
+    document.getElementById('webhookSettingsBtn').style.display='flex';
+    const _nwb=document.getElementById('notifWebhookBtn');if(_nwb)_nwb.style.display='';
   }
   loadTheme();
   loadCursorPref();
@@ -1989,10 +1991,19 @@ async function api(path,method='GET',body=null){
     try {
       const refreshed = await doTokenRefresh();
       if(!refreshed) {
-        // Silent refresh failed — force re-login
-        toast('Session expired — please sign in again','err');
+        // Silent refresh failed — check if session still within 8-day window
+        const _sess = loadSession();
+        const _age  = Date.now() - (_sess?.ts || 0);
+        if(_sess && _age < 8 * 24 * 3600 * 1000) {
+          console.warn('[api] silent refresh failed but session <8d, continuing');
+          const r2=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
+          const d2=await r2.json();
+          if(!r2.ok)throw new Error(d2.error||'HTTP '+r2.status);
+          return d2;
+        }
+        toast('Session expired (8 days) — please sign in again','err');
         setTimeout(()=>{ clearSession(); location.reload(); }, 2500);
-        throw new Error('Session expired — please sign in again');
+        throw new Error('Session expired');
       }
       // Retry original call with new token
       const r2=await fetch(WORKER+path,{method,headers:{'Content-Type':'application/json','X-Google-Token':S.user.idToken},body:body?JSON.stringify(body):undefined});
@@ -2031,8 +2042,7 @@ function setCloud(s,l){
 async function refreshAll(){
   setCloud('busy','loading…');
   try{
-    const [bugsD,sprintsD,teamD,settingsD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team'),api('/settings').catch(()=>({settings:null}))]);
-    if(settingsD?.settings){_webhookCfgCache=settingsD.settings;try{localStorage.setItem(WEBHOOK_KEY,JSON.stringify(_webhookCfgCache));}catch(e){}}
+    const [bugsD,sprintsD,teamD]=await Promise.all([api('/bugs'),api('/sprints'),api('/team')]);
     const _rawSprints=sprintsD.sprints||[];
     const freshBugs=bugsD.bugs||[];
 
@@ -5006,17 +5016,58 @@ function toggleNotif(btn) {
 // WEBHOOK SETTINGS — stored per user in localStorage
 // ══════════════════════════════════════════
 const WEBHOOK_KEY = 'hwt_webhooks_v1';
-function getWebhookConfig() {
-  if(_webhookCfgCache) return _webhookCfgCache;
-  try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
-}
-async function saveWebhookConfig(cfg) {
-  _webhookCfgCache = cfg;
-  try { localStorage.setItem(WEBHOOK_KEY, JSON.stringify(cfg)); } catch(e) {}
-  try { await api('/settings', 'POST', cfg); } catch(e) { console.error('[settings] save failed', e.message); }
+
+// ── helpers ──────────────────────────────────────────────────────────────────
+function buildPodGChatFields(cfg) {
+  const pods = (window.DD_FIELDS||[]).find(f=>f.key==='pod')?.options || [];
+  if (!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured yet.</div>';
+  return pods.map(pod => {
+    const safeId  = pod.replace(/[^a-z0-9]/gi,'_');
+    const gchatKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    const emailKey = 'pod_emails_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
+    return '<div style="background:rgba(6,182,212,.05);border:1px solid rgba(6,182,212,.12);border-radius:8px;padding:10px 12px;margin-bottom:10px">'
+      + '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g2);margin-bottom:8px">' + esc(pod) + '</div>'
+      + '<div class="fg" style="margin-bottom:6px"><label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">💬 GChat Webhook URL</label>'
+      + '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + esc(cfg[gchatKey]||'') + '" placeholder="https://chat.googleapis.com/v1/spaces/…"></div>'
+      + '<div class="fg" style="margin-bottom:0"><label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">📧 Email Recipients (comma-separated)</label>'
+      + '<input class="fi2" id="wh-pod-emails-' + safeId + '" value="' + esc(cfg[emailKey]||'') + '" placeholder="dev@hitwicket.com, qa@hitwicket.com"></div>'
+      + '</div>';
+  }).join('');
 }
 
-let _webhookCfgCache = null;
+function buildJenkinsFields(cfg) {
+  const TEAMS = ['openers','middle_order','tech_infra','liveops'];
+  const label = t => t.split('_').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+  return TEAMS.map(t => {
+    const safeT    = t;
+    const tokenKey = 'jenkins_' + t + '_token';
+    const gchatKey = 'jenkins_' + t + '_gchat';
+    const emailKey = 'jenkins_' + t + '_emails';
+    const hasToken = !!(cfg[tokenKey]);
+    const workerBase = 'https://bugpulse-worker.kunal-249.workers.dev/webhook/jenkins?team=' + t + '&token=';
+    // Token: if set — show masked with Reveal + Regen buttons. If not set — show input + Generate.
+    const tokenHtml = hasToken
+      ? '<div style="display:flex;gap:6px;align-items:center">'
+          + '<input class="fi2" id="wh-token-' + t + '" value="••••••••••••••••" readonly style="flex:1;color:var(--dim);font-family:var(--mono)">'
+          + '<button class="btn btn-g btn-sm" onclick="revealToken('' + t + '')" id="reveal-btn-' + t + '">👁 Reveal</button>'
+          + '<button class="btn btn-r btn-sm" onclick="regenToken('' + t + '')">↻ Regen</button>'
+        + '</div>'
+        + '<div style="font-family:var(--mono);font-size:9px;color:var(--g4);margin-top:4px">✓ Token set — URL: <span style="color:var(--g2)">' + esc(workerBase) + '[token]</span></div>'
+      : '<div style="display:flex;gap:6px">'
+          + '<input class="fi2" id="wh-token-' + t + '" value="" placeholder="Click Generate to create a token" style="flex:1">'
+          + '<button class="btn btn-v btn-sm" onclick="genToken('' + t + '')">⚡ Generate</button>'
+        + '</div>';
+    return '<div style="background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:8px;padding:10px 12px;margin-bottom:10px">'
+      + '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g3);margin-bottom:8px">' + label(t) + '</div>'
+      + '<div class="fg" style="margin-bottom:6px"><label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">🔑 Webhook Token</label>'
+      + tokenHtml + '</div>'
+      + '<div class="fg" style="margin-bottom:6px"><label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">💬 GChat URL</label>'
+      + '<input class="fi2" id="wh-jk-gchat-' + t + '" value="' + esc(cfg[gchatKey]||'') + '" placeholder="https://chat.googleapis.com/…"></div>'
+      + '<div class="fg" style="margin-bottom:0"><label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">📧 Email Recipients</label>'
+      + '<input class="fi2" id="wh-jk-emails-' + t + '" value="' + esc(cfg[emailKey]||'') + '" placeholder="dev@hitwicket.com"></div>'
+      + '</div>';
+  }).join('');
+}
 
 async function sendGChatWebhook(text, pod) {
   const cfg = getWebhookConfig();
@@ -5027,115 +5078,137 @@ async function sendGChatWebhook(text, pod) {
   }
   if (!url) return false;
   try {
-    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: text.slice(0,3800)}) });
-    if (!r.ok) { const t = await r.text(); console.error('[gchat]', r.status, t); return false; }
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: (text||'').slice(0,3800)}) });
+    if (!r.ok) { const t=await r.text(); console.error('[gchat]',r.status,t); return false; }
     return true;
-  } catch(e) { console.warn('[gchat webhook]', e.message); return false; }
+  } catch(e) { console.warn('[gchat]',e.message); return false; }
 }
 
 async function sendSlackWebhook(text, blocks) {
   const cfg = getWebhookConfig();
   if (!cfg.slack_url) return false;
   try {
-    const body = blocks ? { text, blocks } : { text };
-    const r = await fetch(cfg.slack_url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const r = await fetch(cfg.slack_url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(blocks ? {text,blocks} : {text}) });
     return r.ok;
-  } catch(e) { console.warn('[slack webhook]', e.message); return false; }
+  } catch(e) { console.warn('[slack]',e.message); return false; }
 }
 
-function buildPodGChatFields(cfg) {
-  const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
-  if (!pods.length) return '<div style="font-family:var(--mono);font-size:10px;color:var(--dim)">No pods configured — add pods in Manage Dropdowns first.</div>';
-  return pods.map(pod => {
-    const safeId = pod.replace(/[^a-z0-9]/gi,'_');
-    const gchatKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    const emailKey = 'pod_emails_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    const gchatVal = esc(cfg[gchatKey]||'');
-    const emailVal = esc(cfg[emailKey]||'');
-    return '<div style="background:rgba(124,58,237,.05);border-radius:8px;padding:10px 12px;margin-bottom:10px">' +
-      '<div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g2);margin-bottom:8px">' + esc(pod) + '</div>' +
-      '<div class="fg" style="margin-bottom:6px">' +
-        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">💬 GChat Webhook URL</label>' +
-        '<input class="fi2" id="wh-pod-gchat-' + safeId + '" value="' + gchatVal + '" placeholder="https://chat.googleapis.com/v1/spaces/…">' +
-      '</div>' +
-      '<div class="fg" style="margin-bottom:0">' +
-        '<label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">📧 Email Recipients (comma-separated)</label>' +
-        '<input class="fi2" id="wh-pod-emails-' + safeId + '" value="' + emailVal + '" placeholder="dev@hitwicket.com, qa@hitwicket.com">' +
-      '</div>' +
-    '</div>';
-  }).join('');
+// token helpers
+async function revealToken(team) {
+  const btn = document.getElementById('reveal-btn-' + team);
+  const inp = document.getElementById('wh-token-' + team);
+  if (!inp) return;
+  if (inp.dataset.revealed === '1') {
+    inp.value = '••••••••••••••••'; inp.readOnly = true;
+    if (btn) btn.textContent = '👁 Reveal';
+    inp.dataset.revealed = '0';
+    return;
+  }
+  // Fetch real value from D1
+  try {
+    const d = await api('/settings');
+    const token = d?.settings?.['jenkins_' + team + '_token'] || '';
+    if (!token) { toast('No token set for ' + team, 'err'); return; }
+    inp.value = token; inp.readOnly = false;
+    if (btn) btn.textContent = '🙈 Hide';
+    inp.dataset.revealed = '1';
+    // Auto-hide after 30s
+    setTimeout(() => { inp.value = '••••••••••••••••'; inp.readOnly = true; if(btn)btn.textContent='👁 Reveal'; inp.dataset.revealed='0'; }, 30000);
+  } catch(e) { toast('Failed to load token: ' + e.message, 'err'); }
+}
+
+function regenToken(team) {
+  if (!confirm('Regenerate token for ' + team + '?
+
+The old token will stop working immediately — you must update Jenkins with the new one.')) return;
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const inp = document.getElementById('wh-token-' + team);
+  if (inp) { inp.value = token; inp.readOnly = false; inp.dataset.revealed = '1'; }
+  navigator.clipboard.writeText(token).catch(()=>{});
+  toast('New token generated & copied — click Save Settings to apply ✓', 'ok');
+}
+
+function genToken(team) {
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const inp = document.getElementById('wh-token-' + team);
+  if (inp) { inp.value = token; inp.dataset.revealed = '1'; }
+  navigator.clipboard.writeText(token).catch(()=>{});
+  toast('Token generated & copied — click Save Settings to apply ✓', 'ok');
+}
+
+async function testWebhook() {
+  const url = document.getElementById('wh-gchat')?.value?.trim();
+  if (!url) { toast('Enter a GChat webhook URL first','err'); return; }
+  const ok = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'🧪 BugPulse webhook test ✓'})}).then(r=>r.ok).catch(()=>false);
+  toast(ok ? 'Test sent to GChat ✓' : 'GChat test failed','err');
+}
+
+async function testSlackWebhook() {
+  const url = document.getElementById('wh-slack')?.value?.trim();
+  if (!url) { toast('Enter a Slack webhook URL first','err'); return; }
+  const ok = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'🧪 BugPulse Slack test ✓'})}).then(r=>r.ok).catch(()=>false);
+  toast(ok ? 'Test sent to Slack ✓' : 'Slack test failed','err');
+}
+
+async function whFireManual() {
+  const pod = document.getElementById('wh-fire-pod')?.value||'';
+  const msg = document.getElementById('wh-fire-msg')?.value?.trim()||'🔔 Manual notification from BugPulse QA';
+  const ok  = await sendGChatWebhook(msg, pod);
+  toast(ok ? '✓ GChat fired to '+(pod||'global') : '✗ No GChat webhook for this pod', ok?'ok':'err');
+}
+
+async function whFireSlack() {
+  const msg = document.getElementById('wh-fire-msg')?.value?.trim()||'🔔 Manual notification from BugPulse QA';
+  const ok  = await sendSlackWebhook(msg);
+  toast(ok ? '✓ Slack fired' : '✗ No Slack webhook configured', ok?'ok':'err');
 }
 
 async function openWebhookSettings() {
+  if (S.user?.role !== 'admin') { toast('Admin only','err'); return; }
+  // Always load fresh from D1
   const data = await api('/settings').catch(()=>({settings:{}}));
-  const cfg = Object.assign({}, getWebhookConfig(), data?.settings||{});
+  const cfg = Object.assign({}, data?.settings||{});
+  // Also merge localStorage cache for keys not in D1
+  try { const lc = JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); Object.keys(lc).forEach(k=>{ if(!cfg[k]) cfg[k]=lc[k]; }); } catch(e) {}
   _webhookCfgCache = cfg;
-  const pods = DD_FIELDS.find(f=>f.key==='pod')?.options || [];
-  const TEAMS = ['openers','middle_order','tech_infra','liveops'];
-  const teamLabel = t => t.split('_').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+
   document.getElementById('panelTitle').textContent = '🔔 WEBHOOK SETTINGS';
-  document.getElementById('panelId').textContent = 'WEBHOOKS';
+  document.getElementById('panelId').textContent = 'ADMIN ONLY';
   document.getElementById('panelFooter').innerHTML = `
     <button class="btn btn-g" onclick="closePanel()">Cancel</button>
     <button class="btn btn-v" onclick="saveWebhookSettings()">💾 Save Settings</button>`;
+
   document.getElementById('panelBody').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-direction:column;gap:16px">
+
       <div style="background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:4px">🟢 GOOGLE CHAT WEBHOOKS</div>
-        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">Get URL: GChat Space → Apps & Integrations → Manage Webhooks → Add</div>
-        <div class="fg"><label class="fl">Global GChat URL <span style="color:var(--dim);font-weight:400">(fallback)</span></label>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g2);margin-bottom:4px">🟢 GOOGLE CHAT — GLOBAL + PER-POD</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:10px;line-height:1.8">Global = fallback for all pods. Per-pod overrides for EOD + build notifications.</div>
+        <div class="fg"><label class="fl">Global GChat URL</label>
           <input class="fi2" id="wh-gchat" value="${esc(cfg.gchat_url||'')}" placeholder="https://chat.googleapis.com/v1/spaces/…/messages?key=…">
         </div>
-        <div style="margin-top:14px;border-top:1px solid rgba(6,182,212,.15);padding-top:12px">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--g2);margin-bottom:10px">PER-POD GCHAT URLS</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(6,182,212,.15)">
+          <div style="font-family:var(--mono);font-size:9px;text-transform:uppercase;color:var(--g2);margin-bottom:8px">PER-POD</div>
           ${buildPodGChatFields(cfg)}
         </div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-g btn-sm" onclick="testWebhook()">🧪 Test GChat</button>
-        </div>
+        <button class="btn btn-g btn-sm" style="margin-top:6px" onclick="testWebhook()">🧪 Test Global GChat</button>
       </div>
 
       <div style="background:rgba(74,144,226,.06);border:1px solid rgba(74,144,226,.2);border-radius:10px;padding:14px 16px">
         <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#60a5fa;margin-bottom:12px">💬 SLACK WEBHOOK</div>
-        <div class="fg"><label class="fl">Slack Incoming Webhook URL</label>
+        <div class="fg"><label class="fl">Incoming Webhook URL</label>
           <input class="fi2" id="wh-slack" value="${esc(cfg.slack_url||'')}" placeholder="https://hooks.slack.com/services/…">
         </div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn btn-g btn-sm" onclick="testSlackWebhook()">🧪 Test Slack</button>
-        </div>
+        <button class="btn btn-g btn-sm" style="margin-top:8px" onclick="testSlackWebhook()">🧪 Test Slack</button>
       </div>
 
       <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:10px">🔧 JENKINS WEBHOOKS</div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:6px">🔧 JENKINS WEBHOOKS</div>
         <div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-bottom:12px;line-height:1.8">
-          Jenkins calls <code style="color:var(--g2)">/webhook/jenkins?team=TEAM&token=TOKEN</code> with <code style="color:var(--g2)">{version, platform, link, notes, tasks}</code>
+          Jenkins calls <code style="color:var(--g2)">/webhook/jenkins?team=TEAM&token=TOKEN</code> with JSON <code style="color:var(--g2)">{version, platform, link, notes, tasks}</code><br>
+          Tokens are one-way — once saved they show masked. Use Reveal to view, Regen to replace.
         </div>
-        ${TEAMS.map(t => {
-          const tokenKey = `jenkins_${t}_token`;
-          const gchatKey = `jenkins_${t}_gchat`;
-          const emailKey = `jenkins_${t}_emails`;
-          const tLabel = teamLabel(t);
-          const workerUrl = 'https://bugpulse-worker.kunal-249.workers.dev/webhook/jenkins?team=' + t + '&token=';
-          return `<div style="background:rgba(245,158,11,.05);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-            <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--g3);margin-bottom:8px">${esc(tLabel)}</div>
-            <div class="fg" style="margin-bottom:6px">
-              <label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">🔑 Webhook Token (Jenkins passes this as ?token=)</label>
-              <div style="display:flex;gap:6px">
-                <input class="fi2" id="wh-token-${t}" value="${esc(cfg[tokenKey]||'')}" placeholder="Generate a secret token" style="flex:1">
-                <button class="btn btn-g btn-sm" style="flex-shrink:0" onclick="genToken('${t}')">⚡ Generate</button>
-              </div>
-              ${cfg[tokenKey] ? `<div style="font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:4px;word-break:break-all">URL: <span style="color:var(--g2)">${esc(workerUrl)}[TOKEN]</span></div>` : ''}
-            </div>
-            <div class="fg" style="margin-bottom:6px">
-              <label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">💬 GChat URL for Jenkins builds</label>
-              <input class="fi2" id="wh-jk-gchat-${t}" value="${esc(cfg[gchatKey]||'')}" placeholder="https://chat.googleapis.com/…">
-            </div>
-            <div class="fg" style="margin-bottom:0">
-              <label class="fl" style="text-transform:none;letter-spacing:0;font-size:11px">📧 Email Recipients</label>
-              <input class="fi2" id="wh-jk-emails-${t}" value="${esc(cfg[emailKey]||'')}" placeholder="dev@hitwicket.com, qa@hitwicket.com">
-            </div>
-          </div>`;
-        }).join('')}
+        ${buildJenkinsFields(cfg)}
       </div>
 
       <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
@@ -5150,129 +5223,171 @@ async function openWebhookSettings() {
       </div>
 
       <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">📧 EMAIL RECIPIENTS</div>
-        <div class="fg"><label class="fl">Team Emails (comma-separated)</label>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g4);margin-bottom:12px">📧 TEAM EMAILS</div>
+        <div class="fg"><label class="fl">Global team emails (comma-separated)</label>
           <textarea class="fi2" id="wh-emails" rows="2" placeholder="dev@hitwicket.com, qa@hitwicket.com">${esc(cfg.team_emails||'')}</textarea>
         </div>
       </div>
 
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px 16px">
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171;margin-bottom:10px">🚨 AUTO-ALERT HIGH PRIORITY</div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="wh-auto-alert" ${cfg.auto_alert_priority?'checked':''} style="width:16px;height:16px;cursor:pointer">
+          <span style="font-size:13px;color:var(--text)">Auto-alert team on Critical / Urgent / High bugs</span>
+        </label>
+      </div>
+
       <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:12px">⚡ MANUAL WEBHOOK FIRE</div>
-        <div class="fg" style="margin-bottom:10px"><label class="fl">Select Pod</label>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:10px">⚡ MANUAL FIRE</div>
+        <div class="fg" style="margin-bottom:8px"><label class="fl">Pod</label>
           <select class="fi2" id="wh-fire-pod">
-            <option value="">— Global (all teams) —</option>
-            ${(DD_FIELDS.find(f=>f.key==='pod')?.options||[]).map(p=>'<option value="'+esc(p)+'">'+esc(p)+'</option>').join('')}
+            <option value="">— Global —</option>
+            ${((window.DD_FIELDS||[]).find(f=>f.key==='pod')?.options||[]).map(p=>'<option value="'+esc(p)+'">'+esc(p)+'</option>').join('')}
           </select>
         </div>
-        <div class="fg" style="margin-bottom:10px"><label class="fl">Message</label>
-          <textarea class="fi2" id="wh-fire-msg" rows="2" placeholder="Custom message to send to GChat...">🔔 Manual notification from BugPulse QA</textarea>
+        <div class="fg" style="margin-bottom:8px"><label class="fl">Message</label>
+          <textarea class="fi2" id="wh-fire-msg" rows="2">🔔 Manual notification from BugPulse QA</textarea>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px">
           <button class="btn btn-g btn-sm" onclick="whFireManual()">💬 Fire GChat</button>
           <button class="btn btn-g btn-sm" onclick="whFireSlack()">💬 Fire Slack</button>
         </div>
       </div>
 
-      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#f87171;margin-bottom:12px">🚨 AUTO-ALERT ON HIGH PRIORITY</div>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-          <input type="checkbox" id="wh-auto-alert" ${cfg.auto_alert_priority?'checked':''} style="width:16px;height:16px;cursor:pointer">
-          <span style="font-size:13px;color:var(--text)">Enable auto-alert for Critical / Urgent / High bugs</span>
-        </label>
-      </div>
-
       <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:14px 16px">
-        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">⏰ EOD REPORT SCHEDULE</div>
-        <div class="fg" style="margin-bottom:10px">
-          <label class="fl">Auto-send time (Mon–Fri, IST)</label>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <input type="time" class="fi2" id="wh-eod-time" value="${cfg.eod_time||'21:00'}" style="width:130px">
-            <div class="notif-toggle-row" style="margin:0">
-              <button class="notif-toggle${cfg.eod_schedule_on?' on':''}" id="wh-eod-on" onclick="this.classList.toggle('on')"></button>
-              <span class="notif-toggle-label">Enable auto EOD report</span>
-            </div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g1);margin-bottom:12px">⏰ EOD SCHEDULE</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <input type="time" class="fi2" id="wh-eod-time" value="${cfg.eod_time||'21:00'}" style="width:130px">
+          <div class="notif-toggle-row" style="margin:0">
+            <button class="notif-toggle${cfg.eod_schedule_on?' on':''}" id="wh-eod-on" onclick="this.classList.toggle('on')"></button>
+            <span class="notif-toggle-label">Enable auto EOD (Mon–Fri, worker-side)</span>
           </div>
         </div>
       </div>
+
     </div>`;
   openPanel();
 }
 
-function genToken(team) {
-  const token = Math.random().toString(36).slice(2) + Date.now().toString(36) + Math.random().toString(36).slice(2);
-  const el = document.getElementById('wh-token-' + team);
-  if(el) el.value = token;
-  navigator.clipboard.writeText(token).catch(()=>{});
-  toast('Token generated & copied ✓', 'ok');
-}
-
-async function testWebhook() {
-  const url = document.getElementById('wh-gchat')?.value?.trim();
-  if (!url) { toast('Enter a GChat webhook URL first','err'); return; }
-  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'🧪 BugPulse webhook test ✓'}) }).then(r=>r.ok).catch(()=>false);
-  toast(ok ? 'Test sent to GChat ✓' : 'GChat test failed','ok');
-}
-
-async function testSlackWebhook() {
-  const url = document.getElementById('wh-slack')?.value?.trim();
-  if (!url) { toast('Enter a Slack webhook URL first','err'); return; }
-  const ok = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text:'🧪 BugPulse Slack webhook test ✓'}) }).then(r=>r.ok).catch(()=>false);
-  toast(ok ? 'Test sent to Slack ✓' : 'Slack test failed','err');
-}
-
-async function whFireManual() {
-  const pod = document.getElementById('wh-fire-pod')?.value||'';
-  const msg = document.getElementById('wh-fire-msg')?.value?.trim()||'🔔 Manual notification from BugPulse QA';
-  const ok = await sendGChatWebhook(msg, pod);
-  toast(ok ? '✓ GChat fired to '+(pod||'global') : '✗ No GChat webhook for this pod', ok?'ok':'err');
-}
-
-async function whFireSlack() {
-  const msg = document.getElementById('wh-fire-msg')?.value?.trim()||'🔔 Manual notification from BugPulse QA';
-  const ok = await sendSlackWebhook(msg, null);
-  toast(ok ? '✓ Slack fired' : '✗ No Slack webhook configured', ok?'ok':'err');
-}
-
 async function saveWebhookSettings() {
   const TEAMS = ['openers','middle_order','tech_infra','liveops'];
-  const _podGChatUrls = {};
-  (DD_FIELDS.find(f=>f.key==='pod')?.options || []).forEach(pod => {
+  const pods  = (window.DD_FIELDS||[]).find(f=>f.key==='pod')?.options||[];
+
+  // Per-pod
+  const podCfg = {};
+  pods.forEach(pod => {
     const safeId = pod.replace(/[^a-z0-9]/gi,'_');
-    const gchatKey = 'pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    const emailKey = 'pod_emails_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_');
-    _podGChatUrls[gchatKey] = document.getElementById('wh-pod-gchat-' + safeId)?.value?.trim()||'';
-    _podGChatUrls[emailKey] = document.getElementById('wh-pod-emails-' + safeId)?.value?.trim()||'';
+    podCfg['pod_gchat_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_')]  = document.getElementById('wh-pod-gchat-' + safeId)?.value?.trim()||'';
+    podCfg['pod_emails_' + pod.toLowerCase().replace(/[^a-z0-9]/g,'_')] = document.getElementById('wh-pod-emails-' + safeId)?.value?.trim()||'';
   });
-  const jenkinsCfg = {};
+
+  // Jenkins tokens — only send if revealed/changed (not the masked placeholder)
+  const jkCfg = {};
   TEAMS.forEach(t => {
-    const tokenVal = document.getElementById('wh-token-' + t)?.value?.trim()||'';
-    if(tokenVal && tokenVal !== '**set**') jenkinsCfg['jenkins_'+t+'_token'] = tokenVal;
-    jenkinsCfg['jenkins_'+t+'_gchat']  = document.getElementById('wh-jk-gchat-'+t)?.value?.trim()||'';
-    jenkinsCfg['jenkins_'+t+'_emails'] = document.getElementById('wh-jk-emails-'+t)?.value?.trim()||'';
+    const inp = document.getElementById('wh-token-' + t);
+    const val = inp?.value?.trim()||'';
+    if (val && val !== '••••••••••••••••') jkCfg['jenkins_' + t + '_token'] = val;
+    jkCfg['jenkins_' + t + '_gchat']  = document.getElementById('wh-jk-gchat-'+t)?.value?.trim()||'';
+    jkCfg['jenkins_' + t + '_emails'] = document.getElementById('wh-jk-emails-'+t)?.value?.trim()||'';
   });
+
   const cfg = {
-    gchat_url:    document.getElementById('wh-gchat')?.value?.trim()||'',
-    slack_url:    document.getElementById('wh-slack')?.value?.trim()||'',
-    ..._podGChatUrls,
-    ...jenkinsCfg,
-    team_emails:  document.getElementById('wh-emails')?.value?.trim()||'',
-    notif_new_bug:           document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
-    notif_build_available:   document.getElementById('wh-ev-build_available')?.classList.contains('on'),
-    notif_day_end_report:    document.getElementById('wh-ev-day_end_report')?.classList.contains('on'),
-    eod_time:         document.getElementById('wh-eod-time')?.value||'21:00',
-    eod_schedule_on:  document.getElementById('wh-eod-on')?.classList.contains('on'),
-    auto_alert_priority: document.getElementById('wh-auto-alert')?.checked || false,
+    gchat_url:              document.getElementById('wh-gchat')?.value?.trim()||'',
+    slack_url:              document.getElementById('wh-slack')?.value?.trim()||'',
+    team_emails:            document.getElementById('wh-emails')?.value?.trim()||'',
+    notif_new_bug:          document.getElementById('wh-ev-new_bug')?.classList.contains('on'),
+    notif_build_available:  document.getElementById('wh-ev-build_available')?.classList.contains('on'),
+    notif_day_end_report:   document.getElementById('wh-ev-day_end_report')?.classList.contains('on'),
+    eod_time:               document.getElementById('wh-eod-time')?.value||'21:00',
+    eod_schedule_on:        document.getElementById('wh-eod-on')?.classList.contains('on'),
+    auto_alert_priority:    document.getElementById('wh-auto-alert')?.checked||false,
+    ...podCfg,
+    ...jkCfg,
   };
   await saveWebhookConfig(cfg);
   toast('Webhook settings saved ✓','ok');
   closePanel();
 }
 
+function getWebhookConfig() {
+  if(_webhookCfgCache) return _webhookCfgCache;
+  try { return JSON.parse(localStorage.getItem(WEBHOOK_KEY)||'{}'); } catch { return {}; }
+}
+
+async function saveWebhookConfig(cfg) {
+  _webhookCfgCache = cfg;
+  try { localStorage.setItem(WEBHOOK_KEY, JSON.stringify(cfg)); } catch(e) {}
+  try { await api('/settings','POST', cfg); } catch(e) { console.error('[settings save]', e.message); }
+}
+
+let _webhookCfgCache = null;
+
+
 let _eodSchedulerTimer = null;
-function initEODScheduler() {}
+function initEODScheduler() {
+  if (_eodSchedulerTimer) clearInterval(_eodSchedulerTimer);
+  const cfg = getWebhookConfig();
+  if (!cfg.eod_schedule_on || !cfg.gchat_url) return;
+  // Check every minute
+  _eodSchedulerTimer = setInterval(() => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 6=Sat
+    if (day === 0 || day === 6) return; // skip weekends
+    const hhmm = now.toLocaleTimeString('en-GB', {timeZone:'Asia/Kolkata', hour:'2-digit', minute:'2-digit'}).slice(0,5);
+    const cfg2 = getWebhookConfig();
+    if (!cfg2.eod_schedule_on) return;
+    const target = cfg2.eod_time || '21:00';
+    if (hhmm === target) {
+      // Fire only once per minute — use a flag stored in sessionStorage
+      const flagKey = 'eod_sent_' + new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Kolkata'});
+      if (sessionStorage.getItem(flagKey)) return;
+      sessionStorage.setItem(flagKey, '1');
+      sendAutoEODReport();
+    }
+  }, 60000);
+}
+async function sendAutoEODReport() {
+  const todayBugs = getTodayBugs();
+  const closedToday = getClosedTodayBugs();
+  const updatedBugs = getUpdatedTodayBugs();
+  const resolvedToday = updatedBugs.filter(b => ['Dev Fixed','Done','QA Pass'].includes(b.status));
+  const critOpen = S.bugs.filter(b => ['Critical','Urgent'].includes(b.priority) && !['Dev Fixed','Done','QA Pass','Closed'].includes(b.status));
+  const dateStr = new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const text = generateReportText(todayBugs, resolvedToday, critOpen, dateStr, closedToday);
+  const sent = await sendGChatWebhook(text);
+  if (sent) toast('📊 EOD report auto-sent to GChat ✓','ok');
+}
 
-async function sendAutoEODReport() {}
+async function sendGChatWebhook(text) {
+  const cfg = getWebhookConfig();
+  if(!cfg.gchat_url) return false;
+  try {
+    await fetch(cfg.gchat_url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    return true;
+  } catch(e) {
+    console.warn('[gchat webhook]', e.message);
+    return false;
+  }
+}
 
+async function testWebhook() {
+  const url = document.getElementById('wh-gchat')?.value?.trim();
+  if(!url) { toast('Enter a webhook URL first','err'); return; }
+  try {
+    await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({text:`🧪 BugPulse test notification from ${S.user?.name||'team'} — webhooks are working! ✅`})
+    });
+    toast('Test sent to GChat ✓','ok');
+  } catch(e) {
+    toast('Webhook failed: '+e.message,'err');
+  }
+}
 
 async function sendBugNotification(bug, customMsg) {
   const cfg = getWebhookConfig();
