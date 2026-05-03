@@ -5962,22 +5962,9 @@ const CU_TOKEN = 'pk_194617170_NZZKCEMOLFHZOYLIWV9EF6D6T6KDB42X';
 const CU_API   = 'https://api.clickup.com/api/v2';
 let _cuTasks = [], _cuFiltered = [], _cuLists = [], _cuLoaded = false, _cuView = 'list';
 
-// Restore ClickUp cache from localStorage
-(function() {
-  try {
-    const cached = JSON.parse(localStorage.getItem('hwt_cu_cache') || 'null');
-    if(cached && cached.ts && Date.now() - cached.ts < 4 * 3600 * 1000) {
-      // Cache valid for 4 hours
-      _cuTasks = cached.tasks || [];
-      _cuLists = cached.lists || [];
-      _cuLoaded = true;
-    }
-  } catch(e) {}
-})();
-
-// &#9472;&#9472; ClickUp localStorage cache &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;
+// \u2500\u2500 ClickUp localStorage cache \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 const CU_CACHE_KEY = 'hwt_cu_cache_v1';
-const CU_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const CU_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
 
 function cuSaveCache(teamName) {
   try {
@@ -6179,10 +6166,6 @@ async function loadClickUp(force) {
     }));
 
     _cuLoaded = true;
-    // Save to localStorage so data persists (4 hour cache)
-    try {
-      localStorage.setItem('hwt_cu_cache', JSON.stringify({tasks:_cuTasks, lists:_cuLists, ts:Date.now()}));
-    } catch(e) {}
     cuSaveCache(teams[0].name);
     cuBuildFilters();
     _cuFiltered = [..._cuTasks];
