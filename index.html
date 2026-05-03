@@ -2619,19 +2619,20 @@ function sbFilterByVal(val, mode) {
 
 function updateSbBadges(){
   const c=(f,v)=>S.bugs.filter(b=>b[f]===v).length;
-  document.getElementById('sn-all').textContent=S.bugs.length;
-  document.getElementById('sn-open').textContent=c('status','Open');
-  document.getElementById('sn-prog').textContent=c('status','In Progress');
-  document.getElementById('sn-review').textContent=c('status','In Review');
-  document.getElementById('sn-bugged').textContent=c('status','Bugged');
-  document.getElementById('sn-qa').textContent=c('status','QA Pass');
-  document.getElementById('sn-devfix').textContent=c('status','Dev Fixed');
-  document.getElementById('sn-done').textContent=c('status','Done');
-  document.getElementById('sn-crit').textContent=c('priority','Critical');
-  document.getElementById('sn-high').textContent=c('priority','High');
+  const sb=(id,val)=>countUp(document.getElementById(id),val,1400);
+  sb('sn-all',   S.bugs.length);
+  sb('sn-open',  c('status','Open'));
+  sb('sn-prog',  c('status','In Progress'));
+  sb('sn-review',c('status','In Review'));
+  sb('sn-bugged',c('status','Bugged'));
+  sb('sn-qa',    c('status','QA Pass'));
+  sb('sn-devfix',c('status','Dev Fixed'));
+  sb('sn-done',  c('status','Done'));
+  sb('sn-crit',  c('priority','Critical'));
+  sb('sn-high',  c('priority','High'));
   if(S.user){
-    document.getElementById('sn-mine').textContent=S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user.email)).length;
-    document.getElementById('sn-byMe').textContent=S.bugs.filter(b=>b.reporter_email===S.user.email).length;
+    sb('sn-mine',  S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user.email)).length);
+    sb('sn-byMe',  S.bugs.filter(b=>b.reporter_email===S.user.email).length);
   }
 }
 
@@ -3094,23 +3095,30 @@ function renderHome(){
   const total=S.bugs.length;
   document.getElementById('homeQuick').innerHTML=`
     <div class="hq-card" onclick="showInlineDrawer('🟣 Open Bugs',S.bugs.filter(b=>b.status==='Open'))">
-      <div class="hq-icon">🟣</div><div class="hq-n" style="color:#a78bfa">${open}</div><div class="hq-l">Open</div>
+      <div class="hq-icon">🟣</div><div class="hq-n" id="hqn-open" style="color:#a78bfa">0</div><div class="hq-l">Open</div>
     </div>
     <div class="hq-card" onclick="showInlineDrawer('🔵 Active Bugs',S.bugs.filter(b=>['In Progress','Bugged'].includes(b.status)))">
-      <div class="hq-icon">🔵</div><div class="hq-n" style="color:var(--g2)">${active}</div><div class="hq-l">Active</div>
+      <div class="hq-icon">🔵</div><div class="hq-n" id="hqn-active" style="color:var(--g2)">0</div><div class="hq-l">Active</div>
     </div>
     <div class="hq-card" onclick="showInlineDrawer('🚨 Critical & Urgent',S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)))">
-      <div class="hq-icon">🚨</div><div class="hq-n" style="color:var(--g5)">${crit}</div><div class="hq-l">Critical</div>
+      <div class="hq-icon">🚨</div><div class="hq-n" id="hqn-crit" style="color:var(--g5)">0</div><div class="hq-l">Critical</div>
     </div>
     <div class="hq-card" onclick="showInlineDrawer('👤 Assigned to Me',S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user?.email)))">
-      <div class="hq-icon">👤</div><div class="hq-n" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">${mine}</div><div class="hq-l">Mine</div>
+      <div class="hq-icon">👤</div><div class="hq-n" id="hqn-mine" style="background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">0</div><div class="hq-l">Mine</div>
     </div>
     <div class="hq-card" onclick="showInlineDrawer('🛠 Resolved',S.bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)))">
-      <div class="hq-icon">🛠</div><div class="hq-n" style="color:var(--g4)">${done}</div><div class="hq-l">Resolved</div>
+      <div class="hq-icon">🛠</div><div class="hq-n" id="hqn-done" style="color:var(--g4)">0</div><div class="hq-l">Resolved</div>
     </div>
     <div class="hq-card" onclick="showInlineDrawer('📋 All Bugs',S.bugs)">
-      <div class="hq-icon">📋</div><div class="hq-n" style="color:var(--text)">${total}</div><div class="hq-l">Total</div>
+      <div class="hq-icon">📋</div><div class="hq-n" id="hqn-total" style="color:var(--text)">0</div><div class="hq-l">Total</div>
     </div>`;
+  const _dur=1400;
+  countUp(document.getElementById('hqn-open'),  open,   _dur);
+  countUp(document.getElementById('hqn-active'), active, _dur);
+  countUp(document.getElementById('hqn-crit'),   crit,   _dur);
+  countUp(document.getElementById('hqn-mine'),   mine,   _dur);
+  countUp(document.getElementById('hqn-done'),   done,   _dur);
+  countUp(document.getElementById('hqn-total'),  total,  _dur);
   const critBugs=S.bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).slice(0,6);
   document.getElementById('homeCritical').innerHTML=critBugs.length?critBugs.map(homeBugRow).join(''):emptySmall('🎉','All clear!');
   const miBugs=S.bugs.filter(b=>(b.assignees||[]).some(a=>a.email===u?.email)&&!['Dev Fixed','Done','QA Pass','Closed'].includes(b.status)).slice(0,6);
@@ -3296,20 +3304,36 @@ function renderPersonalStats() {
   const myToday   = todayBugs.filter(b=>(b.assignees||[]).some(a=>a.email===S.user.email)).length;
   const myReported = S.bugs.filter(b=>b.reporter_email===S.user.email).length;
 
+  const psData = [
+    ['#a78bfa', myOpen,     'Assigned Open',      'ps-open'],
+    ['#ef4444', myCrit,     'Critical Assigned',   'ps-crit'],
+    ['#10b981', myFixed,    'Fixed/Passed',        'ps-fixed'],
+    ['#06b6d4', myReported, 'Bugs Reported',       'ps-reported'],
+    ['#f59e0b', myToday,    'Active Today',        'ps-today'],
+  ];
   el.innerHTML = `
     <div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px;padding:0 2px">YOUR ACTIVITY</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      ${[
-        ['#a78bfa', myOpen,     'Assigned Open'],
-        ['#ef4444', myCrit,     'Critical Assigned'],
-        ['#10b981', myFixed,    'Fixed/Passed'],
-        ['#06b6d4', myReported, 'Bugs Reported'],
-        ['#f59e0b', myToday,    'Active Today'],
-      ].map(([c,v,l])=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;flex:1;min-width:110px;text-align:center;border-top:2px solid ${c}">
-        <div style="font-size:22px;font-weight:800;color:${c};font-family:var(--disp)">${v}</div>
+      ${psData.map(([c,v,l,id])=>`<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;flex:1;min-width:110px;text-align:center;border-top:2px solid ${c}">
+        <div id="${id}" style="font-size:22px;font-weight:800;color:${c};font-family:var(--disp)">0</div>
         <div style="font-size:9px;color:var(--dim);font-family:var(--mono);margin-top:3px;letter-spacing:.5px">${l}</div>
       </div>`).join('')}
     </div>`;
+  psData.forEach(([,v,,id]) => countUp(document.getElementById(id), v, 1400));
+}
+
+function countUp(el, target, duration) {
+  if (!el) return;
+  if (target === 0) { el.textContent = '0'; return; }
+  const start = performance.now();
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  function tick(now) {
+    const t = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round(easeOut(t) * target);
+    if (t < 1) requestAnimationFrame(tick);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
 }
 
 function renderStats(id){
@@ -3319,11 +3343,17 @@ function renderStats(id){
   const done=S.bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
   const el=document.getElementById(id);if(!el)return;
   el.innerHTML=`
-    <div class="sc"><div class="sc-n" style="color:#a78bfa">${open}</div><div class="sc-l">Open</div><div class="sc-bar" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa"></div></div>
-    <div class="sc"><div class="sc-n" style="color:var(--g2)">${prog}</div><div class="sc-l">Active</div><div class="sc-bar" style="background:var(--g2);box-shadow:0 0 6px var(--g2)"></div></div>
-    <div class="sc"><div class="sc-n" style="color:var(--g5)">${crit}</div><div class="sc-l">Critical</div><div class="sc-bar" style="background:var(--g5);box-shadow:0 0 6px var(--g5)"></div></div>
-    <div class="sc"><div class="sc-n" style="color:var(--g4)">${done}</div><div class="sc-l">Resolved</div><div class="sc-bar" style="background:var(--g4);box-shadow:0 0 6px var(--g4)"></div></div>
-    <div class="sc"><div class="sc-n" style="color:var(--text)">${S.bugs.length}</div><div class="sc-l">Total</div><div class="sc-bar" style="background:var(--bd3)"></div></div>`;
+    <div class="sc"><div class="sc-n" id="${id}-open" style="color:#a78bfa">0</div><div class="sc-l">Open</div><div class="sc-bar" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa"></div></div>
+    <div class="sc"><div class="sc-n" id="${id}-prog" style="color:var(--g2)">0</div><div class="sc-l">Active</div><div class="sc-bar" style="background:var(--g2);box-shadow:0 0 6px var(--g2)"></div></div>
+    <div class="sc"><div class="sc-n" id="${id}-crit" style="color:var(--g5)">0</div><div class="sc-l">Critical</div><div class="sc-bar" style="background:var(--g5);box-shadow:0 0 6px var(--g5)"></div></div>
+    <div class="sc"><div class="sc-n" id="${id}-done" style="color:var(--g4)">0</div><div class="sc-l">Resolved</div><div class="sc-bar" style="background:var(--g4);box-shadow:0 0 6px var(--g4)"></div></div>
+    <div class="sc"><div class="sc-n" id="${id}-total" style="color:var(--text)">0</div><div class="sc-l">Total</div><div class="sc-bar" style="background:var(--bd3)"></div></div>`;
+  const dur = 1400;
+  countUp(document.getElementById(id+'-open'),  open,         dur);
+  countUp(document.getElementById(id+'-prog'),  prog,         dur);
+  countUp(document.getElementById(id+'-crit'),  crit,         dur);
+  countUp(document.getElementById(id+'-done'),  done,         dur);
+  countUp(document.getElementById(id+'-total'), S.bugs.length, dur);
 }
 
 function sortBy(col){if(S.sortCol===col)S.sortDir=-S.sortDir;else{S.sortCol=col;S.sortDir=1;}applyF();}
@@ -6906,15 +6936,22 @@ async function renderBuildsPage() {
           ${cur.platform?`<div style="font-size:11px;color:var(--mute);margin-top:2px">${esc(cur.platform)}</div>`:''}
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
-          <div style="text-align:center"><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--text)">${cur.bugs.length}</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">TOTAL</div></div>
-          <div style="text-align:center"><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--g3)">${curOpen}</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">OPEN</div></div>
-          <div style="text-align:center"><div style="font-family:var(--disp);font-size:24px;font-weight:800;color:${curCrit>0?'var(--g5)':'var(--g4)'}">${curCrit}</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">CRITICAL</div></div>
+          <div style="text-align:center"><div id="cbb-total" style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--text)">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">TOTAL</div></div>
+          <div style="text-align:center"><div id="cbb-open" style="font-family:var(--disp);font-size:24px;font-weight:800;color:var(--g3)">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">OPEN</div></div>
+          <div style="text-align:center"><div id="cbb-crit" style="font-family:var(--disp);font-size:24px;font-weight:800;color:${curCrit>0?'var(--g5)':'var(--g4)'}">0</div><div style="font-family:var(--mono);font-size:8px;color:var(--mute);letter-spacing:1px">CRITICAL</div></div>
         </div>
         ${cur.link?`<a href="${esc(cur.link)}" target="_blank" rel="noopener" class="btn btn-g btn-sm" style="text-decoration:none">📦 Download</a>`:''}
       </div>`;
+    countUp(document.getElementById('cbb-total'), cur.bugs.length, 1400);
+    countUp(document.getElementById('cbb-open'),  curOpen,         1400);
+    countUp(document.getElementById('cbb-crit'),  curCrit,         1400);
   } else if (banner) { banner.innerHTML = ''; }
 
   wrap.innerHTML = `<div class="builds-page-grid">${builds.map(b => buildPageCard(b)).join('')}</div>`;
+  wrap.querySelectorAll('.bpc-stat-n').forEach(n => {
+    const v = parseInt(n.textContent, 10);
+    if (!isNaN(v)) { n.textContent = '0'; countUp(n, v, 1400); }
+  });
 }
 
 function buildPageCard(b) {
@@ -6996,21 +7033,29 @@ function renderHomeBuildsStrip() {
         <button class="btn btn-g btn-xs" onclick="goTab('builds')">Full Tracker →</button>
       </div>
       <div class="hbs-builds">
-        ${builds.map(([ver, bugs]) => {
+        ${builds.map(([ver, bugs], i) => {
           const open  = bugs.filter(b=>statusOpen(b.status)).length;
           const crit  = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&statusOpen(b.status)).length;
           const fixed = bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
           return `<div class="hbs-build" onclick="goTab('builds')">
             <div class="hbs-build-ver">🏗 ${esc(ver)}</div>
             <div class="hbs-build-chips">
-              <span style="font-family:var(--mono);font-size:9px;color:var(--g3)">${open} open</span>
-              ${crit>0?`<span style="font-family:var(--mono);font-size:9px;color:var(--g5)"> · ${crit} crit</span>`:''}
-              <span style="font-family:var(--mono);font-size:9px;color:var(--g4)"> · ${fixed} fixed</span>
+              <span style="font-family:var(--mono);font-size:9px;color:var(--g3)"><span id="hbs-open-${i}">0</span> open</span>
+              ${crit>0?`<span style="font-family:var(--mono);font-size:9px;color:var(--g5)"> · <span id="hbs-crit-${i}">0</span> crit</span>`:''}
+              <span style="font-family:var(--mono);font-size:9px;color:var(--g4)"> · <span id="hbs-fixed-${i}">0</span> fixed</span>
             </div>
           </div>`;
         }).join('')}
       </div>
     </div>`;
+  builds.forEach(([ver, bugs], i) => {
+    const open  = bugs.filter(b=>statusOpen(b.status)).length;
+    const crit  = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)&&statusOpen(b.status)).length;
+    const fixed = bugs.filter(b=>['Dev Fixed','Done','QA Pass'].includes(b.status)).length;
+    countUp(document.getElementById(`hbs-open-${i}`),  open,  1400);
+    countUp(document.getElementById(`hbs-crit-${i}`),  crit,  1400);
+    countUp(document.getElementById(`hbs-fixed-${i}`), fixed, 1400);
+  });
 }
 
 
@@ -8517,6 +8562,10 @@ function renderBuildSection() {
       </div>
       <div class="build-cards-grid">${cards}</div>
     </div>`;
+  el.querySelectorAll('.build-stat-n').forEach(n => {
+    const v = parseInt(n.textContent, 10);
+    if (!isNaN(v)) { n.textContent = '0'; countUp(n, v, 1400); }
+  });
 }
 
 
