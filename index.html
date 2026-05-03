@@ -3924,6 +3924,10 @@ function renderDashboard(){
     </div>`;
   };
   el.innerHTML=bc('BY PRIORITY',cntBy('priority'),pco,'priority')+bc('BY STATUS',cntBy('status'),sco,'status')+bc('BY ASSIGNEE',cntByAssignee(),'','assignee')+bc('BY FEATURE',cntBy('feature'),{},'feature')+DD_FIELDS.map(f=>bc('BY '+f.label.toUpperCase(),cntBy(f.key),{},f.key)).join('')+bc('BY SPRINT',cntBy('sprint'),{},'sprint');
+  el.querySelectorAll('.bar-n').forEach(n => {
+    const v = parseInt(n.textContent, 10);
+    if (!isNaN(v)) { n.textContent = '0'; countUp(n, v, 1400); }
+  });
   renderBuildSection();
   renderDashboardGraphs();
   renderBugHeatmap();
@@ -5604,9 +5608,10 @@ function renderSlaWarnings() {
     slaEl.style.cssText = 'font-family:var(--mono);font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;background:rgba(239,68,68,.15);color:#f87171;margin-left:4px';
   }
   if(breached.length) {
-    slaEl.textContent = `${breached.length} SLA`;
+    slaEl.textContent = '0 SLA';
     const allItem = document.querySelector('.sb-item');
     if(allItem && !allItem.contains(slaEl)) allItem.appendChild(slaEl);
+    countUp({get textContent(){return slaEl.textContent;},set textContent(v){slaEl.textContent=v+' SLA';}}, breached.length, 1400);
   } else {
     slaEl.remove();
   }
@@ -6303,11 +6308,16 @@ function cuRender(){
     const high=tasks.filter(t=>['urgent','high'].includes((t.priority?.priority||'').toLowerCase())).length;
     const open=tasks.filter(t=>{const s=(t.status?.status||'').toLowerCase();return s.includes('open')||s.includes('todo')||s.includes('backlog')||s.includes('new')||s.includes('requirement');}).length;
     stats.innerHTML=`
-      <div class="sc"><div class="sc-n" style="color:var(--text)">${tasks.length}</div><div class="sc-l">Total</div><div class="sc-bar" style="background:var(--bd3)"></div></div>
-      <div class="sc"><div class="sc-n" style="color:#a78bfa">${open}</div><div class="sc-l">Open/Todo</div><div class="sc-bar" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa"></div></div>
-      <div class="sc"><div class="sc-n" style="color:var(--g2)">${prog}</div><div class="sc-l">In Progress</div><div class="sc-bar" style="background:var(--g2);box-shadow:0 0 6px var(--g2)"></div></div>
-      <div class="sc"><div class="sc-n" style="color:var(--g4)">${done}</div><div class="sc-l">Done</div><div class="sc-bar" style="background:var(--g4);box-shadow:0 0 6px var(--g4)"></div></div>
-      <div class="sc"><div class="sc-n" style="color:var(--g5)">${high}</div><div class="sc-l">High/Urgent</div><div class="sc-bar" style="background:var(--g5);box-shadow:0 0 6px var(--g5)"></div></div>`;
+      <div class="sc"><div class="sc-n" id="cu-n-total" style="color:var(--text)">0</div><div class="sc-l">Total</div><div class="sc-bar" style="background:var(--bd3)"></div></div>
+      <div class="sc"><div class="sc-n" id="cu-n-open" style="color:#a78bfa">0</div><div class="sc-l">Open/Todo</div><div class="sc-bar" style="background:#a78bfa;box-shadow:0 0 6px #a78bfa"></div></div>
+      <div class="sc"><div class="sc-n" id="cu-n-prog" style="color:var(--g2)">0</div><div class="sc-l">In Progress</div><div class="sc-bar" style="background:var(--g2);box-shadow:0 0 6px var(--g2)"></div></div>
+      <div class="sc"><div class="sc-n" id="cu-n-done" style="color:var(--g4)">0</div><div class="sc-l">Done</div><div class="sc-bar" style="background:var(--g4);box-shadow:0 0 6px var(--g4)"></div></div>
+      <div class="sc"><div class="sc-n" id="cu-n-high" style="color:var(--g5)">0</div><div class="sc-l">High/Urgent</div><div class="sc-bar" style="background:var(--g5);box-shadow:0 0 6px var(--g5)"></div></div>`;
+    countUp(document.getElementById('cu-n-total'), tasks.length, 1400);
+    countUp(document.getElementById('cu-n-open'),  open,         1400);
+    countUp(document.getElementById('cu-n-prog'),  prog,         1400);
+    countUp(document.getElementById('cu-n-done'),  done,         1400);
+    countUp(document.getElementById('cu-n-high'),  high,         1400);
   } else if(stats){ stats.innerHTML=''; }
 
   if(_cuView==='board') cuRenderBoard();
@@ -10100,15 +10110,17 @@ function renderMonthwiseChart() {
     const crit   = bugs.filter(b=>['Critical','Urgent'].includes(b.priority)).length;
     const happy  = bugs.filter(b=>b.issue_type==='Happy Flow').length;
     const edge   = bugs.filter(b=>b.issue_type==='Edge Case').length;
-    const statCard = (c,v,l) => '<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;text-align:center;border-top:2px solid '+c+'"><div style="font-size:22px;font-weight:800;color:'+c+';font-family:var(--disp)">'+v+'</div><div style="font-size:9px;color:var(--dim);font-family:var(--mono);margin-top:3px">'+l+'</div></div>';
+    const statCard = (c,v,l,id) => '<div style="background:var(--bg3);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;text-align:center;border-top:2px solid '+c+'"><div id="'+id+'" style="font-size:22px;font-weight:800;color:'+c+';font-family:var(--disp)">0</div><div style="font-size:9px;color:var(--dim);font-family:var(--mono);margin-top:3px">'+l+'</div></div>';
     statsEl.innerHTML =
-      statCard('#a78bfa', bugs.length, 'TOTAL FILED') +
-      statCard('#ef4444', crit,   'CRITICAL') +
-      statCard('#06b6d4', active, 'ACTIVE') +
-      statCard('#10b981', qaPass, 'QA PASS') +
-      statCard('#f59e0b', open,   'OPEN') +
-      statCard('#7c3aed', happy,  'HAPPY FLOW') +
-      statCard('#0d9488', edge,   'EDGE CASE');
+      statCard('#a78bfa', bugs.length, 'TOTAL FILED', 'mws-total') +
+      statCard('#ef4444', crit,        'CRITICAL',    'mws-crit')  +
+      statCard('#06b6d4', active,      'ACTIVE',      'mws-active') +
+      statCard('#10b981', qaPass,      'QA PASS',     'mws-qapass') +
+      statCard('#f59e0b', open,        'OPEN',        'mws-open')  +
+      statCard('#7c3aed', happy,       'HAPPY FLOW',  'mws-happy') +
+      statCard('#0d9488', edge,        'EDGE CASE',   'mws-edge');
+    [[bugs.length,'mws-total'],[crit,'mws-crit'],[active,'mws-active'],[qaPass,'mws-qapass'],[open,'mws-open'],[happy,'mws-happy'],[edge,'mws-edge']]
+      .forEach(([v,id]) => countUp(document.getElementById(id), v, 1400));
   }
 
   // Issue type trend bar
