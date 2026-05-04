@@ -8,7 +8,7 @@ database_name = "bugpulse-db"
 database_id = "5dcb154d-6c6d-461d-852c-700d7e5ce9ac"
 
 [triggers]
-crons = ["* * * * *"]
+crons = ["* * * * 1-5"]  # ✅ Runs 720x per week (Mon-Fri only)
 
 [vars]
 APP_URL = "https://hitwicket-bugpulse.vercel.app"
