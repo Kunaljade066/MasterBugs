@@ -4899,6 +4899,45 @@ function openFeatureKanban() {
   openPanel();
 }
 
+function featureInputFilter(val){
+  var dd=document.getElementById('featDropdown');
+  if(!dd)return;
+  var q=(val||'').toLowerCase().trim();
+  var fu={};
+  S.bugs.forEach(function(b){if(b.feature)fu[b.feature]=Math.max(fu[b.feature]||0,b.created_ts||0);});
+  var all=Object.entries(fu).sort(function(a,b2){return b2[1]-a[1];}).map(function(e){return e[0];});
+  var filtered=q?all.filter(function(f){return f.toLowerCase().includes(q);}):all;
+  if(!filtered.length){dd.style.display='none';return;}
+  var top6=filtered.slice(0,6);
+  var rest=filtered.slice(6);
+  dd.innerHTML=
+    '<div style="padding:6px 10px;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--dim);border-bottom:1px solid var(--bd)">'+(q?'MATCHING FEATURES':'RECENTLY USED')+'</div>'+
+    top6.map(function(f){
+      var cnt=S.bugs.filter(function(b){return b.feature===f;}).length;
+      return '<div onclick="selectFeature(\''+esc(f)+'\')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background=\'rgba(124,58,237,.1)\'" onmouseleave="this.style.background=\'\'"><span style="font-size:14px">🕐</span><span>'+esc(f)+'</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">'+cnt+' bugs</span></div>';
+    }).join('')+
+    rest.map(function(f){
+      var cnt=S.bugs.filter(function(b){return b.feature===f;}).length;
+      return '<div onclick="selectFeature(\''+esc(f)+'\')" style="padding:9px 13px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mist);border-bottom:1px solid rgba(255,255,255,.03);display:flex;align-items:center;gap:8px;transition:background .1s" onmouseenter="this.style.background=\'rgba(124,58,237,.08)\'" onmouseleave="this.style.background=\'\'"><span>'+esc(f)+'</span><span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--dim)">'+cnt+' bugs</span></div>';
+    }).join('');
+  dd.style.display='block';
+  // Close on outside click (attach once)
+  if(!dd._outsideListenerAttached){
+    dd._outsideListenerAttached=true;
+    document.addEventListener('mousedown',function(e){
+      var inp=document.getElementById('f-feat');
+      if(dd&&!dd.contains(e.target)&&e.target!==inp) dd.style.display='none';
+    });
+  }
+}
+
+function selectFeature(f){
+  var inp=document.getElementById('f-feat');
+  if(inp) inp.value=f;
+  var dd=document.getElementById('featDropdown');
+  if(dd) dd.style.display='none';
+}
+
 function buildBugForm(bug,full){
   const spOpts=S.sprints.map(s=>`<option value="${esc(s.name)}"${bug?.sprint===s.name?' selected':''}>${esc(s.name)}</option>`).join('');
   const stOpts=ALL_STATUSES.map(v=>`<option value="${v}"${(bug?.status||'Open')===v?' selected':''}>${v}</option>`).join('');
