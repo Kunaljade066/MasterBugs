@@ -9385,23 +9385,8 @@ async function sendBugNotification(bug, customMsg) {
   // GChat webhook &#8212; pod-specific or global
   if(cfg.notif_new_bug !== false) {
     const assigneeNames = assignees.map(a=>a.name).join(', ') || 'Unassigned';
-    const hasImage = isImageUrl && isImageUrl(bug.attachment);
-    const imgUrl = hasImage ? (isDriveUrl && isDriveUrl(bug.attachment) ? getDriveThumbnailUrl(bug.attachment) : bug.attachment) : null;
-    if(hasImage && imgUrl) {
-      const card = { cardsV2: [{ cardId: bug.id, card: {
-        header: { title: '🐛 ' + (bug.id||'') + ' — ' + (bug.priority||'Medium'), subtitle: (bug.title||'').slice(0,80) },
-        sections: [{ widgets: [
-          { textParagraph: { text: '<b>Status:</b> '+(bug.status||'Open')+' | <b>Pod:</b> '+(bug.pod||'—')+' | <b>Build:</b> '+(bug.build||'—') } },
-          { textParagraph: { text: '<b>Assignee:</b> '+assigneeNames } },
-          { image: { imageUrl: imgUrl, onClick: { openLink: { url: bug.attachment } } } },
-          { buttonList: { buttons: [{ text: 'View Bug', onClick: { openLink: { url: bugUrl } } }] } }
-        ]}]
-      }}]};
-      await sendGChatCard(card, bug.pod||'');
-    } else {
-      const gchatText = '🐛 New Bug Filed — '+(bug.id||'')+' — '+(bug.priority||'Medium')+'\n'+(bug.title||'')+'\n\nStatus: '+(bug.status||'Open')+' | Pod: '+(bug.pod||'—')+' | Build: '+(bug.build||'—')+' | Assignee: '+assigneeNames+'\n🔗 View: '+bugUrl;
-      await sendGChatWebhook(gchatText, bug.pod||'');
-    }
+    const gchatText = '🐛 New Bug Filed — '+(bug.id||'')+' — '+(bug.priority||'Medium')+'\n'+(bug.title||'')+'\n\nStatus: '+(bug.status||'Open')+' | Pod: '+(bug.pod||'—')+' | Build: '+(bug.build||'—')+' | Assignee: '+assigneeNames+'\n🔗 View: '+bugUrl;
+    await sendGChatWebhook(gchatText, bug.pod||'');
   }
 
   // Slack
