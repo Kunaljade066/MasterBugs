@@ -9399,7 +9399,7 @@ async function sendBugNotification(bug, customMsg) {
       }}]};
       await sendGChatCard(card, bug.pod||'');
     } else {
-      const gchatText = '\ud83d\udc1b *New Bug Filed \u2014 '+(bug.id||'')+'*\n*'+(bug.title||'')+'*\nPriority: '+(bug.priority||'Medium')+' | Status: '+(bug.status||'Open')+'\nPod: '+(bug.pod||'\u2014')+' | Build: '+(bug.build||'\u2014')+' | Assignee: '+assigneeNames+'\n\ud83d\udd17 View: '+bugUrl;
+      const gchatText = '🐛 New Bug Filed — '+(bug.id||'')+' — '+(bug.priority||'Medium')+'\n'+(bug.title||'')+'\n\nStatus: '+(bug.status||'Open')+' | Pod: '+(bug.pod||'—')+' | Build: '+(bug.build||'—')+' | Assignee: '+assigneeNames+'\n🔗 View: '+bugUrl;
       await sendGChatWebhook(gchatText, bug.pod||'');
     }
   }
